@@ -6,7 +6,9 @@ import com.alodiga.transferto.integration.model.ReserveResponse;
 import com.alodiga.transferto.integration.model.TopUpResponse;
 import com.cms.commons.models.Country;
 import com.cms.commons.models.Product;
+import com.cms.commons.models.Card;
 import com.alodiga.authorizer.cms.response.generic.BankGeneric;
+import com.alodiga.authorizer.cms.responses.CardResponse;
 import java.sql.Connection;
 import java.text.DateFormat;
 import java.text.ParseException;
@@ -77,6 +79,33 @@ public class APIOperations {
             return new CountryListResponse(ResponseCode.INTERNAL_ERROR, "Error loading countries");
         }
         return new CountryListResponse(ResponseCode.SUCCESS, "", countries);
+    }
+    
+    public Card getCardByCardNumber(String cardNumber){
+        try{
+            Query query = entityManager.createQuery("SELECT c FROM Card c WHERE c.cardNumber = " + cardNumber + "");
+            query.setMaxResults(1);
+            Card result = (Card) query.setHint("toplink.refresh", "true").getSingleResult();
+            return result;
+        } catch (NoResultException e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+    
+    public CardResponse getValidateCard(String cardNumber) {
+        Card cards = new Card();
+        try {
+            cards = getCardByCardNumber(cardNumber);
+            
+            if(cards == null){
+              return new CardResponse(ResponseCode.INTERNAL_ERROR, "The card does not exist in the CMS");  
+            } 
+            
+        } catch (Exception e) {
+            return new CardResponse(ResponseCode.INTERNAL_ERROR, "Error loading card");
+        }
+        return new CardResponse(ResponseCode.SUCCESS, "The Card exists in the CMS");
     }
 }
 
