@@ -33,4 +33,11 @@ public class APIAuthorizerCardManagementSystem {
         return operations.getValidateCard(cardNumber);
     }
     
+    @WebMethod
+    public CardResponse validateCardByCardHolder(
+        @WebParam(name = "cardNumber") String cardNumber,
+        @WebParam(name = "cardHolder") String cardHolder) {
+        return operations.validateCardByCardHolder(cardNumber, cardHolder);
+    }
+    
 }
