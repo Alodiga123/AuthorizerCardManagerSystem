@@ -34,6 +34,13 @@ public class APIAuthorizerCardManagementSystem {
     }
     
     @WebMethod
+    public CardResponse validateCardByCardHolder(
+        @WebParam(name = "cardNumber") String cardNumber,
+        @WebParam(name = "cardHolder") String cardHolder) {
+        return operations.validateCardByCardHolder(cardNumber, cardHolder);
+    }
+    
+    @WebMethod
     public CardResponse getValidateCVVAndDueDateCard(
         @WebParam(name = "cardNumber") String cardNumber,
         @WebParam(name = "cvv") String cvv,

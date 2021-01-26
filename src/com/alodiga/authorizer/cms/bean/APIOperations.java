@@ -7,6 +7,7 @@ import com.alodiga.transferto.integration.model.TopUpResponse;
 import com.cms.commons.models.Country;
 import com.cms.commons.models.Product;
 import com.cms.commons.models.Card;
+import com.cms.commons.models.NaturalCustomer;
 import com.alodiga.authorizer.cms.response.generic.BankGeneric;
 import com.alodiga.authorizer.cms.responses.CardResponse;
 import java.sql.Connection;
@@ -108,6 +109,47 @@ public class APIOperations {
         }
         return new CardResponse(ResponseCode.SUCCESS, "The Card exists in the CMS");
     }
+    
+    public NaturalCustomer getCardCustomer(Long personId){
+        try{
+            Query query = entityManager.createQuery("SELECT n FROM NaturalCustomer n WHERE n.personId.id = '" + personId + "'");
+            query.setMaxResults(1);
+            NaturalCustomer result = (NaturalCustomer) query.setHint("toplink.refresh", "true").getSingleResult();
+            return result;
+        } catch (NoResultException e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+    
+    public CardResponse validateCardByCardHolder(String cardNumber, String  cardHolder) {
+        Card cards = new Card();
+        try {
+            cards = getCardByCardNumber(cardNumber);
+            if(cards != null){
+               NaturalCustomer naturalCustomer = new NaturalCustomer();
+               naturalCustomer = getCardCustomer(cards.getPersonCustomerId().getId());
+               if(naturalCustomer != null){
+                   StringBuilder customerName = new StringBuilder(naturalCustomer.getFirstNames());
+                   customerName.append(" ");
+                   customerName.append(naturalCustomer.getLastNames());
+                   if(cardHolder.equals(customerName.toString())){ 
+                       return new CardResponse(ResponseCode.SUCCESS, "Cardholder data has been successfully verified");
+                   } else {
+                       return new CardResponse(ResponseCode.INTERNAL_ERROR, "Cardholder details do not match"); 
+                   }
+               } else {
+                  return new CardResponse(ResponseCode.INTERNAL_ERROR, "Error finding card owner"); 
+               }
+            } else {
+               return new CardResponse(ResponseCode.INTERNAL_ERROR, "Error finding the card to verify cardholder data"); 
+            } 
+        } catch (Exception e) {
+            return new CardResponse(ResponseCode.INTERNAL_ERROR, "Error loading card");
+        }
+    }        
+    
+}
 
     public CardResponse getValidateCVVAndDueDateCard(String cardNumber, String cvv, String cardDate) {
         Card cards = new Card();        
