@@ -59,6 +59,7 @@ import com.ericsson.alodiga.ws.Usuario;
 import com.ericsson.alodiga.ws.RespuestaUsuario;
 import java.sql.Timestamp;
 import com.alodiga.authorizer.cms.utils.Utils;
+import com.cms.commons.models.AccountCard;
 import com.ericsson.alodiga.ws.Cuenta;
 import java.util.HashMap;
 import java.util.Map;
@@ -81,9 +82,9 @@ public class APIOperations {
         }
         return new CountryListResponse(ResponseCode.SUCCESS, "", countries);
     }
-    
-    public Card getCardByCardNumber(String cardNumber){
-        try{
+
+    public Card getCardByCardNumber(String cardNumber) {
+        try {
             Query query = entityManager.createQuery("SELECT c FROM Card c WHERE c.cardNumber = " + cardNumber + "");
             query.setMaxResults(1);
             Card result = (Card) query.setHint("toplink.refresh", "true").getSingleResult();
@@ -93,16 +94,16 @@ public class APIOperations {
             return null;
         }
     }
-    
+
     public CardResponse getValidateCard(String cardNumber) {
         Card cards = new Card();
         try {
             cards = getCardByCardNumber(cardNumber);
-            
-            if(cards == null){
-              return new CardResponse(ResponseCode.INTERNAL_ERROR, "The card does not exist in the CMS");  
-            } 
-            
+
+            if (cards == null) {
+                return new CardResponse(ResponseCode.INTERNAL_ERROR, "The card does not exist in the CMS");
+            }
+
         } catch (Exception e) {
             return new CardResponse(ResponseCode.INTERNAL_ERROR, "Error loading card");
         }
@@ -150,6 +151,44 @@ public class APIOperations {
     
 }
 
+    public CardResponse getValidateCVVAndDueDateCard(String cardNumber, String cvv, String cardDate) {
+        Card cards = new Card();        
+        CardResponse cardResponse = new CardResponse();
+        try {
+            cards = getCardByCardNumber(cardNumber);
+            if (cards == null) {
+                return new CardResponse(ResponseCode.INTERNAL_ERROR, "The card does not exist in the CMS");
+            }            
+            if (!cards.getSecurityCodeCard().equals(cvv)) {
+                return new CardResponse(ResponseCode.INTERNAL_ERROR, "The CVV is Different");
+            }
+            Date cardExpiration = cards.getExpirationDate();
+            SimpleDateFormat sdf = new SimpleDateFormat("dd-MM-yyyy");
+            if (!sdf.format(cardExpiration).equals(cardDate)) {
+                return new CardResponse(ResponseCode.INTERNAL_ERROR, "Expiration Date is Different");
+            }
+        } catch (Exception e) {
+            return new CardResponse(ResponseCode.INTERNAL_ERROR, "Error loading card");
+        }
+        cardResponse.setCard(cards);
+        return new CardResponse(ResponseCode.SUCCESS, "The Card exists in the CMS");
+    }
 
+    public CardResponse getAccountNumberByCard(String cardNumber) {
+        Card cards = new Card();
+        AccountCard accountCard = new AccountCard();
+        String accountNumber = "";
+        try {
+            cards = getCardByCardNumber(cardNumber);
+            if (cards == null) {
+                return new CardResponse(ResponseCode.INTERNAL_ERROR, "The card does not exist in the CMS");
+            }
+            accountCard = (AccountCard) entityManager.createNamedQuery("AccountCard.findByCardId", AccountCard.class).setParameter("cardId", cards.getId()).getSingleResult();
+            accountNumber = accountCard.getAccountNumber();
+        } catch (Exception e) {
+            return new CardResponse(ResponseCode.INTERNAL_ERROR, "There is no Account Associated with the Card");
+        }
+        return new CardResponse(ResponseCode.SUCCESS, "SUCCESS", accountNumber);
+    }
 
-
+}
