@@ -33,4 +33,19 @@ public class APIAuthorizerCardManagementSystem {
         return operations.getValidateCard(cardNumber);
     }
     
+    @WebMethod
+    public CardResponse getValidateCVVAndDueDateCard(
+        @WebParam(name = "cardNumber") String cardNumber,
+        @WebParam(name = "cvv") String cvv,
+        @WebParam(name = "cardDate") String cardDate) {
+        return operations.getValidateCVVAndDueDateCard(cardNumber,cvv,cardDate);
+    }
+    
+    @WebMethod
+    public CardResponse getAccountNumberByCard(
+        @WebParam(name = "cardNumber") String cardNumber) {
+        return operations.getAccountNumberByCard(cardNumber);
+    }
+    
+    
 }

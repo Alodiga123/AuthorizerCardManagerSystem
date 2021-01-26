@@ -13,10 +13,7 @@ import javax.xml.bind.annotation.XmlRootElement;
 public class CardResponse extends Response {
 
 	public Card card;
-        private String aliasCard;
-        private String name;
-        private String email;
-        private String numberPhone;
+        private String accountNumber;
         
 	public CardResponse() {
 		super();
@@ -31,19 +28,13 @@ public class CardResponse extends Response {
 		super(new Date(), code.getCode(), mensaje);
 		this.card = null;
 	}
+        
 
-    public CardResponse(ResponseCode code, String mensaje, String aliasCard) {
+    public CardResponse(ResponseCode code, String mensaje, String accountNumber) {
         super(new Date(), code.getCode(), mensaje);
-        this.aliasCard = aliasCard;
+        this.accountNumber = accountNumber;
     }
     
-    public CardResponse(ResponseCode code, String mensaje, String aliasCard, String name, String email, String numberPhone) {
-        super(new Date(), code.getCode(), mensaje);
-        this.aliasCard = aliasCard;
-        this.name = name;
-        this.email = email;
-        this.numberPhone = numberPhone;
-    }
 
     public Card getCard() {
         return card;
@@ -53,36 +44,12 @@ public class CardResponse extends Response {
         this.card = card;
     }
 
-    public String getaliasCard() {
-        return aliasCard;
+    public String getAccountNumber() {
+        return accountNumber;
     }
 
-    public void setaliasCard(String aliasCard) {
-        this.aliasCard = aliasCard;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public String getEmail() {
-        return email;
-    }
-
-    public void setEmail(String email) {
-        this.email = email;
-    }
-
-    public String getNumberPhone() {
-        return numberPhone;
-    }
-
-    public void setNumberPhone(String numberPhone) {
-        this.numberPhone = numberPhone;
+    public void setAccountNumber(String accountNumber) {
+        this.accountNumber = accountNumber;
     }
     
     
