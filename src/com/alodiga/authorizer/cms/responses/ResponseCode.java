@@ -183,7 +183,11 @@ public enum ResponseCode {
     NOT_PERSON_TYPE("300"),
     NOT_DOCUMENTS_PERSON_TYPE("301"),
     NOT_COLLECTION_TYPE("302"),
-    NOT_COLLECTION_REQUEST("303");
+    NOT_COLLECTION_REQUEST("303"),
+    
+    //Cáculo Tarifas CMS
+    RATE_BY_CARD_NOT_FOUND("401"),
+    RATE_BY_PRODUCT_NOT_FOUND("403");
 
     private final String code;
 
