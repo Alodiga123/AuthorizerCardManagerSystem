@@ -8,6 +8,7 @@ import com.cms.commons.models.Country;
 import com.cms.commons.models.Product;
 import com.cms.commons.models.Card;
 import com.cms.commons.models.NaturalCustomer;
+import com.cms.commons.models.BalanceHistoryCard;
 import com.alodiga.authorizer.cms.response.generic.BankGeneric;
 import com.alodiga.authorizer.cms.responses.CardResponse;
 import java.sql.Connection;
@@ -98,15 +99,14 @@ public class APIOperations {
         Card cards = new Card();
         try {
             cards = getCardByCardNumber(cardNumber);
-            
             if(cards == null){
-              return new CardResponse(ResponseCode.INTERNAL_ERROR, "The card does not exist in the CMS");  
+              return new CardResponse(ResponseCode.CARD_NOT_EXISTS, "The card does not exist in the Card Manager System database");  
             } 
             
         } catch (Exception e) {
             return new CardResponse(ResponseCode.INTERNAL_ERROR, "Error loading card");
         }
-        return new CardResponse(ResponseCode.SUCCESS, "The Card exists in the CMS");
+        return new CardResponse(ResponseCode.CARD_EXISTS, "The Card exists in the Card Manager System database");
     }
     
     public NaturalCustomer getCardCustomer(Long personId){
@@ -133,21 +133,32 @@ public class APIOperations {
                    customerName.append(" ");
                    customerName.append(naturalCustomer.getLastNames());
                    if(cardHolder.equals(customerName.toString())){ 
-                       return new CardResponse(ResponseCode.SUCCESS, "Cardholder data has been successfully verified");
+                       return new CardResponse(ResponseCode.THE_CARDHOLDER_IS_VERIFIED, "Cardholder data has been successfully verified");
                    } else {
-                       return new CardResponse(ResponseCode.INTERNAL_ERROR, "Cardholder details do not match"); 
+                       return new CardResponse(ResponseCode.THE_CARDHOLDER_NOT_MATCH, "Cardholder details do not match"); 
                    }
                } else {
-                  return new CardResponse(ResponseCode.INTERNAL_ERROR, "Error finding card owner"); 
+                  return new CardResponse(ResponseCode.CARD_OWNER_NOT_FOUND, "Error finding card owner"); 
                }
             } else {
-               return new CardResponse(ResponseCode.INTERNAL_ERROR, "Error finding the card to verify cardholder data"); 
+               return new CardResponse(ResponseCode.CARD_NOT_FOUND, "Error finding the card to verify cardholder data"); 
             } 
         } catch (Exception e) {
             return new CardResponse(ResponseCode.INTERNAL_ERROR, "Error loading card");
         }
     }        
     
+    public Float getCurrentBalanceCard(Long cardId){
+        try{
+            Query query = entityManager.createQuery("SELECT b FROM BalanceHistoryCard b WHERE b.cardUserId.id = '" + cardId + "'");
+            query.setMaxResults(1);
+            BalanceHistoryCard result = (BalanceHistoryCard) query.setHint("toplink.refresh", "true").getSingleResult();
+            return result.getCurrentBalance();
+        } catch (NoResultException e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
 }
 
 
