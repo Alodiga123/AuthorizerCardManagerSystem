@@ -101,13 +101,13 @@ public class APIOperations {
         try {
             cards = getCardByCardNumber(cardNumber);
             if(cards == null){
-              return new CardResponse(ResponseCode.CARD_NOT_EXISTS, "The card does not exist in the Card Manager System database");  
+              return new CardResponse(ResponseCode.CARD_NOT_EXISTS.getCode(), ResponseCode.CARD_NOT_EXISTS.getMessage());  
             } 
             
         } catch (Exception e) {
-            return new CardResponse(ResponseCode.INTERNAL_ERROR, "Error loading card");
+            return new CardResponse(ResponseCode.INTERNAL_ERROR.getCode(), "Error loading card");
         }
-        return new CardResponse(ResponseCode.CARD_EXISTS, "The Card exists in the Card Manager System database");
+        return new CardResponse(ResponseCode.CARD_EXISTS.getCode(), ResponseCode.CARD_EXISTS.getMessage());
     }
     
     public NaturalCustomer getCardCustomer(Long personId){
@@ -134,18 +134,18 @@ public class APIOperations {
                    customerName.append(" ");
                    customerName.append(naturalCustomer.getLastNames());
                    if(cardHolder.equals(customerName.toString())){ 
-                       return new CardResponse(ResponseCode.THE_CARDHOLDER_IS_VERIFIED, "Cardholder data has been successfully verified");
+                       return new CardResponse(ResponseCode.THE_CARDHOLDER_IS_VERIFIED.getCode(), ResponseCode.THE_CARDHOLDER_IS_VERIFIED.getMessage());
                    } else {
-                       return new CardResponse(ResponseCode.THE_CARDHOLDER_NOT_MATCH, "Cardholder details do not match"); 
+                       return new CardResponse(ResponseCode.THE_CARDHOLDER_NOT_MATCH.getCode(),ResponseCode.THE_CARDHOLDER_NOT_MATCH.getMessage()); 
                    }
                } else {
-                  return new CardResponse(ResponseCode.CARD_OWNER_NOT_FOUND, "Error finding card owner"); 
+                  return new CardResponse(ResponseCode.CARD_OWNER_NOT_FOUND.getCode(), ResponseCode.CARD_OWNER_NOT_FOUND.getMessage()); 
                }
             } else {
-               return new CardResponse(ResponseCode.CARD_NOT_FOUND, "Error finding the card to verify cardholder data"); 
+               return new CardResponse(ResponseCode.CARD_NOT_FOUND.getCode(),ResponseCode.CARD_NOT_FOUND.getMessage()); 
             } 
         } catch (Exception e) {
-            return new CardResponse(ResponseCode.INTERNAL_ERROR, "Error loading card");
+            return new CardResponse(ResponseCode.INTERNAL_ERROR.getCode(), "Error loading card");
         }
     }        
     
@@ -167,21 +167,21 @@ public class APIOperations {
         try {
             cards = getCardByCardNumber(cardNumber);
             if (cards == null) {
-                return new CardResponse(ResponseCode.INTERNAL_ERROR, "The card does not exist in the CMS");
+                return new CardResponse(ResponseCode.INTERNAL_ERROR.getCode(), "The card does not exist in the CMS");
             }            
             if (!cards.getSecurityCodeCard().equals(cvv)) {
-                return new CardResponse(ResponseCode.INTERNAL_ERROR, "The CVV is Different");
+                return new CardResponse(ResponseCode.INTERNAL_ERROR.getCode(), "The CVV is Different");
             }
             Date cardExpiration = cards.getExpirationDate();
             SimpleDateFormat sdf = new SimpleDateFormat("dd-MM-yyyy");
             if (!sdf.format(cardExpiration).equals(cardDate)) {
-                return new CardResponse(ResponseCode.INTERNAL_ERROR, "Expiration Date is Different");
+                return new CardResponse(ResponseCode.INTERNAL_ERROR.getCode(), "Expiration Date is Different");
             }
         } catch (Exception e) {
-            return new CardResponse(ResponseCode.INTERNAL_ERROR, "Error loading card");
+            return new CardResponse(ResponseCode.INTERNAL_ERROR.getCode(), "Error loading card");
         }
         cardResponse.setCard(cards);
-        return new CardResponse(ResponseCode.SUCCESS, "The Card exists in the CMS");
+        return new CardResponse(ResponseCode.SUCCESS.getCode(), "The Card exists in the CMS");
     }
 
     public CardResponse getAccountNumberByCard(String cardNumber) {
@@ -191,14 +191,14 @@ public class APIOperations {
         try {
             cards = getCardByCardNumber(cardNumber);
             if (cards == null) {
-                return new CardResponse(ResponseCode.INTERNAL_ERROR, "The card does not exist in the CMS");
+                return new CardResponse(ResponseCode.INTERNAL_ERROR.getCode(), "The card does not exist in the CMS");
             }
             accountCard = (AccountCard) entityManager.createNamedQuery("AccountCard.findByCardId", AccountCard.class).setParameter("cardId", cards.getId()).getSingleResult();
             accountNumber = accountCard.getAccountNumber();
         } catch (Exception e) {
-            return new CardResponse(ResponseCode.INTERNAL_ERROR, "There is no Account Associated with the Card");
+            return new CardResponse(ResponseCode.INTERNAL_ERROR.getCode(), "There is no Account Associated with the Card");
         }
-        return new CardResponse(ResponseCode.SUCCESS, "SUCCESS", accountNumber);
+        return new CardResponse(ResponseCode.SUCCESS.getCode(), "SUCCESS", accountNumber);
     }
 
 }
