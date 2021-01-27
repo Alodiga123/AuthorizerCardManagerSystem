@@ -9,6 +9,7 @@ import com.cms.commons.models.Product;
 import com.cms.commons.models.Card;
 import com.cms.commons.models.NaturalCustomer;
 import com.cms.commons.models.BalanceHistoryCard;
+import com.cms.commons.models.TransactionsManagementHistory;
 import com.alodiga.authorizer.cms.response.generic.BankGeneric;
 import com.alodiga.authorizer.cms.responses.CardResponse;
 import java.sql.Connection;
@@ -44,6 +45,7 @@ import com.alodiga.authorizer.cms.responses.UserHasProductResponse;
 import com.alodiga.authorizer.cms.responses.CountryListResponse;
 import com.alodiga.authorizer.cms.responses.ProductListResponse;
 import com.alodiga.authorizer.cms.responses.TopUpInfoListResponse;
+import com.alodiga.authorizer.cms.responses.TransactionFeesResponse;
 import com.alodiga.authorizer.cms.topup.TopUpInfo;
 import com.alodiga.authorizer.cms.utils.Constante;
 import com.alodiga.authorizer.cms.utils.Constants;
@@ -61,6 +63,9 @@ import com.ericsson.alodiga.ws.RespuestaUsuario;
 import java.sql.Timestamp;
 import com.alodiga.authorizer.cms.utils.Utils;
 import com.cms.commons.models.AccountCard;
+import com.cms.commons.models.RateByCard;
+import com.cms.commons.models.RateByProduct;
+import com.cms.commons.util.EjbUtils;
 import com.ericsson.alodiga.ws.Cuenta;
 import java.util.HashMap;
 import java.util.Map;
@@ -200,5 +205,109 @@ public class APIOperations {
         }
         return new CardResponse(ResponseCode.SUCCESS.getCode(), "SUCCESS", accountNumber);
     }
-
+    
+    public TransactionFeesResponse calculateTransactionFees(String cardNumber, Integer channelId, Integer transactionTypeId, Float settlementTransactionAmount) {
+        Card card = null;
+        RateByCard rateByCard = null;
+        RateByProduct rateByProduct = null;
+        Long totalTransactionsByCard = 0L;
+        Long totalTransactionsPerMonthByCard = 0L;
+        int transactionsInitialExempt = 0;
+        int transactionExemptPerMonth = 0;
+        Float transactionFeesAmount = 0.00F;
+        Float fixedRate = 0.00F;
+        Float percentRate = 0.00F; 
+        
+        //Se obtiene la tarjeta asociada a la transacción
+        card = getCardByCardNumber(cardNumber);
+        
+        //Se revisa si el tarjetahabiente tiene tarifas definidas
+        rateByCard = getRateByCard(card.getId(),channelId,transactionTypeId);
+        if (rateByCard == null) {
+            //Se revisa si el producto tiene tarifas definidas
+            rateByProduct = getRateByProduct(card.getProductId().getId(),channelId,transactionTypeId);
+            if (rateByProduct == null) {
+                return new TransactionFeesResponse(ResponseCode.RATE_BY_PRODUCT_NOT_FOUND.getCode(),ResponseCode.RATE_BY_PRODUCT_NOT_FOUND.getMessage());
+            } else {
+                transactionsInitialExempt = rateByProduct.getTotalInitialTransactionsExempt();
+                transactionExemptPerMonth = rateByProduct.getTotalTransactionsExemptPerMonth();
+                if (rateByProduct.getFixedRate() != null) {
+                    fixedRate = rateByProduct.getFixedRate();
+                } else {
+                    percentRate = rateByProduct.getPercentageRate();
+                }
+            }
+        } else {
+            transactionsInitialExempt = rateByCard.getTotalInitialTransactionsExempt();
+            transactionExemptPerMonth = rateByCard.getTotalTransactionsExemptPerMonth();
+            if (rateByCard.getFixedRate() != null) {
+                fixedRate = rateByCard.getFixedRate();
+            } else {
+                percentRate = rateByCard.getPercentageRate();
+            }
+        }
+        
+        //Validar si aplica el cobro de la tarifa
+        //1. Transacciones iniciales excentas
+        totalTransactionsByCard = getTotalTransactionsByCard(card.getCardNumber(),channelId,transactionTypeId);
+        if (totalTransactionsByCard > transactionsInitialExempt) {
+            if (fixedRate != null) {
+                transactionFeesAmount = fixedRate;
+            } else {
+                transactionFeesAmount = (transactionFeesAmount * percentRate)/100;
+            }
+        }
+        
+        //2. Transacciones mensuales excentas
+        if (transactionFeesAmount == 0) {
+            totalTransactionsPerMonthByCard = TransactionsByUserCurrentDate(card.getCardNumber(),EjbUtils.getBeginningDateMonth(new Date()), EjbUtils.getEndingDate(new Date()),channelId,transactionTypeId);
+        }
+        
+        
+        return new TransactionFeesResponse(ResponseCode.SUCCESS.getCode(), "SUCCESS"); 
+    }
+    
+    private RateByCard getRateByCard(Long cardId, Integer channelId, Integer transactionTypeId) {
+        try {
+            Query query = entityManager.createQuery("SELECT r FROM RateByCard r WHERE r.cardId.id = " + cardId + " AND r.channelId.id = " + channelId + " AND r.transactionId.id = " + transactionTypeId + "");
+            query.setMaxResults(1);
+            RateByCard result = (RateByCard) query.setHint("toplink.refresh", "true").getSingleResult();
+            return result;
+        } catch (NoResultException e) {
+            return null;
+        }
+    }
+    
+    private RateByProduct getRateByProduct(Long productId, Integer channelId, Integer transactionTypeId) {
+        try {
+            Query query = entityManager.createQuery("SELECT r FROM RateByProduct r WHERE r.productId.id = " + productId + " AND r.channelId.id = " + channelId + " AND r.transactionId.id = " + transactionTypeId + "");
+            query.setMaxResults(1);
+            RateByProduct result = (RateByProduct) query.setHint("toplink.refresh", "true").getSingleResult();
+            return result;
+        } catch (NoResultException e) {
+            return null;
+        }
+    }
+    
+    private Long getTotalTransactionsByCard(String cardNumber, Integer channelId, Integer transactionTypeId) {
+        StringBuilder sqlBuilder = new StringBuilder("SELECT COUNT(t.id) FROM transactionsManagementHistory t WHERE t.cardNumber = ?1 AND t.channelId = ?2 AND t.transactionTypeId = ?3");
+        Query query = entityManager.createNativeQuery(sqlBuilder.toString());
+        query.setParameter("1", cardNumber);
+        query.setParameter("2", channelId);
+        query.setParameter("3", transactionTypeId);
+        List result = (List) query.setHint("toplink.refresh", "true").getResultList();
+        return result.get(0) != null ? (Long) result.get(0) : 0l;
+    }
+    
+    public Long TransactionsByUserCurrentDate(String cardNumber, Date begginingDateTime, Date endingDateTime, Integer channelId, Integer transactionTypeId) {
+        StringBuilder sqlBuilder = new StringBuilder("SELECT COUNT(t.id) transactionsManagementHistory t WHERE t.cardNumber = ?1 AND t.createDate between ?2 AND ?3 AND t.channelId = ?4 AND t.transactionTypeId = ?5");
+        Query query = entityManager.createNativeQuery(sqlBuilder.toString());
+        query.setParameter("1", cardNumber);
+        query.setParameter("2", begginingDateTime);
+        query.setParameter("3", endingDateTime);
+        query.setParameter("4", channelId);
+        query.setParameter("5", transactionTypeId);
+        List result = (List) query.setHint("toplink.refresh", "true").getResultList();
+        return result.get(0) != null ? (Long) result.get(0) : 0l;
+    }
 }
