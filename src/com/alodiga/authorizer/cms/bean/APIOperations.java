@@ -160,7 +160,6 @@ public class APIOperations {
             return null;
         }
     }
-}
 
     public CardResponse getValidateCVVAndDueDateCard(String cardNumber, String cvv, String cardDate) {
         Card cards = new Card();        
