@@ -21,8 +21,8 @@ public enum ResponseCode {
     
     
     //Cáculo Tarifas CMS
-    RATE_BY_CARD_NOT_FOUND("401",""),
-    RATE_BY_PRODUCT_NOT_FOUND("403","");
+    RATE_BY_CARD_NOT_FOUND("401","The rate for the card has not been defined"),
+    RATE_BY_PRODUCT_NOT_FOUND("403","The rate for the product has not been defined");
 
     private final String code;
     private final String message;
