@@ -1,30 +1,13 @@
 package com.alodiga.authorizer.cms.bean;
 
-import com.alodiga.transferto.integration.connection.RequestManager;
-import com.alodiga.transferto.integration.model.MSIDN_INFOResponse;
-import com.alodiga.transferto.integration.model.ReserveResponse;
-import com.alodiga.transferto.integration.model.TopUpResponse;
 import com.cms.commons.models.Country;
-import com.cms.commons.models.Product;
 import com.cms.commons.models.Card;
 import com.cms.commons.models.NaturalCustomer;
 import com.cms.commons.models.BalanceHistoryCard;
-import com.cms.commons.models.TransactionsManagementHistory;
-import com.alodiga.authorizer.cms.response.generic.BankGeneric;
 import com.alodiga.authorizer.cms.responses.CardResponse;
-import java.sql.Connection;
-import java.text.DateFormat;
-import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
-import java.util.Locale;
-import java.util.Random;
-import java.util.UUID;
-import java.util.Iterator;
-import java.math.BigInteger;
 import javax.ejb.Stateless;
 import javax.ejb.TransactionManagement;
 import javax.ejb.TransactionManagementType;
@@ -32,45 +15,16 @@ import javax.persistence.EntityManager;
 import javax.persistence.Query;
 import javax.persistence.NoResultException;
 import javax.persistence.PersistenceContext;
-import javax.validation.ConstraintViolationException;
-import org.apache.axis.utils.StringUtils;
-import org.apache.commons.dbutils.DbUtils;
-import org.apache.commons.dbutils.QueryRunner;
-import org.apache.commons.dbutils.handlers.BeanListHandler;
 import org.apache.log4j.Logger;
 import com.alodiga.authorizer.cms.responses.ResponseCode;
-import com.alodiga.authorizer.cms.responses.Response;
-import com.alodiga.authorizer.cms.responses.ProductResponse;
-import com.alodiga.authorizer.cms.responses.UserHasProductResponse;
 import com.alodiga.authorizer.cms.responses.CountryListResponse;
-import com.alodiga.authorizer.cms.responses.ProductListResponse;
-import com.alodiga.authorizer.cms.responses.TopUpInfoListResponse;
 import com.alodiga.authorizer.cms.responses.ValidateLimitsResponse;
 import com.alodiga.authorizer.cms.responses.TransactionFeesResponse;
-import com.alodiga.authorizer.cms.topup.TopUpInfo;
-import com.alodiga.authorizer.cms.utils.Constante;
-import com.alodiga.authorizer.cms.utils.Constants;
-import com.alodiga.authorizer.cms.utils.Encryptor;
-import com.alodiga.authorizer.cms.utils.EnvioCorreo;
-import com.alodiga.authorizer.cms.utils.Mail;
-import com.alodiga.authorizer.cms.utils.SendCallRegister;
-import com.alodiga.authorizer.cms.utils.SendMailTherad;
-import java.rmi.RemoteException;
-import java.text.DecimalFormat;
-import java.util.logging.Level;
-import com.ericsson.alodiga.ws.APIRegistroUnificadoProxy;
-import com.ericsson.alodiga.ws.Usuario;
-import com.ericsson.alodiga.ws.RespuestaUsuario;
-import java.sql.Timestamp;
-import com.alodiga.authorizer.cms.utils.Utils;
 import com.cms.commons.models.AccountCard;
 import com.cms.commons.models.ProductHasChannelHasTransaction;
 import com.cms.commons.models.RateByCard;
 import com.cms.commons.models.RateByProduct;
 import com.cms.commons.util.EjbUtils;
-import com.ericsson.alodiga.ws.Cuenta;
-import java.util.HashMap;
-import java.util.Map;
 
 @Stateless(name = "FsProcessorWallet", mappedName = "ejb/FsProcessorWallet")
 @TransactionManagement(TransactionManagementType.CONTAINER)
@@ -317,38 +271,47 @@ public class APIOperations {
         return result.get(0) != null ? (Long) result.get(0) : 0l;
     }
 
-     public ValidateLimitsResponse getValidateLimits(String cardNumber, Long transactionTypeId, Long channelId){
-        int totalTransactionsByCardDaily = 0;
+     public ValidateLimitsResponse getValidateLimits(String cardNumber, Integer transactionTypeId, Integer channelId, String countryCode){
+        Long totalTransactionsByCardDaily = 0L;
         Double totalAmountByCardDaily = 0.00D;
-        int totalTransactionsByCardMonthly = 0;
+        Long totalTransactionsByCardMonthly = 0L;
         Double totalAmountByUserMonthly = 0.00D;
-        if (cardNumber == null || transactionTypeId ==null || channelId==null)
+        boolean transactionLocal = false;
+        
+        if (cardNumber == null || countryCode ==null )
             return new ValidateLimitsResponse(ResponseCode.INVALID_DATA, "The invalid data");
         
         Card card = getCardByCardNumber(cardNumber);
         if (card==null)
              return new ValidateLimitsResponse(ResponseCode.CARD_NOT_FOUND, ResponseCode.CARD_NOT_FOUND.getMessage());
         
+        Country country = getCountry(countryCode);
+        if (country==null)
+            return new ValidateLimitsResponse(ResponseCode.COUNTRY_NOT_FOUND, ResponseCode.COUNTRY_NOT_FOUND.getMessage());
+        
+        if (country.getId().equals(card.getProductId().getCountryId().getId()))
+            transactionLocal = true;
+        
         ProductHasChannelHasTransaction productHasChannelHasTransaction = getSettingLimits(transactionTypeId,channelId, card.getProductId().getId());
        
         if (productHasChannelHasTransaction != null) {
             
-            totalTransactionsByCardDaily = TransactionsByCardByTransactionByProductCurrentDate(cardNumber, EjbUtils.getBeginningDate(new Date()), EjbUtils.getEndingDate(new Date()), transactionTypeId, channelId);
+            totalTransactionsByCardDaily = getTransactionsByCardByTransactionByProductCurrentDate(cardNumber, EjbUtils.getBeginningDate(new Date()), EjbUtils.getEndingDate(new Date()), transactionTypeId, channelId);
             if (totalTransactionsByCardDaily >= productHasChannelHasTransaction.getMaximumNumberTransactionsDaily()) {
                 return new ValidateLimitsResponse(ResponseCode.TRANSACTION_QUANTITY_LIMIT_DIALY, ResponseCode.TRANSACTION_QUANTITY_LIMIT_DIALY.getMessage());
             }
             
-            totalAmountByCardDaily = AmountMaxByUserByUserByTransactionByProductCurrentDate(cardNumber, EjbUtils.getBeginningDate(new Date()), EjbUtils.getEndingDate(new Date()), transactionTypeId, channelId);
+            totalAmountByCardDaily = getAmountMaxByUserByUserByTransactionByProductCurrentDate(cardNumber, EjbUtils.getBeginningDate(new Date()), EjbUtils.getEndingDate(new Date()), transactionTypeId, channelId);
             if (totalAmountByCardDaily >= Double.parseDouble(productHasChannelHasTransaction.getAmountMaximumTransactionInternational().toString())) {
                 return new ValidateLimitsResponse(ResponseCode.TRANSACTION_AMOUNT_LIMIT_DIALY, ResponseCode.TRANSACTION_AMOUNT_LIMIT_DIALY.getMessage());
             }
             
-            totalTransactionsByCardMonthly = TransactionsByCardByTransactionByProductCurrentDate(cardNumber, EjbUtils.getBeginningDateMonth(new Date()), EjbUtils.getEndingDate(new Date()), transactionTypeId, channelId);
+            totalTransactionsByCardMonthly = getTransactionsByCardByTransactionByProductCurrentDate(cardNumber, EjbUtils.getBeginningDateMonth(new Date()), EjbUtils.getEndingDate(new Date()), transactionTypeId, channelId);
             if (totalTransactionsByCardMonthly >= productHasChannelHasTransaction.getMaximumNumberTransactionsMonthly()) {
                 return new ValidateLimitsResponse(ResponseCode.TRANSACTION_QUANTITY_LIMIT_MONTHLY, ResponseCode.TRANSACTION_QUANTITY_LIMIT_MONTHLY.getMessage());
             }
             
-            totalAmountByUserMonthly = AmountMaxByUserByUserByTransactionByProductCurrentDate(cardNumber, EjbUtils.getBeginningDateMonth(new Date()), EjbUtils.getEndingDate(new Date()), transactionTypeId, channelId);
+            totalAmountByUserMonthly = getAmountMaxByUserByUserByTransactionByProductCurrentDate(cardNumber, EjbUtils.getBeginningDateMonth(new Date()), EjbUtils.getEndingDate(new Date()), transactionTypeId, channelId);
             if (totalAmountByUserMonthly >= Double.parseDouble(productHasChannelHasTransaction.getMonthlyAmountLimitInternational().toString())) {
                 return new ValidateLimitsResponse(ResponseCode.TRANSACTION_AMOUNT_LIMIT_MONTHLY, ResponseCode.TRANSACTION_AMOUNT_LIMIT_MONTHLY.getMessage());
             }
@@ -357,7 +320,7 @@ public class APIOperations {
         return new ValidateLimitsResponse(ResponseCode.SUCCESS, "SUCCESS");
     }
     
-    private ProductHasChannelHasTransaction getSettingLimits(Long transactionId, Long channelId, Long productId) {
+    private ProductHasChannelHasTransaction getSettingLimits(Integer transactionId, Integer channelId, Long productId) {
         try {
             Query query = entityManager.createQuery("SELECT c FROM ProductHasChannelHasTransaction p WHERE p.productId.id = " + productId + " p.channelId.id= " + channelId
                     + " p.transactionId.id= " + transactionId + "");
@@ -372,7 +335,7 @@ public class APIOperations {
     }
     
 
-    public int TransactionsByCardByTransactionByProductCurrentDate(String cardNumber, Date begginingDateTime, Date endingDateTime, Long transactionTypeId, Long channelId) {
+    public Long getTransactionsByCardByTransactionByProductCurrentDate(String cardNumber, Date begginingDateTime, Date endingDateTime, Integer transactionTypeId, Integer channelId) {
         StringBuilder sqlBuilder = new StringBuilder("SELECT * FROM transactionsManagementHistory t WHERE t.creationDate between ?1 AND ?2 AND t.cardNumber = ?3 AND t.transactionTypeId = ?4 AND t.channelId = ?5");
         Query query = entityManager.createNativeQuery(sqlBuilder.toString());
         query.setParameter("1", begginingDateTime);
@@ -381,11 +344,11 @@ public class APIOperations {
         query.setParameter("4", transactionTypeId);
         query.setParameter("5", channelId);
         List result = (List) query.setHint("toplink.refresh", "true").getResultList();
-        return result.size();
+        return result.get(0) != null ? (Long) result.get(0) : 0l;
     }
 
 
-    public Double AmountMaxByUserByUserByTransactionByProductCurrentDate(String cardNumber, Date begginingDateTime, Date endingDateTime, Long transactionTypeId, Long channelId) {
+    public Double getAmountMaxByUserByUserByTransactionByProductCurrentDate(String cardNumber, Date begginingDateTime, Date endingDateTime, Integer transactionTypeId, Integer channelId) {
         StringBuilder sqlBuilder = new StringBuilder("SELECT SUM(t.settlementTransactionAmount) FROM transaction t WHERE t.creationDate between ?1 AND ?2 AND t.cardNumber = ?3 AND t.transactionTypeId = ?4 AND t.channelId = ?5");
         Query query = entityManager.createNativeQuery(sqlBuilder.toString());
         query.setParameter("1", begginingDateTime);
@@ -395,6 +358,17 @@ public class APIOperations {
         query.setParameter("5", channelId);
         List result = (List) query.setHint("toplink.refresh", "true").getResultList();
         return result.get(0) != null ? (double) result.get(0) : 0f;
+    }
+    
+     private Country getCountry(String countryCode) {
+        try {
+            Query query = entityManager.createQuery("SELECT c FROM Country c WHERE c.codeIso3 = '" + countryCode + "'");
+            query.setMaxResults(1);
+            Country result = (Country) query.setHint("toplink.refresh", "true").getSingleResult();
+            return result;
+        } catch (NoResultException e) {
+            return null;
+        }
     }
 
 }

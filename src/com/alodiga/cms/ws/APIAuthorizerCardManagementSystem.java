@@ -68,9 +68,10 @@ public class APIAuthorizerCardManagementSystem {
     @WebMethod
     public ValidateLimitsResponse getValidateLimitsTransaccionals(
         @WebParam(name = "cardNumber") String cardNumber,
-        @WebParam(name = "transactionTypeId") Long transactionTypeId,
-        @WebParam(name = "channelId") Long channelId) {
-        return operations.getValidateLimits(cardNumber, transactionTypeId, channelId);
+        @WebParam(name = "transactionTypeId") Integer transactionTypeId,
+        @WebParam(name = "channelId") Integer channelId,
+        @WebParam(name = "countryCode") String countryCode)   {
+        return operations.getValidateLimits(cardNumber, transactionTypeId, channelId,countryCode);
     }
     
 }
