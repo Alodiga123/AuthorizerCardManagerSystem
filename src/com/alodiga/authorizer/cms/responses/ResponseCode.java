@@ -8,7 +8,15 @@ public enum ResponseCode {
     NO_TRUST_IP("04",""),
     INVALID_CREDENTIALS("05",""),
     BLOCKED_USER("06",""),
+    COUNTRY_NOT_FOUND("07","The country not found"),
     INTERNAL_ERROR("99",""),
+    
+     //Validacion de Limites
+    TRANSACTION_QUANTITY_LIMIT_DIALY("34","The card exceeded the maximum number of transactions per day"),
+    TRANSACTION_AMOUNT_LIMIT_DIALY("35","The card exceeded the maximum amount per day"),
+    TRANSACTION_QUANTITY_LIMIT_MONTHLY("36","The card exceeded the maximum number of transactions per month"),
+    TRANSACTION_AMOUNT_LIMIT_MONTHLY("37","The card exceeded the maximum amount per month"),
+
       
     //Mensajes Status Card
     CARD_EXISTS("50","The Card exists in the Card Manager System database"),
@@ -23,7 +31,8 @@ public enum ResponseCode {
     //Cáculo Tarifas CMS
     RATE_BY_CARD_NOT_FOUND("401","The rate for the card has not been defined"),
     RATE_BY_PRODUCT_NOT_FOUND("403","The rate for the product has not been defined");
-
+    
+           
     private final String code;
     private final String message;
         
