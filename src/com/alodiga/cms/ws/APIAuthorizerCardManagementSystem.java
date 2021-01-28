@@ -12,6 +12,7 @@ import com.alodiga.authorizer.cms.responses.ProductListResponse;
 import com.alodiga.authorizer.cms.responses.ProductResponse;
 import com.alodiga.authorizer.cms.responses.CardResponse;
 import com.alodiga.authorizer.cms.responses.TopUpInfoListResponse;
+import com.alodiga.authorizer.cms.responses.TransactionFeesResponse;
 import com.alodiga.authorizer.cms.responses.UserHasProductResponse;
 import com.alodiga.authorizer.cms.responses.ValidateLimitsResponse;
 
@@ -53,6 +54,15 @@ public class APIAuthorizerCardManagementSystem {
     public CardResponse getAccountNumberByCard(
         @WebParam(name = "cardNumber") String cardNumber) {
         return operations.getAccountNumberByCard(cardNumber);
+    }
+    
+    @WebMethod
+    public TransactionFeesResponse calculateTransactionFees(
+        @WebParam(name = "cardNumber") String cardNumber,
+        @WebParam(name = "channelId") Integer channelId,
+        @WebParam(name = "transactionTypeId") Integer transactionTypeId,
+        @WebParam(name = "settlementTransactionAmount") Float settlementTransactionAmount) {
+        return operations.calculateTransactionFees(cardNumber,channelId,transactionTypeId,settlementTransactionAmount);
     }
     
     @WebMethod
