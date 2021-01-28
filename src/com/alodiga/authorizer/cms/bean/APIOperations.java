@@ -260,7 +260,7 @@ public class APIOperations {
         
         //2. Transacciones mensuales excentas
         if (transactionFeesAmount == 0) {
-            totalTransactionsPerMonthByCard = TransactionsByUserCurrentDate(card.getCardNumber(),EjbUtils.getBeginningDateMonth(new Date()), EjbUtils.getEndingDate(new Date()),channelId,transactionTypeId);
+            totalTransactionsPerMonthByCard = getTotalTransactionsByCardByDate(card.getCardNumber(),EjbUtils.getBeginningDateMonth(new Date()), EjbUtils.getEndingDateMonth(new Date()),channelId,transactionTypeId);
         }
         
         
@@ -299,7 +299,7 @@ public class APIOperations {
         return result.get(0) != null ? (Long) result.get(0) : 0l;
     }
     
-    public Long TransactionsByUserCurrentDate(String cardNumber, Date begginingDateTime, Date endingDateTime, Integer channelId, Integer transactionTypeId) {
+    public Long getTotalTransactionsByCardByDate(String cardNumber, Date begginingDateTime, Date endingDateTime, Integer channelId, Integer transactionTypeId) {
         StringBuilder sqlBuilder = new StringBuilder("SELECT COUNT(t.id) transactionsManagementHistory t WHERE t.cardNumber = ?1 AND t.createDate between ?2 AND ?3 AND t.channelId = ?4 AND t.transactionTypeId = ?5");
         Query query = entityManager.createNativeQuery(sqlBuilder.toString());
         query.setParameter("1", cardNumber);
