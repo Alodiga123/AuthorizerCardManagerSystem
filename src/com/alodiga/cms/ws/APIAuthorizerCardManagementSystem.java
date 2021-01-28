@@ -13,6 +13,7 @@ import com.alodiga.authorizer.cms.responses.ProductResponse;
 import com.alodiga.authorizer.cms.responses.CardResponse;
 import com.alodiga.authorizer.cms.responses.TopUpInfoListResponse;
 import com.alodiga.authorizer.cms.responses.UserHasProductResponse;
+import com.alodiga.authorizer.cms.responses.ValidateLimitsResponse;
 
 @WebService
 public class APIAuthorizerCardManagementSystem {
@@ -54,5 +55,12 @@ public class APIAuthorizerCardManagementSystem {
         return operations.getAccountNumberByCard(cardNumber);
     }
     
+    @WebMethod
+    public ValidateLimitsResponse getValidateLimitsTransaccionals(
+        @WebParam(name = "cardNumber") String cardNumber,
+        @WebParam(name = "transactionTypeId") Long transactionTypeId,
+        @WebParam(name = "channelId") Long channelId) {
+        return operations.getValidateLimits(cardNumber, transactionTypeId, channelId);
+    }
     
 }
