@@ -276,7 +276,7 @@ public class APIOperations {
         Double totalAmountByCardDaily = 0.00D;
         Long totalTransactionsByCardMonthly = 0L;
         Double totalAmountByUserMonthly = 0.00D;
-        boolean transactionLocal = false;
+        boolean isTransactionLocal = false;
         
         if (cardNumber == null || countryCode ==null )
             return new ValidateLimitsResponse(ResponseCode.INVALID_DATA, "The invalid data");
@@ -290,28 +290,28 @@ public class APIOperations {
             return new ValidateLimitsResponse(ResponseCode.COUNTRY_NOT_FOUND, ResponseCode.COUNTRY_NOT_FOUND.getMessage());
         
         if (country.getId().equals(card.getProductId().getCountryId().getId()))
-            transactionLocal = true;
+            isTransactionLocal = true;
         
         ProductHasChannelHasTransaction productHasChannelHasTransaction = getSettingLimits(transactionTypeId,channelId, card.getProductId().getId());
        
         if (productHasChannelHasTransaction != null) {
             
-            totalTransactionsByCardDaily = getTransactionsByCardByTransactionByProductCurrentDate(cardNumber, EjbUtils.getBeginningDate(new Date()), EjbUtils.getEndingDate(new Date()), transactionTypeId, channelId);
+            totalTransactionsByCardDaily = getTransactionsByCardByTransactionByProductCurrentDate(cardNumber, EjbUtils.getBeginningDate(new Date()), EjbUtils.getEndingDate(new Date()), transactionTypeId, channelId, ResponseCode.SUCCESS.getCode(),isTransactionLocal, country.getId());
             if (totalTransactionsByCardDaily >= productHasChannelHasTransaction.getMaximumNumberTransactionsDaily()) {
                 return new ValidateLimitsResponse(ResponseCode.TRANSACTION_QUANTITY_LIMIT_DIALY, ResponseCode.TRANSACTION_QUANTITY_LIMIT_DIALY.getMessage());
             }
             
-            totalAmountByCardDaily = getAmountMaxByUserByUserByTransactionByProductCurrentDate(cardNumber, EjbUtils.getBeginningDate(new Date()), EjbUtils.getEndingDate(new Date()), transactionTypeId, channelId);
+            totalAmountByCardDaily = getAmountMaxByUserByUserByTransactionByProductCurrentDate(cardNumber, EjbUtils.getBeginningDate(new Date()), EjbUtils.getEndingDate(new Date()), transactionTypeId, channelId, ResponseCode.SUCCESS.getCode(),isTransactionLocal, country.getId());
             if (totalAmountByCardDaily >= Double.parseDouble(productHasChannelHasTransaction.getAmountMaximumTransactionInternational().toString())) {
                 return new ValidateLimitsResponse(ResponseCode.TRANSACTION_AMOUNT_LIMIT_DIALY, ResponseCode.TRANSACTION_AMOUNT_LIMIT_DIALY.getMessage());
             }
             
-            totalTransactionsByCardMonthly = getTransactionsByCardByTransactionByProductCurrentDate(cardNumber, EjbUtils.getBeginningDateMonth(new Date()), EjbUtils.getEndingDate(new Date()), transactionTypeId, channelId);
+            totalTransactionsByCardMonthly = getTransactionsByCardByTransactionByProductCurrentDate(cardNumber, EjbUtils.getBeginningDateMonth(new Date()), EjbUtils.getEndingDate(new Date()), transactionTypeId, channelId, ResponseCode.SUCCESS.getCode(),isTransactionLocal, country.getId());
             if (totalTransactionsByCardMonthly >= productHasChannelHasTransaction.getMaximumNumberTransactionsMonthly()) {
                 return new ValidateLimitsResponse(ResponseCode.TRANSACTION_QUANTITY_LIMIT_MONTHLY, ResponseCode.TRANSACTION_QUANTITY_LIMIT_MONTHLY.getMessage());
             }
             
-            totalAmountByUserMonthly = getAmountMaxByUserByUserByTransactionByProductCurrentDate(cardNumber, EjbUtils.getBeginningDateMonth(new Date()), EjbUtils.getEndingDate(new Date()), transactionTypeId, channelId);
+            totalAmountByUserMonthly = getAmountMaxByUserByUserByTransactionByProductCurrentDate(cardNumber, EjbUtils.getBeginningDateMonth(new Date()), EjbUtils.getEndingDate(new Date()), transactionTypeId, channelId, ResponseCode.SUCCESS.getCode(),isTransactionLocal, country.getId());
             if (totalAmountByUserMonthly >= Double.parseDouble(productHasChannelHasTransaction.getMonthlyAmountLimitInternational().toString())) {
                 return new ValidateLimitsResponse(ResponseCode.TRANSACTION_AMOUNT_LIMIT_MONTHLY, ResponseCode.TRANSACTION_AMOUNT_LIMIT_MONTHLY.getMessage());
             }
@@ -335,34 +335,48 @@ public class APIOperations {
     }
     
 
-    public Long getTransactionsByCardByTransactionByProductCurrentDate(String cardNumber, Date begginingDateTime, Date endingDateTime, Integer transactionTypeId, Integer channelId) {
-        StringBuilder sqlBuilder = new StringBuilder("SELECT * FROM transactionsManagementHistory t WHERE t.creationDate between ?1 AND ?2 AND t.cardNumber = ?3 AND t.transactionTypeId = ?4 AND t.channelId = ?5");
+    public Long getTransactionsByCardByTransactionByProductCurrentDate(String cardNumber, Date begginingDateTime, Date endingDateTime, Integer transactionTypeId, Integer channelId, String code, boolean isTransactionLocal, Integer countryId) {
+        String sql = "SELECT * FROM transactionsManagementHistory t WHERE t.creationDate between ?1 AND ?2 AND t.cardNumber = ?3 AND t.transactionTypeId = ?4 AND t.channelId = ?5 AND reponseCode =?6";
+        if (isTransactionLocal)
+            sql += (" AND acquirerCountryId = ?7");
+        else
+            sql += (" AND acquirerCountryId <> ?7");
+        StringBuilder sqlBuilder = new StringBuilder(sql);
         Query query = entityManager.createNativeQuery(sqlBuilder.toString());
         query.setParameter("1", begginingDateTime);
         query.setParameter("2", endingDateTime);
         query.setParameter("3", cardNumber);
         query.setParameter("4", transactionTypeId);
         query.setParameter("5", channelId);
+        query.setParameter("6", code);
+        query.setParameter("7", countryId);
         List result = (List) query.setHint("toplink.refresh", "true").getResultList();
         return result.get(0) != null ? (Long) result.get(0) : 0l;
     }
 
 
-    public Double getAmountMaxByUserByUserByTransactionByProductCurrentDate(String cardNumber, Date begginingDateTime, Date endingDateTime, Integer transactionTypeId, Integer channelId) {
-        StringBuilder sqlBuilder = new StringBuilder("SELECT SUM(t.settlementTransactionAmount) FROM transaction t WHERE t.creationDate between ?1 AND ?2 AND t.cardNumber = ?3 AND t.transactionTypeId = ?4 AND t.channelId = ?5");
+    public Double getAmountMaxByUserByUserByTransactionByProductCurrentDate(String cardNumber, Date begginingDateTime, Date endingDateTime, Integer transactionTypeId, Integer channelId, String code, boolean isTransactionLocal, Integer countryId) {
+        String sql = "SELECT SUM(t.settlementTransactionAmount) FROM transaction t WHERE t.creationDate between ?1 AND ?2 AND t.cardNumber = ?3 AND t.transactionTypeId = ?4 AND t.channelId = ?5 AND reponseCode =?6";
+         if (isTransactionLocal)
+            sql += (" AND acquirerCountryId = ?7");
+        else
+            sql += (" AND acquirerCountryId <> ?7");
+        StringBuilder sqlBuilder = new StringBuilder(sql);
         Query query = entityManager.createNativeQuery(sqlBuilder.toString());
         query.setParameter("1", begginingDateTime);
         query.setParameter("2", endingDateTime);
         query.setParameter("3", cardNumber);
         query.setParameter("4", transactionTypeId);
         query.setParameter("5", channelId);
+        query.setParameter("6", code);
+        query.setParameter("7", countryId);
         List result = (List) query.setHint("toplink.refresh", "true").getResultList();
         return result.get(0) != null ? (double) result.get(0) : 0f;
     }
     
      private Country getCountry(String countryCode) {
         try {
-            Query query = entityManager.createQuery("SELECT c FROM Country c WHERE c.codeIso3 = '" + countryCode + "'");
+            Query query = entityManager.createQuery("SELECT c FROM Country c WHERE c.code = '" + countryCode + "'");
             query.setMaxResults(1);
             Country result = (Country) query.setHint("toplink.refresh", "true").getSingleResult();
             return result;
