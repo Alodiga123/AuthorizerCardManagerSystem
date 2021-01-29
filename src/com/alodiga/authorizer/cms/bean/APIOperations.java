@@ -54,6 +54,7 @@ import com.alodiga.authorizer.cms.utils.EnvioCorreo;
 import com.alodiga.authorizer.cms.utils.Mail;
 import com.alodiga.authorizer.cms.utils.SendCallRegister;
 import com.alodiga.authorizer.cms.utils.SendMailTherad;
+import com.cms.commons.enumeraciones.StatusCardE;
 import java.rmi.RemoteException;
 import java.text.DecimalFormat;
 import java.util.logging.Level;
@@ -309,5 +310,41 @@ public class APIOperations {
         query.setParameter("5", transactionTypeId);
         List result = (List) query.setHint("toplink.refresh", "true").getResultList();
         return result.get(0) != null ? (Long) result.get(0) : 0l;
+    }
+    
+    public CardResponse verifyActiveCard(String cardNumber) {
+        Card cards = new Card();
+        try {
+            cards = getCardByCardNumber(cardNumber);
+            if(cards == null){
+              return new CardResponse(ResponseCode.CARD_NOT_EXISTS.getCode(), ResponseCode.CARD_NOT_EXISTS.getMessage());  
+            } else {
+                int statusCard = cards.getCardStatusId().getId();
+                switch(statusCard){
+                    case 1:
+                        return new CardResponse(ResponseCode.THE_CARD_IS_NOT_ACTIVE.getCode(), "The card is not active, its status is: "+StatusCardE.SOLICI.statusCardDescription()+"");
+                    case 2:
+                        return new CardResponse(ResponseCode.THE_CARD_IS_NOT_ACTIVE.getCode(), "The card is not active, its status is: "+StatusCardE.PERSON.statusCardDescription()+"");
+                    case 3:
+                        return new CardResponse(ResponseCode.THE_CARD_IS_NOT_ACTIVE.getCode(), "The card is not active, its status is: "+StatusCardE.PENPER.statusCardDescription()+"");
+                    case 4:
+                        return new CardResponse(ResponseCode.THE_CARD_IS_NOT_ACTIVE.getCode(), "The card is not active, its status is: "+StatusCardE.INVOK.statusCardDescription()+"");
+                    case 5:
+                        return new CardResponse(ResponseCode.THE_CARD_IS_NOT_ACTIVE.getCode(), "The card is not active, its status is: "+StatusCardE.ERRPER.statusCardDescription()+"");
+                    case 6:
+                        return new CardResponse(ResponseCode.THE_CARD_IS_NOT_ACTIVE.getCode(), "The card is not active, its status is: "+StatusCardE.PENDENTR.statusCardDescription()+"");
+                    case 7:
+                        return new CardResponse(ResponseCode.THE_CARD_IS_NOT_ACTIVE.getCode(), "The card is not active, its status is: "+StatusCardE.ENTREG.statusCardDescription()+"");
+                    case 8:
+                        return new CardResponse(ResponseCode.SUCCESS.getCode(), "The card has the status: "+StatusCardE.ACTIVA.statusCardDescription()+"");
+                    case 9:
+                        return new CardResponse(ResponseCode.THE_CARD_IS_NOT_ACTIVE.getCode(), "The card is not active, its status is: "+StatusCardE.BLOQUE.statusCardDescription()+"");
+                    default:
+                        return new CardResponse(ResponseCode.INTERNAL_ERROR.getCode(), "Error loading status card"); 
+                }
+            } 
+        } catch (Exception e) {
+            return new CardResponse(ResponseCode.INTERNAL_ERROR.getCode(), "Error loading card");
+        }
     }
 }
