@@ -16,7 +16,8 @@ public enum ResponseCode {
     TRANSACTION_AMOUNT_LIMIT_DIALY("35","The card exceeded the maximum amount per day"),
     TRANSACTION_QUANTITY_LIMIT_MONTHLY("36","The card exceeded the maximum number of transactions per month"),
     TRANSACTION_AMOUNT_LIMIT_MONTHLY("37","The card exceeded the maximum amount per month"),
-
+    MIN_TRANSACTION_AMOUNT("38","The card exceeded the minimun amount per transaction"),
+    MAX_TRANSACTION_AMOUNT("39","The card exceeded the maximum amount per transaction"),
       
     //Mensajes Status Card
     CARD_EXISTS("50","The Card exists in the Card Manager System database"),
