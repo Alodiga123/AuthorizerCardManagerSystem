@@ -18,7 +18,7 @@ public enum ResponseCode {
     THE_CARDHOLDER_NOT_MATCH("145","Cardholder details do not match"),
     CARD_OWNER_NOT_FOUND("146","Error finding card owner"),
     CARD_NOT_FOUND("147","Error finding the card to verify cardholder data"),
-    
+    THE_CARD_IS_NOT_ACTIVE("148", ""),
     
     //Cáculo Tarifas CMS
     RATE_BY_CARD_NOT_FOUND("401","The rate for the card has not been defined"),

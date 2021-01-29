@@ -64,5 +64,10 @@ public class APIAuthorizerCardManagementSystem {
         return operations.calculateTransactionFees(cardNumber,channelId,transactionTypeId,settlementTransactionAmount);
     }
     
+    @WebMethod
+    public CardResponse verifyActiveCard(
+        @WebParam(name = "cardNumber") String cardNumber) {
+        return operations.verifyActiveCard(cardNumber);
+    }
     
 }
