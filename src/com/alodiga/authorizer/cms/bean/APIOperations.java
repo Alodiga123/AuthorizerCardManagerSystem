@@ -6,7 +6,6 @@ import com.cms.commons.models.NaturalCustomer;
 import com.cms.commons.models.BalanceHistoryCard;
 import com.cms.commons.models.TransactionsManagementHistory;
 import com.cms.commons.util.Constants;
-import com.alodiga.authorizer.cms.response.generic.BankGeneric;
 import com.alodiga.authorizer.cms.responses.CardResponse;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -23,21 +22,7 @@ import com.alodiga.authorizer.cms.responses.ResponseCode;
 import com.alodiga.authorizer.cms.responses.CountryListResponse;
 import com.alodiga.authorizer.cms.responses.ValidateLimitsResponse;
 import com.alodiga.authorizer.cms.responses.TransactionFeesResponse;
-import com.alodiga.authorizer.cms.topup.TopUpInfo;
-import com.alodiga.authorizer.cms.utils.Constante;
-import com.alodiga.authorizer.cms.utils.Encryptor;
-import com.alodiga.authorizer.cms.utils.EnvioCorreo;
-import com.alodiga.authorizer.cms.utils.Mail;
-import com.alodiga.authorizer.cms.utils.SendCallRegister;
-import com.alodiga.authorizer.cms.utils.SendMailTherad;
-import java.rmi.RemoteException;
-import java.text.DecimalFormat;
-import java.util.logging.Level;
-import com.ericsson.alodiga.ws.APIRegistroUnificadoProxy;
-import com.ericsson.alodiga.ws.Usuario;
-import com.ericsson.alodiga.ws.RespuestaUsuario;
 import java.sql.Timestamp;
-import com.alodiga.authorizer.cms.utils.Utils;
 import com.cms.commons.enumeraciones.ChannelE;
 import com.cms.commons.enumeraciones.DocumentTypeE;
 import com.cms.commons.enumeraciones.StatusTransactionManagementE;
@@ -50,6 +35,7 @@ import com.cms.commons.models.RateByProduct;
 import com.cms.commons.models.Sequences;
 import com.cms.commons.models.TransactionsManagement;
 import com.cms.commons.util.EjbUtils;
+import java.util.Calendar;
 
 @Stateless(name = "FsProcessorWallet", mappedName = "ejb/FsProcessorWallet")
 @TransactionManagement(TransactionManagementType.CONTAINER)
