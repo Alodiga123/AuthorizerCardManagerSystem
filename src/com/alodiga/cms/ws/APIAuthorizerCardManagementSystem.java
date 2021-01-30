@@ -60,8 +60,9 @@ public class APIAuthorizerCardManagementSystem {
         @WebParam(name = "cardNumber") String cardNumber,
         @WebParam(name = "channelId") Integer channelId,
         @WebParam(name = "transactionTypeId") Integer transactionTypeId,
-        @WebParam(name = "settlementTransactionAmount") Float settlementTransactionAmount) {
-        return operations.calculateTransactionFees(cardNumber,channelId,transactionTypeId,settlementTransactionAmount);
+        @WebParam(name = "settlementTransactionAmount") Float settlementTransactionAmount,
+        @WebParam(name = "transactionNumberAcquirer") String transactionNumberAcquirer) {
+        return operations.calculateTransactionFees(cardNumber,channelId,transactionTypeId,settlementTransactionAmount,transactionNumberAcquirer);
     }
     
     
