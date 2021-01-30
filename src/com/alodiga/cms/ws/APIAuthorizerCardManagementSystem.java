@@ -8,12 +8,9 @@ import javax.jws.WebService;
 import org.apache.log4j.Logger;
 import com.alodiga.authorizer.cms.bean.APIOperations;
 import com.alodiga.authorizer.cms.responses.CountryListResponse;
-import com.alodiga.authorizer.cms.responses.ProductListResponse;
-import com.alodiga.authorizer.cms.responses.ProductResponse;
 import com.alodiga.authorizer.cms.responses.CardResponse;
-import com.alodiga.authorizer.cms.responses.TopUpInfoListResponse;
 import com.alodiga.authorizer.cms.responses.TransactionFeesResponse;
-import com.alodiga.authorizer.cms.responses.UserHasProductResponse;
+import com.alodiga.authorizer.cms.responses.ValidateLimitsResponse;
 
 @WebService
 public class APIAuthorizerCardManagementSystem {
@@ -65,5 +62,20 @@ public class APIAuthorizerCardManagementSystem {
         return operations.calculateTransactionFees(cardNumber,channelId,transactionTypeId,settlementTransactionAmount,transactionNumberAcquirer);
     }
     
+    @WebMethod
+    public CardResponse verifyActiveCard(
+        @WebParam(name = "cardNumber") String cardNumber) {
+        return operations.verifyActiveCard(cardNumber);
+    }
+    
+    @WebMethod    
+    public ValidateLimitsResponse getValidateLimitsTransaccionals(
+        @WebParam(name = "cardNumber") String cardNumber,
+        @WebParam(name = "transactionTypeId") Integer transactionTypeId,
+        @WebParam(name = "channelId") Integer channelId,
+        @WebParam(name = "countryCode") String countryCode,
+        @WebParam(name = "amountTransaction") Float amountTransaction)   {
+        return operations.getValidateLimits(cardNumber, transactionTypeId, channelId,countryCode,amountTransaction);
+    }
     
 }
