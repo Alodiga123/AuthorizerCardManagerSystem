@@ -4,6 +4,9 @@ import com.cms.commons.models.Country;
 import com.cms.commons.models.Card;
 import com.cms.commons.models.NaturalCustomer;
 import com.cms.commons.models.BalanceHistoryCard;
+import com.cms.commons.models.TransactionsManagementHistory;
+import com.cms.commons.util.Constants;
+import com.alodiga.authorizer.cms.response.generic.BankGeneric;
 import com.alodiga.authorizer.cms.responses.CardResponse;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -20,11 +23,32 @@ import com.alodiga.authorizer.cms.responses.ResponseCode;
 import com.alodiga.authorizer.cms.responses.CountryListResponse;
 import com.alodiga.authorizer.cms.responses.ValidateLimitsResponse;
 import com.alodiga.authorizer.cms.responses.TransactionFeesResponse;
+import com.alodiga.authorizer.cms.topup.TopUpInfo;
+import com.alodiga.authorizer.cms.utils.Constante;
+import com.alodiga.authorizer.cms.utils.Encryptor;
+import com.alodiga.authorizer.cms.utils.EnvioCorreo;
+import com.alodiga.authorizer.cms.utils.Mail;
+import com.alodiga.authorizer.cms.utils.SendCallRegister;
+import com.alodiga.authorizer.cms.utils.SendMailTherad;
+import java.rmi.RemoteException;
+import java.text.DecimalFormat;
+import java.util.logging.Level;
+import com.ericsson.alodiga.ws.APIRegistroUnificadoProxy;
+import com.ericsson.alodiga.ws.Usuario;
+import com.ericsson.alodiga.ws.RespuestaUsuario;
+import java.sql.Timestamp;
+import com.alodiga.authorizer.cms.utils.Utils;
+import com.cms.commons.enumeraciones.ChannelE;
+import com.cms.commons.enumeraciones.DocumentTypeE;
+import com.cms.commons.enumeraciones.StatusTransactionManagementE;
+import com.cms.commons.enumeraciones.TransactionE;
 import com.cms.commons.enumeraciones.StatusCardE;
 import com.cms.commons.models.AccountCard;
 import com.cms.commons.models.ProductHasChannelHasTransaction;
 import com.cms.commons.models.RateByCard;
 import com.cms.commons.models.RateByProduct;
+import com.cms.commons.models.Sequences;
+import com.cms.commons.models.TransactionsManagement;
 import com.cms.commons.util.EjbUtils;
 
 @Stateless(name = "FsProcessorWallet", mappedName = "ejb/FsProcessorWallet")
@@ -167,7 +191,7 @@ public class APIOperations {
 
      
     
-    public TransactionFeesResponse calculateTransactionFees(String cardNumber, Integer channelId, Integer transactionTypeId, Float settlementTransactionAmount) {
+    public TransactionFeesResponse calculateTransactionFees(String cardNumber, Integer channelId, Integer transactionTypeId, Float settlementTransactionAmount, String transactionNumberAcquirer) {
         Card card = null;
         RateByCard rateByCard = null;
         RateByProduct rateByProduct = null;
@@ -178,6 +202,9 @@ public class APIOperations {
         Float transactionFeesAmount = 0.00F;
         Float fixedRate = 0.00F;
         Float percentRate = 0.00F; 
+        String transactionNumberIssuer;
+        TransactionsManagement transactionFeeCharge = null;
+        TransactionsManagementHistory transactionHistoryFeeCharge = null;
         
         //Se obtiene la tarjeta asociada a la transacción
         card = getCardByCardNumber(cardNumber);
@@ -215,17 +242,66 @@ public class APIOperations {
             if (fixedRate != null) {
                 transactionFeesAmount = fixedRate;
             } else {
-                transactionFeesAmount = (transactionFeesAmount * percentRate)/100;
+                transactionFeesAmount = (settlementTransactionAmount * percentRate)/100;
             }
         }
         
         //2. Transacciones mensuales excentas
         if (transactionFeesAmount == 0) {
             totalTransactionsPerMonthByCard = getTotalTransactionsByCardByDate(card.getCardNumber(),EjbUtils.getBeginningDateMonth(new Date()), EjbUtils.getEndingDateMonth(new Date()),channelId,transactionTypeId);
+            if (totalTransactionsPerMonthByCard > transactionExemptPerMonth) {
+                if (fixedRate != null) {
+                    transactionFeesAmount = fixedRate;
+                } else {
+                    transactionFeesAmount = (settlementTransactionAmount * percentRate)/100;
+                }
+            }
         }
         
-        
-        return new TransactionFeesResponse(ResponseCode.SUCCESS.getCode(), "SUCCESS"); 
+        //Si aplica la tarifa a la transacción se registra la transacción para guardar la comisión de Alodiga en la BD
+        if (transactionFeesAmount > 0) {
+            //Se obtiene el número de la transacción
+            transactionNumberIssuer = generateNumberSequence(getSequencesByDocumentTypeByOriginApplication(DocumentTypeE.TRANSACTION_FEE_CMS.getId(), Constants.ORIGIN_APPLICATION_CMS_ID));
+
+            //Se guarda la comisión de Alodiga en la BD
+            transactionFeeCharge = new TransactionsManagement();
+            transactionFeeCharge.setTransactionNumberIssuer(transactionNumberIssuer);
+            transactionFeeCharge.setDateTransaction(new Date());
+            transactionFeeCharge.setChannelId(ChannelE.INT.getId());
+            transactionFeeCharge.setTransactionTypeId(TransactionE.TARIFA_TRANSACCION_CMS.getId());
+            transactionFeeCharge.setTransactionReference(transactionNumberAcquirer);
+            transactionFeeCharge.setCardHolder(card.getCardHolder());
+            transactionFeeCharge.setCardNumber(cardNumber);
+            transactionFeeCharge.setCvv(card.getSecurityCodeCard());
+            String pattern = "MMyy";
+            SimpleDateFormat simpleDateFormat = new SimpleDateFormat(pattern);
+            String expirationCardDate = simpleDateFormat.format(card.getExpirationDate());
+            transactionFeeCharge.setExpirationCardDate(expirationCardDate);
+            transactionFeeCharge.setSettlementTransactionAmount(transactionFeesAmount);
+            transactionFeeCharge.setSettlementCurrencyTransactionId(card.getProductId().getDomesticCurrencyId().getId());
+            transactionFeeCharge.setStatusTransactionManagementId(StatusTransactionManagementE.APPROVED.getId());
+            transactionFeeCharge.setCreateDate(new Timestamp(new Date().getTime()));
+            entityManager.persist(transactionFeeCharge);
+
+            transactionHistoryFeeCharge = new TransactionsManagementHistory();
+            transactionHistoryFeeCharge.setTransactionNumberIssuer(transactionNumberIssuer);
+            transactionHistoryFeeCharge.setDateTransaction(new Date());
+            transactionHistoryFeeCharge.setChannelId(ChannelE.INT.getId());
+            transactionHistoryFeeCharge.setTransactionTypeId(TransactionE.TARIFA_TRANSACCION_CMS.getId());
+            transactionHistoryFeeCharge.setTransactionReference(transactionNumberAcquirer);
+            transactionHistoryFeeCharge.setCardHolder(card.getCardHolder());
+            transactionHistoryFeeCharge.setCardNumber(cardNumber);
+            transactionHistoryFeeCharge.setCvv(card.getSecurityCodeCard());
+            transactionHistoryFeeCharge.setExpirationCardDate(expirationCardDate);
+            transactionHistoryFeeCharge.setSettlementTransactionAmount(transactionFeesAmount);
+            transactionHistoryFeeCharge.setSettlementCurrencyTransactionId(card.getProductId().getDomesticCurrencyId().getId());
+            transactionHistoryFeeCharge.setStatusTransactionManagementId(StatusTransactionManagementE.APPROVED.getId());
+            transactionHistoryFeeCharge.setCreateDate(new Timestamp(new Date().getTime()));
+            entityManager.persist(transactionHistoryFeeCharge);
+        } else {
+            return new TransactionFeesResponse(ResponseCode.SUCCESS.getCode(),"The transaction received did not generate commission to be charged");
+        }     
+        return new TransactionFeesResponse(ResponseCode.SUCCESS.getCode(),"The transaction to record the Alodiga commission corresponding to the received transaction was successfully saved in the database.",transactionFeesAmount,transactionFeeCharge); 
     }
     
     private RateByCard getRateByCard(Long cardId, Integer channelId, Integer transactionTypeId) {
@@ -251,7 +327,7 @@ public class APIOperations {
     }
     
     private Long getTotalTransactionsByCard(String cardNumber, Integer channelId, Integer transactionTypeId) {
-        StringBuilder sqlBuilder = new StringBuilder("SELECT COUNT(t.id) FROM transactionsManagementHistory t WHERE t.cardNumber = ?1 AND t.channelId = ?2 AND t.transactionTypeId = ?3");
+        StringBuilder sqlBuilder = new StringBuilder("SELECT COUNT(t.id) FROM transactionsManagementHistory t WHERE t.cardNumber = ?1 AND t.channelId = ?2 AND t.transactionTypeId = ?3 AND t.responseCode = '00'");
         Query query = entityManager.createNativeQuery(sqlBuilder.toString());
         query.setParameter("1", cardNumber);
         query.setParameter("2", channelId);
@@ -261,15 +337,42 @@ public class APIOperations {
     }
     
     public Long getTotalTransactionsByCardByDate(String cardNumber, Date begginingDateTime, Date endingDateTime, Integer channelId, Integer transactionTypeId) {
-        StringBuilder sqlBuilder = new StringBuilder("SELECT COUNT(t.id) transactionsManagementHistory t WHERE t.cardNumber = ?1 AND t.createDate between ?2 AND ?3 AND t.channelId = ?4 AND t.transactionTypeId = ?5");
+        StringBuilder sqlBuilder = new StringBuilder("SELECT COUNT(t.id) FROM transactionsManagementHistory t WHERE t.createDate between ?1 AND ?2 AND t.cardNumber = ?3 AND t.channelId = ?4 AND t.transactionTypeId = ?5 AND t.responseCode = '00'");
         Query query = entityManager.createNativeQuery(sqlBuilder.toString());
-        query.setParameter("1", cardNumber);
-        query.setParameter("2", begginingDateTime);
-        query.setParameter("3", endingDateTime);
+        query.setParameter("1", begginingDateTime);
+        query.setParameter("2", endingDateTime);
+        query.setParameter("3", cardNumber);
         query.setParameter("4", channelId);
         query.setParameter("5", transactionTypeId);
         List result = (List) query.setHint("toplink.refresh", "true").getResultList();
         return result.get(0) != null ? (Long) result.get(0) : 0l;
+    }
+    
+    public Sequences getSequencesByDocumentTypeByOriginApplication(int documentTypeId, int originApplicationId) {
+        try {
+            Sequences sequences = (Sequences) entityManager.createNamedQuery("Sequences.findBydocumentTypeByOriginApplication", Sequences.class).setParameter("documentTypeId", documentTypeId).setParameter("originApplicationId", originApplicationId).getSingleResult();
+            return sequences;
+        } catch (NoResultException e) {
+            return null;
+        }
+    }
+    
+    private String generateNumberSequence(Sequences s) {
+        String secuence = "";
+        try {
+            Integer numberSequence = s.getCurrentValue() > 1 ? s.getCurrentValue() : s.getInitialValue();
+            s.setCurrentValue(s.getCurrentValue() + 1);
+            Calendar cal = Calendar.getInstance();
+            int year = cal.get(Calendar.YEAR);
+            secuence = ((s.getOriginApplicationId().getId().equals(Constants.ORIGIN_APPLICATION_CMS_ID)) ? "CMS-" : "APP-")
+                    .concat(s.getDocumentTypeId().getAcronym()).concat("-")
+                    .concat(String.valueOf(year)).concat("-")
+                    .concat(numberSequence.toString());
+            entityManager.persist(s);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return secuence;
     }
 
     
