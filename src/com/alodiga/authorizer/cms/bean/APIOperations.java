@@ -4,6 +4,8 @@ import com.cms.commons.models.Country;
 import com.cms.commons.models.Card;
 import com.cms.commons.models.NaturalCustomer;
 import com.cms.commons.models.BalanceHistoryCard;
+import com.cms.commons.models.TransactionsManagementHistory;
+import com.cms.commons.util.Constants;
 import com.alodiga.authorizer.cms.responses.CardResponse;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -20,11 +22,20 @@ import com.alodiga.authorizer.cms.responses.ResponseCode;
 import com.alodiga.authorizer.cms.responses.CountryListResponse;
 import com.alodiga.authorizer.cms.responses.ValidateLimitsResponse;
 import com.alodiga.authorizer.cms.responses.TransactionFeesResponse;
+import java.sql.Timestamp;
+import com.cms.commons.enumeraciones.ChannelE;
+import com.cms.commons.enumeraciones.DocumentTypeE;
+import com.cms.commons.enumeraciones.StatusTransactionManagementE;
+import com.cms.commons.enumeraciones.TransactionE;
+import com.cms.commons.enumeraciones.StatusCardE;
 import com.cms.commons.models.AccountCard;
 import com.cms.commons.models.ProductHasChannelHasTransaction;
 import com.cms.commons.models.RateByCard;
 import com.cms.commons.models.RateByProduct;
+import com.cms.commons.models.Sequences;
+import com.cms.commons.models.TransactionsManagement;
 import com.cms.commons.util.EjbUtils;
+import java.util.Calendar;
 
 @Stateless(name = "FsProcessorWallet", mappedName = "ejb/FsProcessorWallet")
 @TransactionManagement(TransactionManagementType.CONTAINER)
@@ -70,9 +81,9 @@ public class APIOperations {
         }
         return new CardResponse(ResponseCode.CARD_EXISTS.getCode(), ResponseCode.CARD_EXISTS.getMessage());
     }
-    
-    public NaturalCustomer getCardCustomer(Long personId){
-        try{
+
+    public NaturalCustomer getCardCustomer(Long personId) {
+        try {
             Query query = entityManager.createQuery("SELECT n FROM NaturalCustomer n WHERE n.personId.id = '" + personId + "'");
             query.setMaxResults(1);
             NaturalCustomer result = (NaturalCustomer) query.setHint("toplink.refresh", "true").getSingleResult();
@@ -82,8 +93,8 @@ public class APIOperations {
             return null;
         }
     }
-    
-    public CardResponse validateCardByCardHolder(String cardNumber, String  cardHolder) {
+
+    public CardResponse validateCardByCardHolder(String cardNumber, String cardHolder) {
         Card cards = new Card();
         try {
             cards = getCardByCardNumber(cardNumber);
@@ -125,7 +136,7 @@ public class APIOperations {
 
 
     public CardResponse getValidateCVVAndDueDateCard(String cardNumber, String cvv, String cardDate) {
-        Card cards = new Card();        
+        Card cards = new Card();
         CardResponse cardResponse = new CardResponse();
         try {
             cards = getCardByCardNumber(cardNumber);
@@ -164,9 +175,90 @@ public class APIOperations {
         return new CardResponse(ResponseCode.SUCCESS.getCode(), "SUCCESS", accountNumber);
     }
 
+    public CardResponse getValidateCardByLUNH(String cardNumber) {
+        try {
+            if (checkLuhn(cardNumber)) {
+                System.out.println("This is a valid card");
+                return new CardResponse(ResponseCode.SUCCESS, "This is a valid card");
+            } else {
+                System.out.println("This is not a valid card");
+                return new CardResponse(ResponseCode.INTERNAL_ERROR, "This is not a valid card");
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            return new CardResponse(ResponseCode.INTERNAL_ERROR, "INTERNAL_ERROR");
+        }
+
+    }
+
+    static boolean checkLuhn(String cardNumber) {
+        int nDigits = cardNumber.length();
+
+        int nSum = 0;
+        boolean isSecond = false;
+        for (int i = nDigits - 1; i >= 0; i--) {
+
+            int d = cardNumber.charAt(i) - '0';
+
+            if (isSecond == true) {
+                d = d * 2;
+            }
+
+            // We add two digits to handle
+            // cases that make two digits 
+            // after doubling
+            nSum += d / 10;
+            nSum += d % 10;
+
+            isSecond = !isSecond;
+        }
+        return (nSum % 10 == 0);
+    }
+
+    public CardResponse calculatesCheckDigitLunh(String cardNumber) {
+
+        try {
+            if (cardNumber == null) {
+                return null;
+            }
+            String digit;
+            /* se convierte el número en un arreglo de digitos */
+            int[] digits = new int[cardNumber.length()];
+            for (int i = 0; i < cardNumber.length(); i++) {
+                digits[i] = Character.getNumericValue(cardNumber.charAt(i));
+            }
+
+            /* se duplica cada dígito desde la derecha saltando de dos en dos*/
+            for (int i = digits.length - 1; i >= 0; i -= 2) {
+                digits[i] += digits[i];
+
+                /* si la suma de los digitos es más de 10, se resta 9 */
+                if (digits[i] >= 10) {
+                    digits[i] = digits[i] - 9;
+                }
+            }
+            int sum = 0;
+            for (int i = 0; i < digits.length; i++) {
+                sum += digits[i];
+            }
+
+            /* se multiplica por 9 */
+            sum = sum * 9;
+
+            /* se convierte a cadena para obtener facilmente el último dígito */
+            digit = sum + "";
+            Long checkdigit = Long.valueOf(digit.substring(digit.length() - 1));
+            return new CardResponse(ResponseCode.SUCCESS, "SUCCESS", checkdigit);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return new CardResponse(ResponseCode.INTERNAL_ERROR, "INTERNAL_ERROR");
+        }
+
+    }
+
      
     
-    public TransactionFeesResponse calculateTransactionFees(String cardNumber, Integer channelId, Integer transactionTypeId, Float settlementTransactionAmount) {
+    public TransactionFeesResponse calculateTransactionFees(String cardNumber, Integer channelId, Integer transactionTypeId, Float settlementTransactionAmount, String transactionNumberAcquirer) {
         Card card = null;
         RateByCard rateByCard = null;
         RateByProduct rateByProduct = null;
@@ -177,6 +269,9 @@ public class APIOperations {
         Float transactionFeesAmount = 0.00F;
         Float fixedRate = 0.00F;
         Float percentRate = 0.00F; 
+        String transactionNumberIssuer;
+        TransactionsManagement transactionFeeCharge = null;
+        TransactionsManagementHistory transactionHistoryFeeCharge = null;
         
         //Se obtiene la tarjeta asociada a la transacción
         card = getCardByCardNumber(cardNumber);
@@ -214,17 +309,66 @@ public class APIOperations {
             if (fixedRate != null) {
                 transactionFeesAmount = fixedRate;
             } else {
-                transactionFeesAmount = (transactionFeesAmount * percentRate)/100;
+                transactionFeesAmount = (settlementTransactionAmount * percentRate)/100;
             }
         }
         
         //2. Transacciones mensuales excentas
         if (transactionFeesAmount == 0) {
             totalTransactionsPerMonthByCard = getTotalTransactionsByCardByDate(card.getCardNumber(),EjbUtils.getBeginningDateMonth(new Date()), EjbUtils.getEndingDateMonth(new Date()),channelId,transactionTypeId);
+            if (totalTransactionsPerMonthByCard > transactionExemptPerMonth) {
+                if (fixedRate != null) {
+                    transactionFeesAmount = fixedRate;
+                } else {
+                    transactionFeesAmount = (settlementTransactionAmount * percentRate)/100;
+                }
+            }
         }
         
-        
-        return new TransactionFeesResponse(ResponseCode.SUCCESS.getCode(), "SUCCESS"); 
+        //Si aplica la tarifa a la transacción se registra la transacción para guardar la comisión de Alodiga en la BD
+        if (transactionFeesAmount > 0) {
+            //Se obtiene el número de la transacción
+            transactionNumberIssuer = generateNumberSequence(getSequencesByDocumentTypeByOriginApplication(DocumentTypeE.TRANSACTION_FEE_CMS.getId(), Constants.ORIGIN_APPLICATION_CMS_ID));
+
+            //Se guarda la comisión de Alodiga en la BD
+            transactionFeeCharge = new TransactionsManagement();
+            transactionFeeCharge.setTransactionNumberIssuer(transactionNumberIssuer);
+            transactionFeeCharge.setDateTransaction(new Date());
+            transactionFeeCharge.setChannelId(ChannelE.INT.getId());
+            transactionFeeCharge.setTransactionTypeId(TransactionE.TARIFA_TRANSACCION_CMS.getId());
+            transactionFeeCharge.setTransactionReference(transactionNumberAcquirer);
+            transactionFeeCharge.setCardHolder(card.getCardHolder());
+            transactionFeeCharge.setCardNumber(cardNumber);
+            transactionFeeCharge.setCvv(card.getSecurityCodeCard());
+            String pattern = "MMyy";
+            SimpleDateFormat simpleDateFormat = new SimpleDateFormat(pattern);
+            String expirationCardDate = simpleDateFormat.format(card.getExpirationDate());
+            transactionFeeCharge.setExpirationCardDate(expirationCardDate);
+            transactionFeeCharge.setSettlementTransactionAmount(transactionFeesAmount);
+            transactionFeeCharge.setSettlementCurrencyTransactionId(card.getProductId().getDomesticCurrencyId().getId());
+            transactionFeeCharge.setStatusTransactionManagementId(StatusTransactionManagementE.APPROVED.getId());
+            transactionFeeCharge.setCreateDate(new Timestamp(new Date().getTime()));
+            entityManager.persist(transactionFeeCharge);
+
+            transactionHistoryFeeCharge = new TransactionsManagementHistory();
+            transactionHistoryFeeCharge.setTransactionNumberIssuer(transactionNumberIssuer);
+            transactionHistoryFeeCharge.setDateTransaction(new Date());
+            transactionHistoryFeeCharge.setChannelId(ChannelE.INT.getId());
+            transactionHistoryFeeCharge.setTransactionTypeId(TransactionE.TARIFA_TRANSACCION_CMS.getId());
+            transactionHistoryFeeCharge.setTransactionReference(transactionNumberAcquirer);
+            transactionHistoryFeeCharge.setCardHolder(card.getCardHolder());
+            transactionHistoryFeeCharge.setCardNumber(cardNumber);
+            transactionHistoryFeeCharge.setCvv(card.getSecurityCodeCard());
+            transactionHistoryFeeCharge.setExpirationCardDate(expirationCardDate);
+            transactionHistoryFeeCharge.setSettlementTransactionAmount(transactionFeesAmount);
+            transactionHistoryFeeCharge.setSettlementCurrencyTransactionId(card.getProductId().getDomesticCurrencyId().getId());
+            transactionHistoryFeeCharge.setStatusTransactionManagementId(StatusTransactionManagementE.APPROVED.getId());
+            transactionHistoryFeeCharge.setCreateDate(new Timestamp(new Date().getTime()));
+            entityManager.persist(transactionHistoryFeeCharge);
+        } else {
+            return new TransactionFeesResponse(ResponseCode.SUCCESS.getCode(),"The transaction received did not generate commission to be charged");
+        }     
+        return new TransactionFeesResponse(ResponseCode.SUCCESS.getCode(),"The transaction to record the Alodiga commission corresponding to the received transaction was successfully saved in the database.",transactionFeesAmount,transactionFeeCharge); 
     }
     
     private RateByCard getRateByCard(Long cardId, Integer channelId, Integer transactionTypeId) {
@@ -250,7 +394,7 @@ public class APIOperations {
     }
     
     private Long getTotalTransactionsByCard(String cardNumber, Integer channelId, Integer transactionTypeId) {
-        StringBuilder sqlBuilder = new StringBuilder("SELECT COUNT(t.id) FROM transactionsManagementHistory t WHERE t.cardNumber = ?1 AND t.channelId = ?2 AND t.transactionTypeId = ?3");
+        StringBuilder sqlBuilder = new StringBuilder("SELECT COUNT(t.id) FROM transactionsManagementHistory t WHERE t.cardNumber = ?1 AND t.channelId = ?2 AND t.transactionTypeId = ?3 AND t.responseCode = '00'");
         Query query = entityManager.createNativeQuery(sqlBuilder.toString());
         query.setParameter("1", cardNumber);
         query.setParameter("2", channelId);
@@ -260,16 +404,81 @@ public class APIOperations {
     }
     
     public Long getTotalTransactionsByCardByDate(String cardNumber, Date begginingDateTime, Date endingDateTime, Integer channelId, Integer transactionTypeId) {
-        StringBuilder sqlBuilder = new StringBuilder("SELECT COUNT(t.id) transactionsManagementHistory t WHERE t.cardNumber = ?1 AND t.createDate between ?2 AND ?3 AND t.channelId = ?4 AND t.transactionTypeId = ?5");
+        StringBuilder sqlBuilder = new StringBuilder("SELECT COUNT(t.id) FROM transactionsManagementHistory t WHERE t.createDate between ?1 AND ?2 AND t.cardNumber = ?3 AND t.channelId = ?4 AND t.transactionTypeId = ?5 AND t.responseCode = '00'");
         Query query = entityManager.createNativeQuery(sqlBuilder.toString());
-        query.setParameter("1", cardNumber);
-        query.setParameter("2", begginingDateTime);
-        query.setParameter("3", endingDateTime);
+        query.setParameter("1", begginingDateTime);
+        query.setParameter("2", endingDateTime);
+        query.setParameter("3", cardNumber);
         query.setParameter("4", channelId);
         query.setParameter("5", transactionTypeId);
         List result = (List) query.setHint("toplink.refresh", "true").getResultList();
         return result.get(0) != null ? (Long) result.get(0) : 0l;
     }
+    
+    public Sequences getSequencesByDocumentTypeByOriginApplication(int documentTypeId, int originApplicationId) {
+        try {
+            Sequences sequences = (Sequences) entityManager.createNamedQuery("Sequences.findBydocumentTypeByOriginApplication", Sequences.class).setParameter("documentTypeId", documentTypeId).setParameter("originApplicationId", originApplicationId).getSingleResult();
+            return sequences;
+        } catch (NoResultException e) {
+            return null;
+        }
+    }
+    
+    private String generateNumberSequence(Sequences s) {
+        String secuence = "";
+        try {
+            Integer numberSequence = s.getCurrentValue() > 1 ? s.getCurrentValue() : s.getInitialValue();
+            s.setCurrentValue(s.getCurrentValue() + 1);
+            Calendar cal = Calendar.getInstance();
+            int year = cal.get(Calendar.YEAR);
+            secuence = ((s.getOriginApplicationId().getId().equals(Constants.ORIGIN_APPLICATION_CMS_ID)) ? "CMS-" : "APP-")
+                    .concat(s.getDocumentTypeId().getAcronym()).concat("-")
+                    .concat(String.valueOf(year)).concat("-")
+                    .concat(numberSequence.toString());
+            entityManager.persist(s);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return secuence;
+    }
+
+    
+    public CardResponse verifyActiveCard(String cardNumber) {
+        Card cards = new Card();
+        try {
+            cards = getCardByCardNumber(cardNumber);
+            if(cards == null){
+              return new CardResponse(ResponseCode.CARD_NOT_EXISTS.getCode(), ResponseCode.CARD_NOT_EXISTS.getMessage());  
+            } else {
+                int statusCard = cards.getCardStatusId().getId();
+                switch(statusCard){
+                    case 1:
+                        return new CardResponse(ResponseCode.THE_CARD_IS_NOT_ACTIVE.getCode(), "The card is not active, its status is: "+StatusCardE.SOLICI.statusCardDescription()+"");
+                    case 2:
+                        return new CardResponse(ResponseCode.THE_CARD_IS_NOT_ACTIVE.getCode(), "The card is not active, its status is: "+StatusCardE.PERSON.statusCardDescription()+"");
+                    case 3:
+                        return new CardResponse(ResponseCode.THE_CARD_IS_NOT_ACTIVE.getCode(), "The card is not active, its status is: "+StatusCardE.PENPER.statusCardDescription()+"");
+                    case 4:
+                        return new CardResponse(ResponseCode.THE_CARD_IS_NOT_ACTIVE.getCode(), "The card is not active, its status is: "+StatusCardE.INVOK.statusCardDescription()+"");
+                    case 5:
+                        return new CardResponse(ResponseCode.THE_CARD_IS_NOT_ACTIVE.getCode(), "The card is not active, its status is: "+StatusCardE.ERRPER.statusCardDescription()+"");
+                    case 6:
+                        return new CardResponse(ResponseCode.THE_CARD_IS_NOT_ACTIVE.getCode(), "The card is not active, its status is: "+StatusCardE.PENDENTR.statusCardDescription()+"");
+                    case 7:
+                        return new CardResponse(ResponseCode.THE_CARD_IS_NOT_ACTIVE.getCode(), "The card is not active, its status is: "+StatusCardE.ENTREG.statusCardDescription()+"");
+                    case 8:
+                        return new CardResponse(ResponseCode.SUCCESS.getCode(), "The card has the status: "+StatusCardE.ACTIVA.statusCardDescription()+"");
+                    case 9:
+                        return new CardResponse(ResponseCode.THE_CARD_IS_NOT_ACTIVE.getCode(), "The card is not active, its status is: "+StatusCardE.BLOQUE.statusCardDescription()+"");
+                    default:
+                        return new CardResponse(ResponseCode.INTERNAL_ERROR.getCode(), "Error loading status card"); 
+                }
+            } 
+        } catch (Exception e) {
+            return new CardResponse(ResponseCode.INTERNAL_ERROR.getCode(), "Error loading card");
+        }
+    }
+
 
      public ValidateLimitsResponse getValidateLimits(String cardNumber, Integer transactionTypeId, Integer channelId, String countryCode, Float amountTransaction){
         Long totalTransactionsByCardDaily = 0L;

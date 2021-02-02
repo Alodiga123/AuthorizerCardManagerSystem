@@ -1,6 +1,5 @@
 package com.alodiga.cms.ws;
 
-
 import javax.ejb.EJB;
 import javax.jws.WebMethod;
 import javax.jws.WebParam;
@@ -8,12 +7,8 @@ import javax.jws.WebService;
 import org.apache.log4j.Logger;
 import com.alodiga.authorizer.cms.bean.APIOperations;
 import com.alodiga.authorizer.cms.responses.CountryListResponse;
-import com.alodiga.authorizer.cms.responses.ProductListResponse;
-import com.alodiga.authorizer.cms.responses.ProductResponse;
 import com.alodiga.authorizer.cms.responses.CardResponse;
-import com.alodiga.authorizer.cms.responses.TopUpInfoListResponse;
 import com.alodiga.authorizer.cms.responses.TransactionFeesResponse;
-import com.alodiga.authorizer.cms.responses.UserHasProductResponse;
 import com.alodiga.authorizer.cms.responses.ValidateLimitsResponse;
 
 @WebService
@@ -28,32 +23,38 @@ public class APIAuthorizerCardManagementSystem {
     public CountryListResponse getCountryList() {
         return operations.getCountryList();
     }
-    
+
     @WebMethod
     public CardResponse getValidateCard(
-        @WebParam(name = "cardNumber") String cardNumber) {
+            @WebParam(name = "cardNumber") String cardNumber) {
         return operations.getValidateCard(cardNumber);
     }
-    
+
     @WebMethod
     public CardResponse validateCardByCardHolder(
-        @WebParam(name = "cardNumber") String cardNumber,
-        @WebParam(name = "cardHolder") String cardHolder) {
+            @WebParam(name = "cardNumber") String cardNumber,
+            @WebParam(name = "cardHolder") String cardHolder) {
         return operations.validateCardByCardHolder(cardNumber, cardHolder);
     }
-    
+
     @WebMethod
     public CardResponse getValidateCVVAndDueDateCard(
-        @WebParam(name = "cardNumber") String cardNumber,
-        @WebParam(name = "cvv") String cvv,
-        @WebParam(name = "cardDate") String cardDate) {
-        return operations.getValidateCVVAndDueDateCard(cardNumber,cvv,cardDate);
+            @WebParam(name = "cardNumber") String cardNumber,
+            @WebParam(name = "cvv") String cvv,
+            @WebParam(name = "cardDate") String cardDate) {
+        return operations.getValidateCVVAndDueDateCard(cardNumber, cvv, cardDate);
     }
-    
+
     @WebMethod
     public CardResponse getAccountNumberByCard(
-        @WebParam(name = "cardNumber") String cardNumber) {
+            @WebParam(name = "cardNumber") String cardNumber) {
         return operations.getAccountNumberByCard(cardNumber);
+    }
+
+    @WebMethod
+    public CardResponse getValidateCardByLUNH(
+            @WebParam(name = "cardNumber") String cardNumber) {
+        return operations.getValidateCardByLUNH(cardNumber);
     }
     
     @WebMethod
@@ -61,11 +62,23 @@ public class APIAuthorizerCardManagementSystem {
         @WebParam(name = "cardNumber") String cardNumber,
         @WebParam(name = "channelId") Integer channelId,
         @WebParam(name = "transactionTypeId") Integer transactionTypeId,
-        @WebParam(name = "settlementTransactionAmount") Float settlementTransactionAmount) {
-        return operations.calculateTransactionFees(cardNumber,channelId,transactionTypeId,settlementTransactionAmount);
+        @WebParam(name = "settlementTransactionAmount") Float settlementTransactionAmount,
+        @WebParam(name = "transactionNumberAcquirer") String transactionNumberAcquirer) {
+        return operations.calculateTransactionFees(cardNumber,channelId,transactionTypeId,settlementTransactionAmount,transactionNumberAcquirer);
+    }
+    @WebMethod
+    public CardResponse calculatesCheckDigitLunh(
+            @WebParam(name = "cardNumber") String cardNumber) {
+        return operations.calculatesCheckDigitLunh(cardNumber);
     }
     
     @WebMethod
+    public CardResponse verifyActiveCard(
+        @WebParam(name = "cardNumber") String cardNumber) {
+        return operations.verifyActiveCard(cardNumber);
+    }
+    
+    @WebMethod    
     public ValidateLimitsResponse getValidateLimitsTransaccionals(
         @WebParam(name = "cardNumber") String cardNumber,
         @WebParam(name = "transactionTypeId") Integer transactionTypeId,
