@@ -14,6 +14,8 @@ public class CardResponse extends Response {
 
 	public Card card;
         private String accountNumber;
+        private Long checkDigitLunh;
+
         
 	public CardResponse() {
 		super();
@@ -35,6 +37,10 @@ public class CardResponse extends Response {
         this.accountNumber = accountNumber;
     }
     
+    public CardResponse(ResponseCode code, String mensaje, Long checkDigitLunh) {
+        super(new Date(), code.getCode(), mensaje);
+        this.checkDigitLunh = checkDigitLunh;
+    }
 
     public Card getCard() {
         return card;
@@ -50,6 +56,14 @@ public class CardResponse extends Response {
 
     public void setAccountNumber(String accountNumber) {
         this.accountNumber = accountNumber;
+    }
+
+    public Long getCheckDigitLunh() {
+        return checkDigitLunh;
+    }
+
+    public void setCheckDigitLunh(Long checkDigitLunh) {
+        this.checkDigitLunh = checkDigitLunh;
     }
     
     

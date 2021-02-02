@@ -1,6 +1,5 @@
 package com.alodiga.cms.ws;
 
-
 import javax.ejb.EJB;
 import javax.jws.WebMethod;
 import javax.jws.WebParam;
@@ -26,33 +25,45 @@ public class APIAuthorizerCardManagementSystem {
     public CountryListResponse getCountryList() {
         return operations.getCountryList();
     }
-    
+
     @WebMethod
     public CardResponse getValidateCard(
-        @WebParam(name = "cardNumber") String cardNumber) {
+            @WebParam(name = "cardNumber") String cardNumber) {
         return operations.getValidateCard(cardNumber);
     }
-    
+
     @WebMethod
     public CardResponse validateCardByCardHolder(
-        @WebParam(name = "cardNumber") String cardNumber,
-        @WebParam(name = "cardHolder") String cardHolder) {
+            @WebParam(name = "cardNumber") String cardNumber,
+            @WebParam(name = "cardHolder") String cardHolder) {
         return operations.validateCardByCardHolder(cardNumber, cardHolder);
     }
-    
+
     @WebMethod
     public CardResponse getValidateCVVAndDueDateCard(
-        @WebParam(name = "cardNumber") String cardNumber,
-        @WebParam(name = "cvv") String cvv,
-        @WebParam(name = "cardDate") String cardDate) {
-        return operations.getValidateCVVAndDueDateCard(cardNumber,cvv,cardDate);
+            @WebParam(name = "cardNumber") String cardNumber,
+            @WebParam(name = "cvv") String cvv,
+            @WebParam(name = "cardDate") String cardDate) {
+        return operations.getValidateCVVAndDueDateCard(cardNumber, cvv, cardDate);
+    }
+
+    @WebMethod
+    public CardResponse getAccountNumberByCard(
+            @WebParam(name = "cardNumber") String cardNumber) {
+        return operations.getAccountNumberByCard(cardNumber);
+    }
+
+    @WebMethod
+    public CardResponse getValidateCardByLUNH(
+            @WebParam(name = "cardNumber") String cardNumber) {
+        return operations.getValidateCardByLUNH(cardNumber);
     }
     
     @WebMethod
-    public CardResponse getAccountNumberByCard(
-        @WebParam(name = "cardNumber") String cardNumber) {
-        return operations.getAccountNumberByCard(cardNumber);
+    public CardResponse calculatesCheckDigitLunh(
+            @WebParam(name = "cardNumber") String cardNumber) {
+        return operations.calculatesCheckDigitLunh(cardNumber);
     }
     
-    
+
 }

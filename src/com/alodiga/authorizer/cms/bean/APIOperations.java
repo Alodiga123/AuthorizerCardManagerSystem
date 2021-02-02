@@ -109,9 +109,9 @@ public class APIOperations {
         }
         return new CardResponse(ResponseCode.SUCCESS, "The Card exists in the CMS");
     }
-    
-    public NaturalCustomer getCardCustomer(Long personId){
-        try{
+
+    public NaturalCustomer getCardCustomer(Long personId) {
+        try {
             Query query = entityManager.createQuery("SELECT n FROM NaturalCustomer n WHERE n.personId.id = '" + personId + "'");
             query.setMaxResults(1);
             NaturalCustomer result = (NaturalCustomer) query.setHint("toplink.refresh", "true").getSingleResult();
@@ -121,44 +121,42 @@ public class APIOperations {
             return null;
         }
     }
-    
-    public CardResponse validateCardByCardHolder(String cardNumber, String  cardHolder) {
+
+    public CardResponse validateCardByCardHolder(String cardNumber, String cardHolder) {
         Card cards = new Card();
         try {
             cards = getCardByCardNumber(cardNumber);
-            if(cards != null){
-               NaturalCustomer naturalCustomer = new NaturalCustomer();
-               naturalCustomer = getCardCustomer(cards.getPersonCustomerId().getId());
-               if(naturalCustomer != null){
-                   StringBuilder customerName = new StringBuilder(naturalCustomer.getFirstNames());
-                   customerName.append(" ");
-                   customerName.append(naturalCustomer.getLastNames());
-                   if(cardHolder.equals(customerName.toString())){ 
-                       return new CardResponse(ResponseCode.SUCCESS, "Cardholder data has been successfully verified");
-                   } else {
-                       return new CardResponse(ResponseCode.INTERNAL_ERROR, "Cardholder details do not match"); 
-                   }
-               } else {
-                  return new CardResponse(ResponseCode.INTERNAL_ERROR, "Error finding card owner"); 
-               }
+            if (cards != null) {
+                NaturalCustomer naturalCustomer = new NaturalCustomer();
+                naturalCustomer = getCardCustomer(cards.getPersonCustomerId().getId());
+                if (naturalCustomer != null) {
+                    StringBuilder customerName = new StringBuilder(naturalCustomer.getFirstNames());
+                    customerName.append(" ");
+                    customerName.append(naturalCustomer.getLastNames());
+                    if (cardHolder.equals(customerName.toString())) {
+                        return new CardResponse(ResponseCode.SUCCESS, "Cardholder data has been successfully verified");
+                    } else {
+                        return new CardResponse(ResponseCode.INTERNAL_ERROR, "Cardholder details do not match");
+                    }
+                } else {
+                    return new CardResponse(ResponseCode.INTERNAL_ERROR, "Error finding card owner");
+                }
             } else {
-               return new CardResponse(ResponseCode.INTERNAL_ERROR, "Error finding the card to verify cardholder data"); 
-            } 
+                return new CardResponse(ResponseCode.INTERNAL_ERROR, "Error finding the card to verify cardholder data");
+            }
         } catch (Exception e) {
             return new CardResponse(ResponseCode.INTERNAL_ERROR, "Error loading card");
         }
-    }        
-    
-}
+    }
 
     public CardResponse getValidateCVVAndDueDateCard(String cardNumber, String cvv, String cardDate) {
-        Card cards = new Card();        
+        Card cards = new Card();
         CardResponse cardResponse = new CardResponse();
         try {
             cards = getCardByCardNumber(cardNumber);
             if (cards == null) {
                 return new CardResponse(ResponseCode.INTERNAL_ERROR, "The card does not exist in the CMS");
-            }            
+            }
             if (!cards.getSecurityCodeCard().equals(cvv)) {
                 return new CardResponse(ResponseCode.INTERNAL_ERROR, "The CVV is Different");
             }
@@ -168,6 +166,7 @@ public class APIOperations {
                 return new CardResponse(ResponseCode.INTERNAL_ERROR, "Expiration Date is Different");
             }
         } catch (Exception e) {
+            e.printStackTrace();
             return new CardResponse(ResponseCode.INTERNAL_ERROR, "Error loading card");
         }
         cardResponse.setCard(cards);
@@ -186,9 +185,91 @@ public class APIOperations {
             accountCard = (AccountCard) entityManager.createNamedQuery("AccountCard.findByCardId", AccountCard.class).setParameter("cardId", cards.getId()).getSingleResult();
             accountNumber = accountCard.getAccountNumber();
         } catch (Exception e) {
+            e.printStackTrace();
             return new CardResponse(ResponseCode.INTERNAL_ERROR, "There is no Account Associated with the Card");
         }
         return new CardResponse(ResponseCode.SUCCESS, "SUCCESS", accountNumber);
+    }
+
+    public CardResponse getValidateCardByLUNH(String cardNumber) {
+        try {
+            if (checkLuhn(cardNumber)) {
+                System.out.println("This is a valid card");
+                return new CardResponse(ResponseCode.SUCCESS, "This is a valid card");
+            } else {
+                System.out.println("This is not a valid card");
+                return new CardResponse(ResponseCode.INTERNAL_ERROR, "This is not a valid card");
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            return new CardResponse(ResponseCode.INTERNAL_ERROR, "INTERNAL_ERROR");
+        }
+
+    }
+
+    static boolean checkLuhn(String cardNumber) {
+        int nDigits = cardNumber.length();
+
+        int nSum = 0;
+        boolean isSecond = false;
+        for (int i = nDigits - 1; i >= 0; i--) {
+
+            int d = cardNumber.charAt(i) - '0';
+
+            if (isSecond == true) {
+                d = d * 2;
+            }
+
+            // We add two digits to handle
+            // cases that make two digits 
+            // after doubling
+            nSum += d / 10;
+            nSum += d % 10;
+
+            isSecond = !isSecond;
+        }
+        return (nSum % 10 == 0);
+    }
+
+    public CardResponse calculatesCheckDigitLunh(String cardNumber) {
+
+        try {
+            if (cardNumber == null) {
+                return null;
+            }
+            String digit;
+            /* se convierte el número en un arreglo de digitos */
+            int[] digits = new int[cardNumber.length()];
+            for (int i = 0; i < cardNumber.length(); i++) {
+                digits[i] = Character.getNumericValue(cardNumber.charAt(i));
+            }
+
+            /* se duplica cada dígito desde la derecha saltando de dos en dos*/
+            for (int i = digits.length - 1; i >= 0; i -= 2) {
+                digits[i] += digits[i];
+
+                /* si la suma de los digitos es más de 10, se resta 9 */
+                if (digits[i] >= 10) {
+                    digits[i] = digits[i] - 9;
+                }
+            }
+            int sum = 0;
+            for (int i = 0; i < digits.length; i++) {
+                sum += digits[i];
+            }
+
+            /* se multiplica por 9 */
+            sum = sum * 9;
+
+            /* se convierte a cadena para obtener facilmente el último dígito */
+            digit = sum + "";
+            Long checkdigit = Long.valueOf(digit.substring(digit.length() - 1));
+            return new CardResponse(ResponseCode.SUCCESS, "SUCCESS", checkdigit);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return new CardResponse(ResponseCode.INTERNAL_ERROR, "INTERNAL_ERROR");
+        }
+
     }
 
 }
