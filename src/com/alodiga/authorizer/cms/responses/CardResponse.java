@@ -25,15 +25,14 @@ public class CardResponse extends Response {
 		super(new Date(), code.getCode(), code.name());
 		this.card = null;
 	}
-	
-	public CardResponse(ResponseCode code, String mensaje) {
-		super(new Date(), code.getCode(), mensaje);
-		this.card = null;
-	}
         
+        public CardResponse(String code, String message) {
+		super(new Date(), code, message);
+		this.card = null;
+	}        
 
-    public CardResponse(ResponseCode code, String mensaje, String accountNumber) {
-        super(new Date(), code.getCode(), mensaje);
+    public CardResponse(String code, String mensaje, String accountNumber) {
+        super(new Date(), code, mensaje);
         this.accountNumber = accountNumber;
     }
     
