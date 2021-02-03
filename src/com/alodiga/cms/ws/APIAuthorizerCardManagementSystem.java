@@ -1,6 +1,5 @@
 package com.alodiga.cms.ws;
 
-
 import javax.ejb.EJB;
 import javax.jws.WebMethod;
 import javax.jws.WebParam;
@@ -24,32 +23,38 @@ public class APIAuthorizerCardManagementSystem {
     public CountryListResponse getCountryList() {
         return operations.getCountryList();
     }
-    
+
     @WebMethod
     public CardResponse getValidateCard(
-        @WebParam(name = "cardNumber") String cardNumber) {
+            @WebParam(name = "cardNumber") String cardNumber) {
         return operations.getValidateCard(cardNumber);
     }
-    
+
     @WebMethod
     public CardResponse validateCardByCardHolder(
-        @WebParam(name = "cardNumber") String cardNumber,
-        @WebParam(name = "cardHolder") String cardHolder) {
+            @WebParam(name = "cardNumber") String cardNumber,
+            @WebParam(name = "cardHolder") String cardHolder) {
         return operations.validateCardByCardHolder(cardNumber, cardHolder);
     }
-    
+
     @WebMethod
     public CardResponse getValidateCVVAndDueDateCard(
-        @WebParam(name = "cardNumber") String cardNumber,
-        @WebParam(name = "cvv") String cvv,
-        @WebParam(name = "cardDate") String cardDate) {
-        return operations.getValidateCVVAndDueDateCard(cardNumber,cvv,cardDate);
+            @WebParam(name = "cardNumber") String cardNumber,
+            @WebParam(name = "cvv") String cvv,
+            @WebParam(name = "cardDate") String cardDate) {
+        return operations.getValidateCVVAndDueDateCard(cardNumber, cvv, cardDate);
     }
-    
+
     @WebMethod
     public CardResponse getAccountNumberByCard(
-        @WebParam(name = "cardNumber") String cardNumber) {
+            @WebParam(name = "cardNumber") String cardNumber) {
         return operations.getAccountNumberByCard(cardNumber);
+    }
+
+    @WebMethod
+    public CardResponse getValidateCardByLUNH(
+            @WebParam(name = "cardNumber") String cardNumber) {
+        return operations.getValidateCardByLUNH(cardNumber);
     }
     
     @WebMethod
@@ -60,6 +65,11 @@ public class APIAuthorizerCardManagementSystem {
         @WebParam(name = "settlementTransactionAmount") Float settlementTransactionAmount,
         @WebParam(name = "transactionNumberAcquirer") String transactionNumberAcquirer) {
         return operations.calculateTransactionFees(cardNumber,channelId,transactionTypeId,settlementTransactionAmount,transactionNumberAcquirer);
+    }
+    @WebMethod
+    public CardResponse calculatesCheckDigitLunh(
+            @WebParam(name = "cardNumber") String cardNumber) {
+        return operations.calculatesCheckDigitLunh(cardNumber);
     }
     
     @WebMethod
@@ -76,6 +86,16 @@ public class APIAuthorizerCardManagementSystem {
         @WebParam(name = "countryCode") String countryCode,
         @WebParam(name = "amountTransaction") Float amountTransaction)   {
         return operations.getValidateLimits(cardNumber, transactionTypeId, channelId,countryCode,amountTransaction);
+    }
+    
+    @WebMethod
+    public CardResponse validateCard(
+            @WebParam(name = "cardNumber") String cardNumber,
+            @WebParam(name = "ARQC") String ARQC,
+            @WebParam(name = "cardHolder") String cardHolder,
+            @WebParam(name = "CVV") String CVV,
+            @WebParam(name = "cardDueDate") String cardDueDate) {
+        return operations.validateCard(cardNumber,ARQC,cardHolder,CVV,cardDueDate);
     }
     
 }
