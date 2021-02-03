@@ -88,4 +88,14 @@ public class APIAuthorizerCardManagementSystem {
         return operations.getValidateLimits(cardNumber, transactionTypeId, channelId,countryCode,amountTransaction);
     }
     
+    @WebMethod
+    public CardResponse validateCard(
+            @WebParam(name = "cardNumber") String cardNumber,
+            @WebParam(name = "ARQC") String ARQC,
+            @WebParam(name = "cardHolder") String cardHolder,
+            @WebParam(name = "CVV") String CVV,
+            @WebParam(name = "cardDueDate") String cardDueDate) {
+        return operations.validateCard(cardNumber,ARQC,cardHolder,CVV,cardDueDate);
+    }
+    
 }

@@ -135,7 +135,7 @@ public class APIOperations {
     }
 
 
-    public CardResponse getValidateCVVAndDueDateCard(String cardNumber, String cvv, String cardDate) {
+    public CardResponse getValidateCVVAndDueDateCard(String cardNumber, String cvv, String cardDueDate) {
         Card cards = new Card();
         CardResponse cardResponse = new CardResponse();
         try {
@@ -147,8 +147,8 @@ public class APIOperations {
                 return new CardResponse(ResponseCode.INTERNAL_ERROR.getCode(), "The CVV is Different");
             }
             Date cardExpiration = cards.getExpirationDate();
-            SimpleDateFormat sdf = new SimpleDateFormat("dd-MM-yyyy");
-            if (!sdf.format(cardExpiration).equals(cardDate)) {
+            SimpleDateFormat sdf = new SimpleDateFormat("MMyy");
+            if (!sdf.format(cardExpiration).equals(cardDueDate)) {
                 return new CardResponse(ResponseCode.INTERNAL_ERROR.getCode(), "Expiration Date is Different");
             }
         } catch (Exception e) {
@@ -178,38 +178,37 @@ public class APIOperations {
     public CardResponse getValidateCardByLUNH(String cardNumber) {
         try {
             if (checkLuhn(cardNumber)) {
+<<<<<<< HEAD
+                return new CardResponse(ResponseCode.SUCCESS.getCode(), "The verification digit on the card is valid");
+            } else {
+                return new CardResponse(ResponseCode.INTERNAL_ERROR.getCode(), "The verification digit on the card is invalid");
+=======
                 System.out.println("This is a valid card");
                 return new CardResponse(ResponseCode.SUCCESS.getCode(), "This is a valid card");
             } else {
                 System.out.println("This is not a valid card");
                 return new CardResponse(ResponseCode.INTERNAL_ERROR.getCode(), "This is not a valid card");
+>>>>>>> Moises
             }
         } catch (Exception e) {
             e.printStackTrace();
             return new CardResponse(ResponseCode.INTERNAL_ERROR.getCode(), "INTERNAL_ERROR");
         }
-
     }
 
     static boolean checkLuhn(String cardNumber) {
         int nDigits = cardNumber.length();
-
         int nSum = 0;
         boolean isSecond = false;
         for (int i = nDigits - 1; i >= 0; i--) {
-
             int d = cardNumber.charAt(i) - '0';
-
             if (isSecond == true) {
                 d = d * 2;
             }
 
-            // We add two digits to handle
-            // cases that make two digits 
-            // after doubling
+            // We add two digits to handle cases that make two digits after doubling
             nSum += d / 10;
             nSum += d % 10;
-
             isSecond = !isSecond;
         }
         return (nSum % 10 == 0);
@@ -253,10 +252,7 @@ public class APIOperations {
             e.printStackTrace();
             return new CardResponse(ResponseCode.INTERNAL_ERROR.getCode(), "INTERNAL_ERROR");
         }
-
-    }
-
-     
+    }     
     
     public TransactionFeesResponse calculateTransactionFees(String cardNumber, Integer channelId, Integer transactionTypeId, Float settlementTransactionAmount, String transactionNumberAcquirer) {
         Card card = null;
@@ -547,8 +543,7 @@ public class APIOperations {
             return null;
         }
 
-    }
-    
+    }    
 
     public Long getTransactionsByCardByTransactionByProductCurrentDate(String cardNumber, Date begginingDateTime, Date endingDateTime, Integer transactionTypeId, Integer channelId, String code, boolean isTransactionLocal, Integer countryId) {
         String sql = "SELECT * FROM transactionsManagementHistory t WHERE t.dateTransaction between ?1 AND ?2 AND t.cardNumber = ?3 AND t.transactionTypeId = ?4 AND t.channelId = ?5 AND t.responseCode =?6";
@@ -597,6 +592,40 @@ public class APIOperations {
             return result;
         } catch (NoResultException e) {
             return null;
+        }
+    }
+     
+    public CardResponse validateCard(String cardNumber, String ARQC, String cardHolder, String CVV, String cardDueDate) {
+        CardResponse validateCard = getValidateCard(cardNumber);
+        //Se valida que la tarjeta exista en la BD del CMS
+        if (validateCard.getCodigoRespuesta().equals(ResponseCode.CARD_EXISTS.getCode())) {
+            CardResponse verifyActiveCard = verifyActiveCard(cardNumber);
+            //Se valida que la tarjeta este en estatus ACTIVA
+            if (verifyActiveCard.getCodigoRespuesta().equals(ResponseCode.SUCCESS.getCode())) {
+                CardResponse validateCardByLUNH = getValidateCardByLUNH(cardNumber);
+                //Se valida el dígito verificador de la tarjeta a través de algoritmo de LUHN
+                if (getValidateCardByLUNH(cardNumber).getCodigoRespuesta().equals(ResponseCode.SUCCESS.getCode())) {
+                    CardResponse validateCVVAndDueDate = getValidateCVVAndDueDateCard(cardNumber, CVV, cardDueDate);
+                    //Se valida el CVV y la fecha de vencimiento de la tarjeta
+                    if (validateCVVAndDueDate.getCodigoRespuesta().equals(ResponseCode.SUCCESS.getCode())) {
+                        //Se valida el nombre del cliente en la tarjeta (CardHolder)
+                        CardResponse validateCardHolder = validateCardByCardHolder(cardNumber, cardHolder);
+                        if (validateCardHolder.getCodigoRespuesta().equals(ResponseCode.SUCCESS.getCode())) {
+                            return new CardResponse(ResponseCode.SUCCESS.getCode(), "The Card is Valid");
+                        } else {
+                            return validateCardHolder;
+                        }
+                    } else {
+                        return validateCVVAndDueDate;
+                    }
+                } else {
+                    return validateCardByLUNH;
+                }
+            } else {
+                return verifyActiveCard;
+            }
+        } else {
+            return validateCard;
         }
     }
 
