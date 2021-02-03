@@ -179,14 +179,14 @@ public class APIOperations {
         try {
             if (checkLuhn(cardNumber)) {
                 System.out.println("This is a valid card");
-                return new CardResponse(ResponseCode.SUCCESS, "This is a valid card");
+                return new CardResponse(ResponseCode.SUCCESS.getCode(), "This is a valid card");
             } else {
                 System.out.println("This is not a valid card");
-                return new CardResponse(ResponseCode.INTERNAL_ERROR, "This is not a valid card");
+                return new CardResponse(ResponseCode.INTERNAL_ERROR.getCode(), "This is not a valid card");
             }
         } catch (Exception e) {
             e.printStackTrace();
-            return new CardResponse(ResponseCode.INTERNAL_ERROR, "INTERNAL_ERROR");
+            return new CardResponse(ResponseCode.INTERNAL_ERROR.getCode(), "INTERNAL_ERROR");
         }
 
     }
@@ -251,7 +251,7 @@ public class APIOperations {
             return new CardResponse(ResponseCode.SUCCESS, "SUCCESS", checkdigit);
         } catch (Exception e) {
             e.printStackTrace();
-            return new CardResponse(ResponseCode.INTERNAL_ERROR, "INTERNAL_ERROR");
+            return new CardResponse(ResponseCode.INTERNAL_ERROR.getCode(), "INTERNAL_ERROR");
         }
 
     }
