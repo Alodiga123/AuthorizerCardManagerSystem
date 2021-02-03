@@ -178,9 +178,17 @@ public class APIOperations {
     public CardResponse getValidateCardByLUNH(String cardNumber) {
         try {
             if (checkLuhn(cardNumber)) {
+<<<<<<< HEAD
                 return new CardResponse(ResponseCode.SUCCESS.getCode(), "The verification digit on the card is valid");
             } else {
                 return new CardResponse(ResponseCode.INTERNAL_ERROR.getCode(), "The verification digit on the card is invalid");
+=======
+                System.out.println("This is a valid card");
+                return new CardResponse(ResponseCode.SUCCESS.getCode(), "This is a valid card");
+            } else {
+                System.out.println("This is not a valid card");
+                return new CardResponse(ResponseCode.INTERNAL_ERROR.getCode(), "This is not a valid card");
+>>>>>>> Moises
             }
         } catch (Exception e) {
             e.printStackTrace();
