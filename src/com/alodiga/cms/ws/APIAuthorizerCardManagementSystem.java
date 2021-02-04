@@ -105,5 +105,27 @@ public class APIAuthorizerCardManagementSystem {
             @WebParam(name = "identificationNumber") String identificationNumber) {
         return operations.validateDocumentIdentificationCustomer(cardNumber,identificationNumber);
     }
-       
+    
+    @WebMethod
+    public CardResponse changeCardStatus(
+            @WebParam(name = "cardNumber") String cardNumber,
+            @WebParam(name = "CVV") String CVV,
+            @WebParam(name = "cardDueDate") String cardDueDate,
+            @WebParam(name = "cardHolder") String cardHolder,
+            @WebParam(name = "messageMiddlewareId") Long messageMiddlewareId,
+            @WebParam(name = "newStatusCardId") Long newStatusCardId,
+            @WebParam(name = "statusUpdateReasonId") Integer statusUpdateReasonId,
+            @WebParam(name = "observations") String observations,
+            @WebParam(name = "statusUpdateReasonDate") Date statusUpdateReasonDate,
+            @WebParam(name = "userResponsabibleStatusUpdateId") Long userResponsabibleStatusUpdateId,
+            @WebParam(name = "documentIdentificationNumber") String documentIdentificationNumber,
+            @WebParam(name = "transactionTypeId") Integer transactionTypeId,
+            @WebParam(name = "channelId") Integer channelId,
+            @WebParam(name = "transactionDate") Date transactionDate,
+            @WebParam(name = "localTimeTransaction") Date localTimeTransaction,
+            @WebParam(name = "acquirerTerminalCodeId") String acquirerTerminalCodeId,
+            @WebParam(name = "acquirerCountryId") Integer acquirerCountryId) {
+        return operations.changeCardStatus(cardNumber,CVV,cardDueDate,cardHolder,messageMiddlewareId,newStatusCardId,statusUpdateReasonId,observations,statusUpdateReasonDate,userResponsabibleStatusUpdateId,documentIdentificationNumber,transactionTypeId,channelId,transactionDate,localTimeTransaction,acquirerTerminalCodeId,acquirerCountryId);
+    }
+         
 }

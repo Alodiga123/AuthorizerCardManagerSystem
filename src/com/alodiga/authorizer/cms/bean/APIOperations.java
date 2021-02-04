@@ -28,12 +28,17 @@ import com.cms.commons.enumeraciones.DocumentTypeE;
 import com.cms.commons.enumeraciones.StatusTransactionManagementE;
 import com.cms.commons.enumeraciones.TransactionE;
 import com.cms.commons.enumeraciones.StatusCardE;
+import com.cms.commons.enumeraciones.StatusUpdateReasonE;
 import com.cms.commons.models.AccountCard;
+import com.cms.commons.models.CardStatus;
+import com.cms.commons.models.CardStatusHasUpdateReason;
 import com.cms.commons.models.ProductHasChannelHasTransaction;
 import com.cms.commons.models.RateByCard;
 import com.cms.commons.models.RateByProduct;
 import com.cms.commons.models.Sequences;
+import com.cms.commons.models.StatusUpdateReason;
 import com.cms.commons.models.TransactionsManagement;
+import com.cms.commons.models.User;
 import com.cms.commons.util.EjbUtils;
 import java.util.Calendar;
 
@@ -648,6 +653,97 @@ public class APIOperations {
             return new CardResponse(ResponseCode.INTERNAL_ERROR.getCode(), "Unexpected error has occurred");
         }
         
+    }
+    
+    public CardResponse changeCardStatus(String cardNumber,String CVV,String cardDueDate,String cardHolder,Long messageMiddlewareId,Long newStatusCardId,Integer statusUpdateReasonId,String observations,
+            Date statusUpdateReasonDate,Long userResponsabibleStatusUpdateId,String documentIdentificationNumber,Integer transactionTypeId,Integer channelId,Date transactionDate,Date localTimeTransaction,String acquirerTerminalCodeId,Integer acquirerCountryId){
+        CardResponse validateCard = getValidateCard(cardNumber);
+        //Se valida que la tarjeta exista en la BD del CMS
+        if (validateCard.getCodigoRespuesta().equals(ResponseCode.CARD_EXISTS.getCode())) {
+            String transactionNumberIssuer;
+            //Update Status Reason
+            Integer reasonLost = StatusUpdateReasonE.PERDID.getId();
+            Integer reasonStole = StatusUpdateReasonE.ROBO.getId();
+            Integer reasonDamaged = StatusUpdateReasonE.DAÑADA.getId(); 
+            Integer reasonCloning = StatusUpdateReasonE.CLONAC.getId();
+            Integer reasonNoInterested = StatusUpdateReasonE.NOINT.getId();
+            Integer reasonFound = StatusUpdateReasonE.ENCONT.getId();
+            if(statusUpdateReasonId == reasonLost || statusUpdateReasonId == reasonStole || statusUpdateReasonId == reasonDamaged){
+                if(newStatusCardId == StatusCardE.BLOQUE.getId() || newStatusCardId == StatusCardE.ANULAD.getId()){
+                   //Se obtiene el número de la transacción
+                    //Preguntar que Acrnym se le va a colocar para el cambio de status de la tarjeta
+                    transactionNumberIssuer = generateNumberSequence(getSequencesByDocumentTypeByOriginApplication(DocumentTypeE.TRANSACTION_FEE_CMS.getId(), Constants.ORIGIN_APPLICATION_CMS_ID));
+                    
+                   //Se guarda el transactionsManagement
+                   TransactionsManagement transactionsManagement = new TransactionsManagement();
+                   transactionsManagement.setCardNumber(cardNumber);
+                   transactionsManagement.setCvv(CVV);
+                   transactionsManagement.setCardHolder(cardHolder);
+                   transactionsManagement.setMessageMiddlewareId(messageMiddlewareId);
+                   transactionsManagement.setTransactionTypeId(transactionTypeId);
+                   transactionsManagement.setChannelId(channelId);
+                   transactionsManagement.setTransactionNumberIssuer(transactionNumberIssuer); 
+                   transactionsManagement.setLocalDateTransaction(localTimeTransaction);
+                   transactionsManagement.setAcquirerTerminalCode(acquirerTerminalCodeId);
+                   transactionsManagement.setAcquirerCountryId(acquirerCountryId);
+                   transactionsManagement.setTransactionDateIssuer(new Timestamp(new Date().getTime()));
+                   entityManager.persist(transactionsManagement);
+                   
+                   //Se guarda el transactionsHistory
+                   TransactionsManagementHistory transactionsHistory = new TransactionsManagementHistory();
+                   transactionsHistory.setCardNumber(cardNumber);
+                   transactionsHistory.setCvv(CVV);
+                   transactionsHistory.setCardHolder(cardHolder);
+                   transactionsHistory.setTransactionNumberIssuer(transactionNumberIssuer);
+                   transactionsHistory.setMessageMiddlewareId(messageMiddlewareId);
+                   transactionsHistory.setTransactionTypeId(transactionTypeId);
+                   transactionsHistory.setChannelId(channelId);
+                   transactionsHistory.setTransactionDateIssuer(new Timestamp(new Date().getTime()));
+                   transactionsHistory.setAcquirerTerminalCode(acquirerTerminalCodeId);
+                   transactionsHistory.setAcquirerCountryId(acquirerCountryId);
+                   entityManager.persist(transactionsManagement);
+                   
+                   //Se obtiene el nuevo status, el statusUpdateReason y el usuario responsable
+                   CardStatus cardStatus = (CardStatus) entityManager.createNamedQuery("CardStatus.findById", CardStatus.class).setParameter("id", newStatusCardId).getSingleResult();
+                   StatusUpdateReason statusUpdateReason = (StatusUpdateReason) entityManager.createNamedQuery("StatusUpdateReason.findById", StatusUpdateReason.class).setParameter("id", statusUpdateReasonId).getSingleResult();
+                   User user = (User) entityManager.createNamedQuery("User.findById", User.class).setParameter("id", userResponsabibleStatusUpdateId).getSingleResult();
+                   
+                   //Se actualiza el estado de la tarjeta
+                   Card cards = validateCard.getCard();
+                   cards.setCardStatusId(cardStatus);
+                   cards.setStatusUpdateReasonId(statusUpdateReason);
+                   cards.setUserResponsibleStatusUpdateId(user);
+                   cards.setUpdateDate(new Timestamp(new Date().getTime()));
+                   entityManager.persist(cards);
+                   
+                   return new CardResponse(ResponseCode.SUCCESS.getCode(), "", cards.getCardNumber());
+                } else {
+                    // El status no se puede actualizar al nuevo tiene que ser bloqueada o anulada
+                    return new CardResponse(ResponseCode.INTERNAL_ERROR.getCode(), "Unexpected error has occurred");
+                }
+            } else if(statusUpdateReasonId == reasonCloning){
+                if(newStatusCardId == StatusCardE.ANULAD.getId()){
+                    
+                } else {
+                    // El status no se puede actualizar al nuevo anulada
+                    return new CardResponse(ResponseCode.INTERNAL_ERROR.getCode(), "Unexpected error has occurred");
+                }   
+            } else if(statusUpdateReasonId == reasonNoInterested){
+                if(newStatusCardId == StatusCardE.ANULAD.getId()){
+                    
+                } else {
+                    // El status no se puede actualizar al nuevo anulada
+                    return new CardResponse(ResponseCode.INTERNAL_ERROR.getCode(), "Unexpected error has occurred");
+                }
+
+            } else if(statusUpdateReasonId == reasonFound){
+                //Validar el tiempo excedido 
+            }     
+        } else {
+          return new CardResponse(ResponseCode.INTERNAL_ERROR.getCode(), "Unexpected error has occurred");  
+        }
+        
+        return new CardResponse(ResponseCode.INTERNAL_ERROR.getCode(), "Unexpected error has occurred");
     }
         
 
