@@ -10,6 +10,7 @@ import com.alodiga.authorizer.cms.responses.CountryListResponse;
 import com.alodiga.authorizer.cms.responses.CardResponse;
 import com.alodiga.authorizer.cms.responses.TransactionFeesResponse;
 import com.alodiga.authorizer.cms.responses.ValidateLimitsResponse;
+import java.util.Date;
 
 @WebService
 public class APIAuthorizerCardManagementSystem {
@@ -98,4 +99,11 @@ public class APIAuthorizerCardManagementSystem {
         return operations.validateCard(cardNumber,ARQC,cardHolder,CVV,cardDueDate);
     }
     
+    @WebMethod
+    public CardResponse validateDocumentIdentificationCustomer(
+            @WebParam(name = "cardNumber") String cardNumber,
+            @WebParam(name = "identificationNumber") String identificationNumber) {
+        return operations.validateDocumentIdentificationCustomer(cardNumber,identificationNumber);
+    }
+       
 }

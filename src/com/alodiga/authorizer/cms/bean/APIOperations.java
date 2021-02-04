@@ -623,5 +623,32 @@ public class APIOperations {
             return validateCard;
         }
     }
+    
+    public CardResponse validateDocumentIdentificationCustomer(String cardNumber, String identificationNumber){
+        Card cards = new Card();
+        try {
+            cards = getCardByCardNumber(cardNumber);
+            if (cards == null) {
+                return new CardResponse(ResponseCode.INTERNAL_ERROR.getCode(), "The card does not exist in the CMS");
+            } else {
+                NaturalCustomer naturalCustomer = new NaturalCustomer();
+                naturalCustomer = getCardCustomer(cards.getPersonCustomerId().getId());
+                if(naturalCustomer != null){
+                   String identificationCustomer = naturalCustomer.getIdentificationNumber();
+                   if(identificationCustomer.equals(identificationNumber)){ 
+                       return new CardResponse(ResponseCode.THE_IDENTIFICATION_NUMBER_IS_VERIFIED.getCode(), ResponseCode.THE_IDENTIFICATION_NUMBER_IS_VERIFIED.getMessage());
+                   } else {
+                       return new CardResponse(ResponseCode.THE_IDENTIFICATION_NUMBER_NOT_MATCH.getCode(),ResponseCode.THE_IDENTIFICATION_NUMBER_NOT_MATCH.getMessage()); 
+                   }
+               } else {
+                  return new CardResponse(ResponseCode.CARD_OWNER_NOT_FOUND.getCode(),ResponseCode.CARD_OWNER_NOT_FOUND.getMessage());  
+               } 
+            }
+        } catch (Exception e) {
+            return new CardResponse(ResponseCode.INTERNAL_ERROR.getCode(), "Unexpected error has occurred");
+        }
+        
+    }
+        
 
 }
