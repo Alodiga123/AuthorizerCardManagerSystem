@@ -18,10 +18,13 @@ public enum ResponseCode {
     TRANSACTION_AMOUNT_LIMIT_MONTHLY("37","The card exceeded the maximum amount per month"),
     MIN_TRANSACTION_AMOUNT("38","The card exceeded the minimun amount per transaction"),
     MAX_TRANSACTION_AMOUNT("39","The card exceeded the maximum amount per transaction"),
-      
+         
     //Mensajes Status Card
     CARD_EXISTS("50","The Card exists in the Card Manager System database"),
     CARD_NOT_EXISTS("51","The card does not exist in the Card Manager System database"),  
+    
+    //validaciones para calcular bonificaciones
+    PROGRAM_LOYALTY_BY_CARD_NOT_EXISTS("60","The card does not have a loyalty program associated with it"), 
     
     THE_CARDHOLDER_IS_VERIFIED("145","Cardholder data has been successfully verified"),
     THE_CARDHOLDER_NOT_MATCH("145","Cardholder details do not match"),

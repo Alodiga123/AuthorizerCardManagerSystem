@@ -8,18 +8,18 @@ import javax.xml.bind.annotation.XmlRootElement;
 
 @XmlRootElement
 @XmlAccessorType(XmlAccessType.FIELD)
-public class ValidateLimitsResponse extends Response {
+public class CalculateBonusResponse extends Response {
 
 	        
-	public ValidateLimitsResponse() {
+	public CalculateBonusResponse() {
 		super();
 	}
 	
-	public ValidateLimitsResponse(ResponseCode code) {
+	public CalculateBonusResponse(ResponseCode code) {
 		super(new Date(), code.getCode(), code.name());
 	}
 	
-	public ValidateLimitsResponse(ResponseCode code, String mensaje) {
+	public CalculateBonusResponse(ResponseCode code, String mensaje) {
 		super(new Date(), code.getCode(), mensaje);
 	}
   

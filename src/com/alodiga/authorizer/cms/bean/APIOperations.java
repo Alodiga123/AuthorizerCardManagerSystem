@@ -1,5 +1,6 @@
 package com.alodiga.authorizer.cms.bean;
 
+import com.alodiga.authorizer.cms.responses.CalculateBonusResponse;
 import com.cms.commons.models.Country;
 import com.cms.commons.models.Card;
 import com.cms.commons.models.NaturalCustomer;
@@ -28,14 +29,20 @@ import com.cms.commons.enumeraciones.DocumentTypeE;
 import com.cms.commons.enumeraciones.StatusTransactionManagementE;
 import com.cms.commons.enumeraciones.TransactionE;
 import com.cms.commons.enumeraciones.StatusCardE;
+import com.cms.commons.enumeraciones.SubTransactionE;
 import com.cms.commons.models.AccountCard;
+import com.cms.commons.models.BonusCard;
+import com.cms.commons.models.DaysWeek;
 import com.cms.commons.models.ProductHasChannelHasTransaction;
+import com.cms.commons.models.ProgramLoyalty;
+import com.cms.commons.models.ProgramLoyaltyTransaction;
 import com.cms.commons.models.RateByCard;
 import com.cms.commons.models.RateByProduct;
 import com.cms.commons.models.Sequences;
 import com.cms.commons.models.TransactionsManagement;
 import com.cms.commons.util.EjbUtils;
 import java.util.Calendar;
+import java.util.logging.Level;
 
 @Stateless(name = "FsProcessorWallet", mappedName = "ejb/FsProcessorWallet")
 @TransactionManagement(TransactionManagementType.CONTAINER)
@@ -179,14 +186,14 @@ public class APIOperations {
         try {
             if (checkLuhn(cardNumber)) {
                 System.out.println("This is a valid card");
-                return new CardResponse(ResponseCode.SUCCESS, "This is a valid card");
+                return new CardResponse(ResponseCode.SUCCESS.getCode(), "This is a valid card");
             } else {
                 System.out.println("This is not a valid card");
-                return new CardResponse(ResponseCode.INTERNAL_ERROR, "This is not a valid card");
+                return new CardResponse(ResponseCode.INTERNAL_ERROR.getCode(), "This is not a valid card");
             }
         } catch (Exception e) {
             e.printStackTrace();
-            return new CardResponse(ResponseCode.INTERNAL_ERROR, "INTERNAL_ERROR");
+            return new CardResponse(ResponseCode.INTERNAL_ERROR.getCode(), "INTERNAL_ERROR");
         }
 
     }
@@ -251,7 +258,7 @@ public class APIOperations {
             return new CardResponse(ResponseCode.SUCCESS, "SUCCESS", checkdigit);
         } catch (Exception e) {
             e.printStackTrace();
-            return new CardResponse(ResponseCode.INTERNAL_ERROR, "INTERNAL_ERROR");
+            return new CardResponse(ResponseCode.INTERNAL_ERROR.getCode(), "INTERNAL_ERROR");
         }
 
     }
@@ -599,5 +606,127 @@ public class APIOperations {
             return null;
         }
     }
+     
+     public CalculateBonusResponse calculateBonus(String cardNumber, Integer transactionTypeId, Integer channelId, Long commerceId, String countryCode,Float amountTransaction){   
+        Long totalTransactionsByCardDaily = 0L;
+        Double totalAmountByCardDaily = 0.00D;
+        Long totalTransactionsByCardMonthly = 0L;
+        Double totalAmountByUserMonthly = 0.00D;
+        boolean isTransactionLocal = false;
+        
+        if (cardNumber == null || countryCode ==null )
+            return new CalculateBonusResponse(ResponseCode.INVALID_DATA, "The invalid data");
+        
+        Card card = getCardByCardNumber(cardNumber);
+        if (card==null)
+             return new CalculateBonusResponse(ResponseCode.CARD_NOT_EXISTS, ResponseCode.CARD_NOT_FOUND.getMessage());
+        
+        Country country = getCountry(countryCode);
+        if (country==null)
+            return new CalculateBonusResponse(ResponseCode.COUNTRY_NOT_FOUND, ResponseCode.COUNTRY_NOT_FOUND.getMessage());
+        
+        if (country.getId().equals(card.getProductId().getCountryId().getId()))
+            isTransactionLocal = true;
+        
+        ProgramLoyalty programLoyalty = getProgramLoyaltybyProductId(card.getProductId().getId());
+        if (programLoyalty==null)
+             return new CalculateBonusResponse(ResponseCode.PROGRAM_LOYALTY_BY_CARD_NOT_EXISTS, ResponseCode.PROGRAM_LOYALTY_BY_CARD_NOT_EXISTS.getMessage());
+        
+        DaysWeek dayWeek = getDaysWeekByDate();
+        
+        if (checkActiveProgramLoyalty(programLoyalty.getId(),dayWeek.getId())){
+            ProgramLoyaltyTransaction programLoyaltyTransaction = getProgramLoyaltyTransactionbyParam(programLoyalty.getId(),transactionTypeId, channelId);
+            if (programLoyaltyTransaction.getTransactionId().getSubTypeTransactionId().getCode().equals(SubTransactionE.ADMINI.getCode())){
+                try {
+                    BonusCard bonusCard = new BonusCard();
+                    bonusCard.setCardId(card);
+                    bonusCard.setCreateDate(new Date());
+                    bonusCard.setProgramLoyaltyTransactionId(programLoyaltyTransaction);
+                    bonusCard.setUpdateDate(new Date());
+                    saveBonusCard(bonusCard);
+                } catch (Exception ex) {
+                    return new CalculateBonusResponse(ResponseCode.INTERNAL_ERROR, "Error");
+                }
+            }
+            totalTransactionsByCardDaily = getTransactionsByCardByTransactionByProductCurrentDate(cardNumber, EjbUtils.getBeginningDate(new Date()), EjbUtils.getEndingDate(new Date()), transactionTypeId, channelId, ResponseCode.SUCCESS.getCode(),isTransactionLocal, country.getId());
+            if ((totalTransactionsByCardDaily + 1) > programLoyaltyTransaction.getTotalMaximumTransactions()) {
+                //agregar bonificacion
+            }
+            totalAmountByCardDaily = getAmountMaxByUserByUserByTransactionByProductCurrentDate(cardNumber, EjbUtils.getBeginningDate(new Date()), EjbUtils.getEndingDate(new Date()), transactionTypeId, channelId, ResponseCode.SUCCESS.getCode(),isTransactionLocal, country.getId());
+            if ((totalAmountByCardDaily + amountTransaction) > Double.parseDouble(programLoyaltyTransaction.getTotalAmountDaily().toString())) {
+               //agregar bonificacion
+            }
+ 
+            totalAmountByUserMonthly = getAmountMaxByUserByUserByTransactionByProductCurrentDate(cardNumber, EjbUtils.getBeginningDateMonth(new Date()), EjbUtils.getEndingDate(new Date()), transactionTypeId, channelId, ResponseCode.SUCCESS.getCode(),isTransactionLocal, country.getId());
+            if ((totalAmountByUserMonthly + amountTransaction) > Double.parseDouble(programLoyaltyTransaction.getTotalAmountMonthly().toString())) {
+                //agregar bonificacion
+            }
+        }
+        
+        
+        return new CalculateBonusResponse(ResponseCode.SUCCESS, "SUCCESS");
+    }
+     
+    private ProgramLoyalty getProgramLoyaltybyProductId(Long productId) {
+        try {
+            Query query = entityManager.createQuery("SELECT p FROM ProgramLoyalty p WHERE p.productId.id = " + productId + " AND p.statusProgramLoyaltyId.id=" + Constants.STATUS_LOYALTY_PROGRAM_ACTIVE);
+            query.setMaxResults(1);
+            ProgramLoyalty result = (ProgramLoyalty) query.setHint("toplink.refresh", "true").getSingleResult();
+            return result;
+        } catch (NoResultException e) {
+            return null;
+        }
+    }
+    
+    private ProgramLoyaltyTransaction getProgramLoyaltyTransactionbyParam(Long programLoyaltyId, Integer transactionId, Integer channelId) {
+         try {
+            Query query = entityManager.createQuery("SELECT P FROM ProgramLoyaltyTransaction p WHERE p.programLoyaltyId.id = " + programLoyaltyId + " AND p.channelId.id= " + channelId
+                    + " AND p.transactionId.id= " + transactionId + "");
+            query.setMaxResults(1);
+            ProgramLoyaltyTransaction result = (ProgramLoyaltyTransaction) query.setHint("toplink.refresh", "true").getSingleResult();
+            return result;
+        } catch (NoResultException e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+     
+    private boolean checkActiveProgramLoyalty(Long programLoyaltyId, int dayWeekId) {
+        try {
+            Query query = entityManager.createQuery("SELECT d FROM DaysWeekHasProgramLoyalty d WHERE p.programLoyalty.id = " + programLoyaltyId + " AND p.daysWeekId.id=" + dayWeekId);
+            query.setMaxResults(1);
+            ProgramLoyalty result = (ProgramLoyalty) query.setHint("toplink.refresh", "true").getSingleResult();
+            return true;
+        } catch (NoResultException e) {
+            return false;
+        }
+    }
+     
+    private DaysWeek getDaysWeekByDate() {
+        Calendar now = Calendar.getInstance();
+        int day = now.get(Calendar.DAY_OF_WEEK);		
+        try {
+            Query query = entityManager.createQuery("SELECT d FROM DaysWeek d WHERE p.id = " + day );
+            query.setMaxResults(1);
+            DaysWeek result = (DaysWeek) query.setHint("toplink.refresh", "true").getSingleResult();
+            return result;
+        } catch (NoResultException e) {
+            return null;
+        }
+    }
+    
+     public BonusCard saveBonusCard(BonusCard bonusCard) throws Exception{
+        try {
+            if (bonusCard.getId()==null)
+                entityManager.persist(bonusCard);
+            else
+                entityManager.merge(bonusCard);
+        } catch (Exception e) {
+            e.printStackTrace();
+           throw new Exception();
+        }
+        return bonusCard;
+    }
+     
 
 }

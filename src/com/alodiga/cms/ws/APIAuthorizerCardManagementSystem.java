@@ -6,6 +6,7 @@ import javax.jws.WebParam;
 import javax.jws.WebService;
 import org.apache.log4j.Logger;
 import com.alodiga.authorizer.cms.bean.APIOperations;
+import com.alodiga.authorizer.cms.responses.CalculateBonusResponse;
 import com.alodiga.authorizer.cms.responses.CountryListResponse;
 import com.alodiga.authorizer.cms.responses.CardResponse;
 import com.alodiga.authorizer.cms.responses.TransactionFeesResponse;
@@ -86,6 +87,17 @@ public class APIAuthorizerCardManagementSystem {
         @WebParam(name = "countryCode") String countryCode,
         @WebParam(name = "amountTransaction") Float amountTransaction)   {
         return operations.getValidateLimits(cardNumber, transactionTypeId, channelId,countryCode,amountTransaction);
+    }
+    
+    @WebMethod    
+    public CalculateBonusResponse calculateBonus(
+        @WebParam(name = "cardNumber") String cardNumber,
+        @WebParam(name = "transactionTypeId") Integer transactionTypeId,
+        @WebParam(name = "channelId") Integer channelId,
+        @WebParam(name = "commerceId") Long commerceId,
+        @WebParam(name = "countryCode") String countryCode,
+        @WebParam(name = "amountTransaction") Float amountTransaction)   {
+        return operations.calculateBonus(cardNumber, transactionTypeId, channelId,commerceId,countryCode,amountTransaction);
     }
     
 }
