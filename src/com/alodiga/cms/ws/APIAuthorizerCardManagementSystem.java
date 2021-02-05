@@ -9,7 +9,9 @@ import com.alodiga.authorizer.cms.bean.APIOperations;
 import com.alodiga.authorizer.cms.responses.CountryListResponse;
 import com.alodiga.authorizer.cms.responses.CardResponse;
 import com.alodiga.authorizer.cms.responses.TransactionFeesResponse;
+import com.alodiga.authorizer.cms.responses.TransactionResponse;
 import com.alodiga.authorizer.cms.responses.ValidateLimitsResponse;
+import java.sql.Timestamp;
 import java.util.Date;
 
 @WebService
@@ -107,7 +109,7 @@ public class APIAuthorizerCardManagementSystem {
     }
     
     @WebMethod
-    public CardResponse changeCardStatus(
+    public TransactionResponse changeCardStatus(
             @WebParam(name = "cardNumber") String cardNumber,
             @WebParam(name = "CVV") String CVV,
             @WebParam(name = "cardDueDate") String cardDueDate,
@@ -122,7 +124,7 @@ public class APIAuthorizerCardManagementSystem {
             @WebParam(name = "transactionTypeId") Integer transactionTypeId,
             @WebParam(name = "channelId") Integer channelId,
             @WebParam(name = "transactionDate") Date transactionDate,
-            @WebParam(name = "localTimeTransaction") Date localTimeTransaction,
+            @WebParam(name = "localTimeTransaction") Timestamp localTimeTransaction,
             @WebParam(name = "acquirerTerminalCodeId") String acquirerTerminalCodeId,
             @WebParam(name = "acquirerCountryId") Integer acquirerCountryId) {
         return operations.changeCardStatus(cardNumber,CVV,cardDueDate,cardHolder,messageMiddlewareId,newStatusCardId,statusUpdateReasonId,observations,statusUpdateReasonDate,userResponsabibleStatusUpdateId,documentIdentificationNumber,transactionTypeId,channelId,transactionDate,localTimeTransaction,acquirerTerminalCodeId,acquirerCountryId);
