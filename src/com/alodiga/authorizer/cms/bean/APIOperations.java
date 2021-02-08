@@ -23,18 +23,25 @@ import com.alodiga.authorizer.cms.responses.CountryListResponse;
 import com.alodiga.authorizer.cms.responses.OperationCardBalanceInquiryResponse;
 import com.alodiga.authorizer.cms.responses.ValidateLimitsResponse;
 import com.alodiga.authorizer.cms.responses.TransactionFeesResponse;
+import com.alodiga.authorizer.cms.responses.TransactionResponse;
 import java.sql.Timestamp;
 import com.cms.commons.enumeraciones.ChannelE;
 import com.cms.commons.enumeraciones.DocumentTypeE;
 import com.cms.commons.enumeraciones.StatusTransactionManagementE;
 import com.cms.commons.enumeraciones.TransactionE;
 import com.cms.commons.enumeraciones.StatusCardE;
+import com.cms.commons.enumeraciones.StatusUpdateReasonE;
 import com.cms.commons.models.AccountCard;
+import com.cms.commons.models.CardStatus;
+import com.cms.commons.models.CardStatusHasUpdateReason;
+import com.cms.commons.models.Product;
 import com.cms.commons.models.ProductHasChannelHasTransaction;
 import com.cms.commons.models.RateByCard;
 import com.cms.commons.models.RateByProduct;
 import com.cms.commons.models.Sequences;
+import com.cms.commons.models.StatusUpdateReason;
 import com.cms.commons.models.TransactionsManagement;
+import com.cms.commons.models.User;
 import com.cms.commons.util.EjbUtils;
 import java.util.Calendar;
 
@@ -632,6 +639,231 @@ public class APIOperations {
         } else {
             return validateCard;
         }
+    }
+    
+    public CardResponse validateDocumentIdentificationCustomer(String cardNumber, String identificationNumber){
+        Card cards = new Card();
+        try {
+            cards = getCardByCardNumber(cardNumber);
+            if (cards == null) {
+                return new CardResponse(ResponseCode.INTERNAL_ERROR.getCode(), "The card does not exist in the CMS");
+            } else {
+                NaturalCustomer naturalCustomer = new NaturalCustomer();
+                naturalCustomer = getCardCustomer(cards.getPersonCustomerId().getId());
+                if(naturalCustomer != null){
+                   String identificationCustomer = naturalCustomer.getIdentificationNumber();
+                   if(identificationCustomer.equals(identificationNumber)){ 
+                       return new CardResponse(ResponseCode.THE_IDENTIFICATION_NUMBER_IS_VERIFIED.getCode(), ResponseCode.THE_IDENTIFICATION_NUMBER_IS_VERIFIED.getMessage());
+                   } else {
+                       return new CardResponse(ResponseCode.THE_IDENTIFICATION_NUMBER_NOT_MATCH.getCode(),ResponseCode.THE_IDENTIFICATION_NUMBER_NOT_MATCH.getMessage()); 
+                   }
+               } else {
+                  return new CardResponse(ResponseCode.CARD_OWNER_NOT_FOUND.getCode(),ResponseCode.CARD_OWNER_NOT_FOUND.getMessage());  
+               } 
+            }
+        } catch (Exception e) {
+            return new CardResponse(ResponseCode.INTERNAL_ERROR.getCode(), "Unexpected error has occurred");
+        }
+        
+    }
+    
+    public TransactionResponse changeCardStatus(String cardNumber,String CVV,String cardDueDate,String cardHolder,Long messageMiddlewareId,Long newStatusCardId,Integer statusUpdateReasonId,String observations,
+            Date statusUpdateReasonDate,Long userResponsabibleStatusUpdateId,String documentIdentificationNumber,Integer transactionTypeId,Integer channelId,Date transactionDate,Timestamp localTimeTransaction,String acquirerTerminalCodeId,Integer acquirerCountryId){
+        //Se valida que la tarjeta exista en la BD del CMS
+        CardResponse validateCard = getValidateCard(cardNumber);
+        if (validateCard.getCodigoRespuesta().equals(ResponseCode.CARD_EXISTS.getCode())) {
+            String transactionNumberIssuer;
+            //Update Status Reason
+            Integer reasonLost = StatusUpdateReasonE.PERDID.getId();
+            Integer reasonStole = StatusUpdateReasonE.ROBO.getId();
+            Integer reasonDamaged = StatusUpdateReasonE.DAÑADA.getId(); 
+            Integer reasonCloning = StatusUpdateReasonE.CLONAC.getId();
+            Integer reasonNoInterested = StatusUpdateReasonE.NOINT.getId();
+            Integer reasonFound = StatusUpdateReasonE.ENCONT.getId();
+            //Se obtiene el número de secuencia la transacción
+            transactionNumberIssuer = generateNumberSequence(getSequencesByDocumentTypeByOriginApplication(DocumentTypeE.CHANGE_CARD_STATUS.getId(), Constants.ORIGIN_APPLICATION_CMS_ID));
+            //Colocar asteriscos al cardNumber
+            String cardNumberEncript = transformCardNumber(cardNumber);
+            
+            if(statusUpdateReasonId == reasonLost || statusUpdateReasonId == reasonStole || statusUpdateReasonId == reasonDamaged){
+                if(newStatusCardId == StatusCardE.BLOQUE.getId() || newStatusCardId == StatusCardE.ANULAD.getId()){
+                   //Se guarda el transactionsManagement
+                   TransactionsManagement transactionsManagement = new TransactionsManagement();
+                   transactionsManagement.setCardNumber(cardNumber);
+                   transactionsManagement.setCvv(CVV);
+                   transactionsManagement.setCardHolder(cardHolder);
+                   transactionsManagement.setMessageMiddlewareId(messageMiddlewareId);
+                   transactionsManagement.setTransactionTypeId(transactionTypeId);
+                   transactionsManagement.setChannelId(channelId);
+                   transactionsManagement.setTransactionNumberIssuer(transactionNumberIssuer); 
+                   transactionsManagement.setLocalDateTransaction(localTimeTransaction);
+                   transactionsManagement.setAcquirerTerminalCode(acquirerTerminalCodeId);
+                   transactionsManagement.setAcquirerCountryId(acquirerCountryId);
+                   transactionsManagement.setTransactionDateIssuer(new Timestamp(new Date().getTime()));
+                   entityManager.persist(transactionsManagement);
+                   
+                   //Se guarda el transactionsHistory
+                   TransactionsManagementHistory transactionsHistory = new TransactionsManagementHistory();
+                   transactionsHistory.setCardNumber(cardNumber);
+                   transactionsHistory.setCvv(CVV);
+                   transactionsHistory.setCardHolder(cardHolder);
+                   transactionsHistory.setTransactionNumberIssuer(transactionNumberIssuer);
+                   transactionsHistory.setMessageMiddlewareId(messageMiddlewareId);
+                   transactionsHistory.setTransactionTypeId(transactionTypeId);
+                   transactionsHistory.setChannelId(channelId);
+                   transactionsHistory.setTransactionDateIssuer(new Timestamp(new Date().getTime()));
+                   transactionsHistory.setAcquirerTerminalCode(acquirerTerminalCodeId);
+                   transactionsHistory.setAcquirerCountryId(acquirerCountryId);
+                   entityManager.persist(transactionsManagement);
+                   
+                   //Se obtiene el nuevo status, el statusUpdateReason y el usuario responsable
+                   CardStatus cardStatus = (CardStatus) entityManager.createNamedQuery("CardStatus.findById", CardStatus.class).setParameter("id", newStatusCardId).getSingleResult();
+                   StatusUpdateReason statusUpdateReason = (StatusUpdateReason) entityManager.createNamedQuery("StatusUpdateReason.findById", StatusUpdateReason.class).setParameter("id", statusUpdateReasonId).getSingleResult();
+                   User user = (User) entityManager.createNamedQuery("User.findById", User.class).setParameter("id", userResponsabibleStatusUpdateId).getSingleResult();
+                   
+                   //Se obtiene la tarjeta y se actualiza el estado de la tarjeta
+                   Card cards = getCardByCardNumber(cardNumber);
+                   cards.setCardStatusId(cardStatus);
+                   cards.setStatusUpdateReasonId(statusUpdateReason);
+                   cards.setUserResponsibleStatusUpdateId(user);
+                   cards.setObservations(observations);
+                   cards.setUpdateDate(new Timestamp(new Date().getTime()));
+                   entityManager.persist(cards);
+                   
+                   
+                   return new TransactionResponse(ResponseCode.SUCCESS.getCode(), "",cardNumberEncript, cardStatus.getId().intValue(),observations,messageMiddlewareId,transactionNumberIssuer,localTimeTransaction);
+                   
+                } else {
+                    // El status no se puede actualizar al nuevo tiene que ser bloqueada o anulada
+                    return new TransactionResponse(ResponseCode.THE_CARD_STATUS_NOT_BE_CHANGED.getCode(), "Card status cannot be updated, it can only be updated to status "+StatusCardE.BLOQUE.statusCardDescription()+"or "+StatusCardE.ANULAD.statusCardDescription()+"");
+                }
+            } else if(statusUpdateReasonId == reasonCloning ||statusUpdateReasonId == reasonNoInterested ){
+                if(newStatusCardId == StatusCardE.ANULAD.getId()){
+                   //Se guarda el transactionsManagement
+                   TransactionsManagement transactionsManagement = new TransactionsManagement();
+                   transactionsManagement.setCardNumber(cardNumber);
+                   transactionsManagement.setCvv(CVV);
+                   transactionsManagement.setCardHolder(cardHolder);
+                   transactionsManagement.setMessageMiddlewareId(messageMiddlewareId);
+                   transactionsManagement.setTransactionTypeId(transactionTypeId);
+                   transactionsManagement.setChannelId(channelId);
+                   transactionsManagement.setTransactionNumberIssuer(transactionNumberIssuer); 
+                   transactionsManagement.setLocalDateTransaction(localTimeTransaction);
+                   transactionsManagement.setAcquirerTerminalCode(acquirerTerminalCodeId);
+                   transactionsManagement.setAcquirerCountryId(acquirerCountryId);
+                   transactionsManagement.setTransactionDateIssuer(new Timestamp(new Date().getTime()));
+                   entityManager.persist(transactionsManagement);
+                   
+                   //Se guarda el transactionsHistory
+                   TransactionsManagementHistory transactionsHistory = new TransactionsManagementHistory();
+                   transactionsHistory.setCardNumber(cardNumber);
+                   transactionsHistory.setCvv(CVV);
+                   transactionsHistory.setCardHolder(cardHolder);
+                   transactionsHistory.setTransactionNumberIssuer(transactionNumberIssuer);
+                   transactionsHistory.setMessageMiddlewareId(messageMiddlewareId);
+                   transactionsHistory.setTransactionTypeId(transactionTypeId);
+                   transactionsHistory.setChannelId(channelId);
+                   transactionsHistory.setTransactionDateIssuer(new Timestamp(new Date().getTime()));
+                   transactionsHistory.setAcquirerTerminalCode(acquirerTerminalCodeId);
+                   transactionsHistory.setAcquirerCountryId(acquirerCountryId);
+                   entityManager.persist(transactionsManagement);
+                   
+                   //Se obtiene el nuevo status, el statusUpdateReason y el usuario responsable
+                   CardStatus cardStatus = (CardStatus) entityManager.createNamedQuery("CardStatus.findById", CardStatus.class).setParameter("id", newStatusCardId).getSingleResult();
+                   StatusUpdateReason statusUpdateReason = (StatusUpdateReason) entityManager.createNamedQuery("StatusUpdateReason.findById", StatusUpdateReason.class).setParameter("id", statusUpdateReasonId).getSingleResult();
+                   User user = (User) entityManager.createNamedQuery("User.findById", User.class).setParameter("id", userResponsabibleStatusUpdateId).getSingleResult();
+                   
+                   //Se obtiene la tarjeta y se actualiza el estado de la tarjeta
+                   Card cards = getCardByCardNumber(cardNumber);
+                   cards.setCardStatusId(cardStatus);
+                   cards.setStatusUpdateReasonId(statusUpdateReason);
+                   cards.setUserResponsibleStatusUpdateId(user);
+                   cards.setUpdateDate(new Timestamp(new Date().getTime()));
+                   entityManager.persist(cards);
+                   
+                   return new TransactionResponse(ResponseCode.SUCCESS.getCode(), "",cardNumberEncript, cardStatus.getId().intValue(),observations,messageMiddlewareId,transactionNumberIssuer,localTimeTransaction);
+                   
+                } else {
+                    return new TransactionResponse(ResponseCode.THE_CARD_STATUS_NOT_BE_CHANGED.getCode(), "Card status cannot be updated, it can only be updated to status "+StatusCardE.ANULAD.statusCardDescription()+"");
+                }   
+            } else if(statusUpdateReasonId == reasonFound){
+                if(newStatusCardId == StatusCardE.ACTIVA.getId()){
+                    //Se obtiene la tarjeta y el producto por el id
+                    Card cards = getCardByCardNumber(cardNumber);
+                    Product product = (Product) entityManager.createNamedQuery("Product.findById", Product.class).setParameter("id", cards.getProductId().getId()).getSingleResult();
+
+                    //Validar cuantos dias han transcurrido con el estados actual de la tarjeta
+                    Date currentDate = new Timestamp(new Date().getTime());
+                    int days = (int) ((currentDate.getTime()-cards.getUpdateDate().getTime())/86400000);
+                    
+                    //Si es menor o igual al tiempo permitido por el producto sigue con el proceso
+                    if(days <= product.getMaximunDeactivationTimeBlocking()){
+
+                       //Se guarda el transactionsManagement
+                       TransactionsManagement transactionsManagement = new TransactionsManagement();
+                       transactionsManagement.setCardNumber(cardNumber);
+                       transactionsManagement.setCvv(CVV);
+                       transactionsManagement.setCardHolder(cardHolder);
+                       transactionsManagement.setMessageMiddlewareId(messageMiddlewareId);
+                       transactionsManagement.setTransactionTypeId(transactionTypeId);
+                       transactionsManagement.setChannelId(channelId);
+                       transactionsManagement.setTransactionNumberIssuer(transactionNumberIssuer); 
+                       transactionsManagement.setLocalDateTransaction(localTimeTransaction);
+                       transactionsManagement.setAcquirerTerminalCode(acquirerTerminalCodeId);
+                       transactionsManagement.setAcquirerCountryId(acquirerCountryId);
+                       transactionsManagement.setTransactionDateIssuer(new Timestamp(new Date().getTime()));
+                       entityManager.persist(transactionsManagement);
+
+                       //Se guarda el transactionsHistory
+                       TransactionsManagementHistory transactionsHistory = new TransactionsManagementHistory();
+                       transactionsHistory.setCardNumber(cardNumber);
+                       transactionsHistory.setCvv(CVV);
+                       transactionsHistory.setCardHolder(cardHolder);
+                       transactionsHistory.setTransactionNumberIssuer(transactionNumberIssuer);
+                       transactionsHistory.setMessageMiddlewareId(messageMiddlewareId);
+                       transactionsHistory.setTransactionTypeId(transactionTypeId);
+                       transactionsHistory.setChannelId(channelId);
+                       transactionsHistory.setTransactionDateIssuer(new Timestamp(new Date().getTime()));
+                       transactionsHistory.setAcquirerTerminalCode(acquirerTerminalCodeId);
+                       transactionsHistory.setAcquirerCountryId(acquirerCountryId);
+                       entityManager.persist(transactionsManagement);
+
+                       //Se obtiene el nuevo status, el statusUpdateReason y el usuario responsable
+                       CardStatus cardStatus = (CardStatus) entityManager.createNamedQuery("CardStatus.findById", CardStatus.class).setParameter("id", newStatusCardId).getSingleResult();
+                       StatusUpdateReason statusUpdateReason = (StatusUpdateReason) entityManager.createNamedQuery("StatusUpdateReason.findById", StatusUpdateReason.class).setParameter("id", statusUpdateReasonId).getSingleResult();
+                       User user = (User) entityManager.createNamedQuery("User.findById", User.class).setParameter("id", userResponsabibleStatusUpdateId).getSingleResult();
+
+                       //Se actualiza el estado de la tarjeta
+                       cards.setCardStatusId(cardStatus);
+                       cards.setStatusUpdateReasonId(statusUpdateReason);
+                       cards.setUserResponsibleStatusUpdateId(user);
+                       cards.setUpdateDate(new Timestamp(new Date().getTime()));
+                       entityManager.persist(cards);
+                       
+                       return new TransactionResponse(ResponseCode.SUCCESS.getCode(), "",cardNumberEncript, cardStatus.getId().intValue(),observations,messageMiddlewareId,transactionNumberIssuer,localTimeTransaction);
+
+                    } else {
+                      return new TransactionResponse(ResponseCode.INTERNAL_ERROR.getCode(), "The maximum time to change status has been exceeded");  
+                    }
+                } else {
+                    return new TransactionResponse(ResponseCode.THE_CARD_STATUS_NOT_BE_CHANGED.getCode(), "Card status cannot be updated, it can only be updated to status "+StatusCardE.ACTIVA.statusCardDescription()+"");
+                }
+            }
+            return new TransactionResponse(ResponseCode.INTERNAL_ERROR.getCode(), "The card does not match any type of card update reason");
+        } else {
+          return new TransactionResponse(ResponseCode.INTERNAL_ERROR.getCode(), "The card is not a valid card");  
+        }
+        
+    } 
+    
+    public String transformCardNumber(String cardNumber) {
+        StringBuilder cadena = new StringBuilder(cardNumber);
+          for(int i = 5; i < cadena.length(); i++){
+              if(i <= 11){
+                cadena.setCharAt(i, '*');  
+              }       
+          }
+        return cadena.toString();
     }
 
     public OperationCardBalanceInquiryResponse cardBalanceInquiry(String cardNumber, String CVV, String ARQC, String documentIdentificationNumber, Integer transactionTypeId, Integer channelId, Date transactionDate, Date localTimeTransaction, String acquirerTerminalCodeId, Integer acquirerCountryId, Long messageMiddlewareId, String transactionNumberAcquirer, String cardDueDate, String cardHolder, String PinOffset) {
