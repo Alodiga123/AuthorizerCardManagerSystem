@@ -8,6 +8,7 @@ import org.apache.log4j.Logger;
 import com.alodiga.authorizer.cms.bean.APIOperations;
 import com.alodiga.authorizer.cms.responses.CountryListResponse;
 import com.alodiga.authorizer.cms.responses.CardResponse;
+import com.alodiga.authorizer.cms.responses.OperationCardBalanceInquiryResponse;
 import com.alodiga.authorizer.cms.responses.TransactionFeesResponse;
 import com.alodiga.authorizer.cms.responses.TransactionResponse;
 import com.alodiga.authorizer.cms.responses.ValidateLimitsResponse;
@@ -130,4 +131,27 @@ public class APIAuthorizerCardManagementSystem {
         return operations.changeCardStatus(cardNumber,CVV,cardDueDate,cardHolder,messageMiddlewareId,newStatusCardId,statusUpdateReasonId,observations,statusUpdateReasonDate,userResponsabibleStatusUpdateId,documentIdentificationNumber,transactionTypeId,channelId,transactionDate,localTimeTransaction,acquirerTerminalCodeId,acquirerCountryId);
     }
          
+    @WebMethod
+    public OperationCardBalanceInquiryResponse cardBalanceInquiry(
+            @WebParam(name = "cardNumber") String cardNumber,
+            @WebParam(name = "CVV") String CVV,
+            @WebParam(name = "ARQC") String ARQC,
+            @WebParam(name = "documentIdentificationNumber") String documentIdentificationNumber,
+            @WebParam(name = "transactionTypeId") Integer transactionTypeId,
+            @WebParam(name = "channelId") Integer channelId,
+            @WebParam(name = "transactionDate") Date transactionDate,
+            @WebParam(name = "localTimeTransaction") Date localTimeTransaction,
+            @WebParam(name = "acquirerTerminalCodeId") String acquirerTerminalCodeId,
+            @WebParam(name = "acquirerCountryId") Integer acquirerCountryId,
+            @WebParam(name = "messageMiddlewareId") Long messageMiddlewareId,
+            @WebParam(name = "transactionNumberAcquirer") String transactionNumberAcquirer,
+            @WebParam(name = "cardDueDate") String cardDueDate,
+            @WebParam(name = "cardHolder") String cardHolder,
+            @WebParam(name = "PinOffset") String PinOffset) {
+        return operations.cardBalanceInquiry(cardNumber, CVV, ARQC, documentIdentificationNumber, transactionTypeId, channelId, transactionDate, localTimeTransaction, acquirerTerminalCodeId, acquirerCountryId, messageMiddlewareId, transactionNumberAcquirer, cardDueDate, cardHolder, PinOffset);
+    }
+    
+    
+    
+    
 }
