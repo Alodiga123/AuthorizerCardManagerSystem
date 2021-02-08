@@ -58,13 +58,13 @@ public class APIAuthorizerCardManagementSystem {
     }
     
     @WebMethod
-    public TransactionFeesResponse calculateTransactionFees(
+    public TransactionFeesResponse calculateCommisionCMS(
         @WebParam(name = "cardNumber") String cardNumber,
         @WebParam(name = "channelId") Integer channelId,
         @WebParam(name = "transactionTypeId") Integer transactionTypeId,
         @WebParam(name = "settlementTransactionAmount") Float settlementTransactionAmount,
         @WebParam(name = "transactionNumberAcquirer") String transactionNumberAcquirer) {
-        return operations.calculateTransactionFees(cardNumber,channelId,transactionTypeId,settlementTransactionAmount,transactionNumberAcquirer);
+        return operations.calculateCommisionCMS(cardNumber,channelId,transactionTypeId,settlementTransactionAmount,transactionNumberAcquirer);
     }
     @WebMethod
     public CardResponse calculatesCheckDigitLunh(

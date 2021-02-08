@@ -22,6 +22,7 @@ import com.alodiga.authorizer.cms.responses.ResponseCode;
 import com.alodiga.authorizer.cms.responses.CountryListResponse;
 import com.alodiga.authorizer.cms.responses.ValidateLimitsResponse;
 import com.alodiga.authorizer.cms.responses.TransactionFeesResponse;
+import com.alodiga.authorizer.cms.responses.TransactionResponse;
 import java.sql.Timestamp;
 import com.cms.commons.enumeraciones.ChannelE;
 import com.cms.commons.enumeraciones.DocumentTypeE;
@@ -246,7 +247,7 @@ public class APIOperations {
         }
     }     
     
-    public TransactionFeesResponse calculateTransactionFees(String cardNumber, Integer channelId, Integer transactionTypeId, Float settlementTransactionAmount, String transactionNumberAcquirer) {
+    public TransactionFeesResponse calculateCommisionCMS(String cardNumber, Integer channelId, Integer transactionTypeId, Float settlementTransactionAmount, String transactionNumberAcquirer) {
         Card card = null;
         RateByCard rateByCard = null;
         RateByProduct rateByProduct = null;
@@ -258,8 +259,8 @@ public class APIOperations {
         Float fixedRate = 0.00F;
         Float percentRate = 0.00F; 
         String transactionNumberIssuer;
-        TransactionsManagement transactionFeeCharge = null;
-        TransactionsManagementHistory transactionHistoryFeeCharge = null;
+        TransactionsManagement transactionCommisionCMS = null;
+        TransactionsManagementHistory transactionHistoryCommisionCMS = null;
         
         //Se obtiene la tarjeta asociada a la transacción
         card = getCardByCardNumber(cardNumber);
@@ -316,47 +317,47 @@ public class APIOperations {
         //Si aplica la tarifa a la transacción se registra la transacción para guardar la comisión de Alodiga en la BD
         if (transactionFeesAmount > 0) {
             //Se obtiene el número de la transacción
-            transactionNumberIssuer = generateNumberSequence(getSequencesByDocumentTypeByOriginApplication(DocumentTypeE.TRANSACTION_FEE_CMS.getId(), Constants.ORIGIN_APPLICATION_CMS_ID));
+            transactionNumberIssuer = generateNumberSequence(getSequencesByDocumentTypeByOriginApplication(DocumentTypeE.COMMISION_CMS.getId(), Constants.ORIGIN_APPLICATION_CMS_ID));
 
             //Se guarda la comisión de Alodiga en la BD
-            transactionFeeCharge = new TransactionsManagement();
-            transactionFeeCharge.setTransactionNumberIssuer(transactionNumberIssuer);
-            transactionFeeCharge.setDateTransaction(new Date());
-            transactionFeeCharge.setChannelId(ChannelE.INT.getId());
-            transactionFeeCharge.setTransactionTypeId(TransactionE.TARIFA_TRANSACCION_CMS.getId());
-            transactionFeeCharge.setTransactionReference(transactionNumberAcquirer);
-            transactionFeeCharge.setCardHolder(card.getCardHolder());
-            transactionFeeCharge.setCardNumber(cardNumber);
-            transactionFeeCharge.setCvv(card.getSecurityCodeCard());
+            transactionCommisionCMS = new TransactionsManagement();
+            transactionCommisionCMS.setTransactionNumberIssuer(transactionNumberIssuer);
+            transactionCommisionCMS.setDateTransaction(new Date());
+            transactionCommisionCMS.setChannelId(ChannelE.INT.getId());
+            transactionCommisionCMS.setTransactionTypeId(TransactionE.COMISION_CMS.getId());
+            transactionCommisionCMS.setTransactionReference(transactionNumberAcquirer);
+            transactionCommisionCMS.setCardHolder(card.getCardHolder());
+            transactionCommisionCMS.setCardNumber(cardNumber);
+            transactionCommisionCMS.setCvv(card.getSecurityCodeCard());
             String pattern = "MMyy";
             SimpleDateFormat simpleDateFormat = new SimpleDateFormat(pattern);
             String expirationCardDate = simpleDateFormat.format(card.getExpirationDate());
-            transactionFeeCharge.setExpirationCardDate(expirationCardDate);
-            transactionFeeCharge.setSettlementTransactionAmount(transactionFeesAmount);
-            transactionFeeCharge.setSettlementCurrencyTransactionId(card.getProductId().getDomesticCurrencyId().getId());
-            transactionFeeCharge.setStatusTransactionManagementId(StatusTransactionManagementE.APPROVED.getId());
-            transactionFeeCharge.setCreateDate(new Timestamp(new Date().getTime()));
-            entityManager.persist(transactionFeeCharge);
+            transactionCommisionCMS.setExpirationCardDate(expirationCardDate);
+            transactionCommisionCMS.setSettlementTransactionAmount(transactionFeesAmount);
+            transactionCommisionCMS.setSettlementCurrencyTransactionId(card.getProductId().getDomesticCurrencyId().getId());
+            transactionCommisionCMS.setStatusTransactionManagementId(StatusTransactionManagementE.APPROVED.getId());
+            transactionCommisionCMS.setCreateDate(new Timestamp(new Date().getTime()));
+            entityManager.persist(transactionCommisionCMS);
 
-            transactionHistoryFeeCharge = new TransactionsManagementHistory();
-            transactionHistoryFeeCharge.setTransactionNumberIssuer(transactionNumberIssuer);
-            transactionHistoryFeeCharge.setDateTransaction(new Date());
-            transactionHistoryFeeCharge.setChannelId(ChannelE.INT.getId());
-            transactionHistoryFeeCharge.setTransactionTypeId(TransactionE.TARIFA_TRANSACCION_CMS.getId());
-            transactionHistoryFeeCharge.setTransactionReference(transactionNumberAcquirer);
-            transactionHistoryFeeCharge.setCardHolder(card.getCardHolder());
-            transactionHistoryFeeCharge.setCardNumber(cardNumber);
-            transactionHistoryFeeCharge.setCvv(card.getSecurityCodeCard());
-            transactionHistoryFeeCharge.setExpirationCardDate(expirationCardDate);
-            transactionHistoryFeeCharge.setSettlementTransactionAmount(transactionFeesAmount);
-            transactionHistoryFeeCharge.setSettlementCurrencyTransactionId(card.getProductId().getDomesticCurrencyId().getId());
-            transactionHistoryFeeCharge.setStatusTransactionManagementId(StatusTransactionManagementE.APPROVED.getId());
-            transactionHistoryFeeCharge.setCreateDate(new Timestamp(new Date().getTime()));
-            entityManager.persist(transactionHistoryFeeCharge);
+            transactionHistoryCommisionCMS = new TransactionsManagementHistory();
+            transactionHistoryCommisionCMS.setTransactionNumberIssuer(transactionNumberIssuer);
+            transactionHistoryCommisionCMS.setDateTransaction(new Date());
+            transactionHistoryCommisionCMS.setChannelId(ChannelE.INT.getId());
+            transactionHistoryCommisionCMS.setTransactionTypeId(TransactionE.COMISION_CMS.getId());
+            transactionHistoryCommisionCMS.setTransactionReference(transactionNumberAcquirer);
+            transactionHistoryCommisionCMS.setCardHolder(card.getCardHolder());
+            transactionHistoryCommisionCMS.setCardNumber(cardNumber);
+            transactionHistoryCommisionCMS.setCvv(card.getSecurityCodeCard());
+            transactionHistoryCommisionCMS.setExpirationCardDate(expirationCardDate);
+            transactionHistoryCommisionCMS.setSettlementTransactionAmount(transactionFeesAmount);
+            transactionHistoryCommisionCMS.setSettlementCurrencyTransactionId(card.getProductId().getDomesticCurrencyId().getId());
+            transactionHistoryCommisionCMS.setStatusTransactionManagementId(StatusTransactionManagementE.APPROVED.getId());
+            transactionHistoryCommisionCMS.setCreateDate(new Timestamp(new Date().getTime()));
+            entityManager.persist(transactionHistoryCommisionCMS);
         } else {
             return new TransactionFeesResponse(ResponseCode.SUCCESS.getCode(),"The transaction received did not generate commission to be charged");
         }     
-        return new TransactionFeesResponse(ResponseCode.SUCCESS.getCode(),"The transaction to record the Alodiga commission corresponding to the received transaction was successfully saved in the database.",transactionFeesAmount,transactionFeeCharge); 
+        return new TransactionFeesResponse(ResponseCode.SUCCESS.getCode(),"The transaction to record the Alodiga commission corresponding to the received transaction was successfully saved in the database.",transactionFeesAmount,transactionCommisionCMS); 
     }
     
     private RateByCard getRateByCard(Long cardId, Integer channelId, Integer transactionTypeId) {
@@ -588,36 +589,68 @@ public class APIOperations {
     }
      
     public CardResponse validateCard(String cardNumber, String ARQC, String cardHolder, String CVV, String cardDueDate) {
-        CardResponse validateCard = getValidateCard(cardNumber);
-        //Se valida que la tarjeta exista en la BD del CMS
-        if (validateCard.getCodigoRespuesta().equals(ResponseCode.CARD_EXISTS.getCode())) {
-            CardResponse verifyActiveCard = verifyActiveCard(cardNumber);
-            //Se valida que la tarjeta este en estatus ACTIVA
-            if (verifyActiveCard.getCodigoRespuesta().equals(ResponseCode.SUCCESS.getCode())) {
-                CardResponse validateCardByLUNH = getValidateCardByLUNH(cardNumber);
-                //Se valida el dígito verificador de la tarjeta a través de algoritmo de LUHN
-                if (getValidateCardByLUNH(cardNumber).getCodigoRespuesta().equals(ResponseCode.SUCCESS.getCode())) {
-                    CardResponse validateCVVAndDueDate = getValidateCVVAndDueDateCard(cardNumber, CVV, cardDueDate);
-                    //Se valida el CVV y la fecha de vencimiento de la tarjeta
-                    if (validateCVVAndDueDate.getCodigoRespuesta().equals(ResponseCode.SUCCESS.getCode())) {
-                        //Se valida el nombre del cliente en la tarjeta (CardHolder)
-                        CardResponse validateCardHolder = validateCardByCardHolder(cardNumber, cardHolder);
-                        if (validateCardHolder.getCodigoRespuesta().equals(ResponseCode.SUCCESS.getCode())) {
-                            return new CardResponse(ResponseCode.SUCCESS.getCode(), "The Card is Valid");
+        try {
+            CardResponse validateCard = getValidateCard(cardNumber);
+            //Se valida que la tarjeta exista en la BD del CMS
+            if (validateCard.getCodigoRespuesta().equals(ResponseCode.CARD_EXISTS.getCode())) {
+                CardResponse verifyActiveCard = verifyActiveCard(cardNumber);
+                //Se valida que la tarjeta este en estatus ACTIVA
+                if (verifyActiveCard.getCodigoRespuesta().equals(ResponseCode.SUCCESS.getCode())) {
+                    CardResponse validateCardByLUNH = getValidateCardByLUNH(cardNumber);
+                    //Se valida el dígito verificador de la tarjeta a través de algoritmo de LUHN
+                    if (getValidateCardByLUNH(cardNumber).getCodigoRespuesta().equals(ResponseCode.SUCCESS.getCode())) {
+                        CardResponse validateCVVAndDueDate = getValidateCVVAndDueDateCard(cardNumber, CVV, cardDueDate);
+                        //Se valida el CVV y la fecha de vencimiento de la tarjeta
+                        if (validateCVVAndDueDate.getCodigoRespuesta().equals(ResponseCode.SUCCESS.getCode())) {
+                            //Se valida el nombre del cliente en la tarjeta (CardHolder)
+                            CardResponse validateCardHolder = validateCardByCardHolder(cardNumber, cardHolder);
+                            if (validateCardHolder.getCodigoRespuesta().equals(ResponseCode.THE_CARDHOLDER_IS_VERIFIED.getCode())) {
+                                return new CardResponse(ResponseCode.SUCCESS.getCode(), "The Card is Valid");
+                            } else {
+                                return validateCardHolder;
+                            }
                         } else {
-                            return validateCardHolder;
+                            return validateCVVAndDueDate;
                         }
                     } else {
-                        return validateCVVAndDueDate;
+                        return validateCardByLUNH;
                     }
                 } else {
-                    return validateCardByLUNH;
+                    return verifyActiveCard;
                 }
             } else {
-                return verifyActiveCard;
+                return validateCard;
             }
+        } catch (Exception e) {
+            return new CardResponse(ResponseCode.INTERNAL_ERROR.getCode(), "an unexpected error occurred");
+        }
+        
+    }
+    
+    public TransactionResponse activateCard(String cardNumber, String cardHolder, String CVV, String cardDueDate, String documentIdentificationNumber, 
+                                            String numberPhoneCustomer, Date dateBirth, String emailCustomer, Long messageMiddlewareId,
+                                            Integer transactionTypeId, Integer channelId, Date transactionDate, Timestamp localTimeTransaction,
+                                            String acquirerTerminalCodeId, Integer acquirerCountryId) {
+        
+        String ARQC = null;
+        
+        try {
+        //Se valida la tarjeta
+        CardResponse validateCard = validateCard(cardNumber, ARQC, cardHolder, CVV, cardDueDate);
+        if (validateCard.getCodigoRespuesta().equals(ResponseCode.SUCCESS.getCode())) {
+            //Se registra la transacción en el CMS
+            
+            
+            
+            
         } else {
-            return validateCard;
+            return new TransactionResponse(ResponseCode.INTERNAL_ERROR.getCode(), validateCard.getMensajeRespuesta());
+        }
+         return new TransactionResponse();    
+        
+        
+        } catch (Exception e) {
+            return new TransactionResponse(ResponseCode.INTERNAL_ERROR.getCode(), "an unexpected error occurred");
         }
     }
 
