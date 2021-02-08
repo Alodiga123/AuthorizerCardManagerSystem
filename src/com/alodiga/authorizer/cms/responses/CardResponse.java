@@ -1,6 +1,5 @@
 package com.alodiga.authorizer.cms.responses;
 import com.cms.commons.models.Card;
-import java.io.Serializable;
 import java.util.Date;
 
 import javax.xml.bind.annotation.XmlAccessType;
