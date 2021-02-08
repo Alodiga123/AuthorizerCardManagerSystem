@@ -26,6 +26,7 @@ import com.alodiga.authorizer.cms.responses.TransactionFeesResponse;
 import java.sql.Timestamp;
 import com.cms.commons.enumeraciones.ChannelE;
 import com.cms.commons.enumeraciones.DocumentTypeE;
+import com.cms.commons.enumeraciones.ProgramLoyaltyTypeE;
 import com.cms.commons.enumeraciones.StatusTransactionManagementE;
 import com.cms.commons.enumeraciones.TransactionE;
 import com.cms.commons.enumeraciones.StatusCardE;
@@ -36,6 +37,7 @@ import com.cms.commons.models.DaysWeek;
 import com.cms.commons.models.ProductHasChannelHasTransaction;
 import com.cms.commons.models.ProgramLoyalty;
 import com.cms.commons.models.ProgramLoyaltyTransaction;
+import com.cms.commons.models.ProgramLoyaltyType;
 import com.cms.commons.models.RateByCard;
 import com.cms.commons.models.RateByProduct;
 import com.cms.commons.models.Sequences;
@@ -596,7 +598,7 @@ public class APIOperations {
         return result.get(0)!=null ? (double) result.get(0) : 0f;
     }
     
-     private Country getCountry(String countryCode) {
+    private Country getCountry(String countryCode) {
         try {
             Query query = entityManager.createQuery("SELECT c FROM Country c WHERE c.code = '" + countryCode + "'");
             query.setMaxResults(1);
@@ -637,16 +639,14 @@ public class APIOperations {
         if (checkActiveProgramLoyalty(programLoyalty.getId(),dayWeek.getId())){
             ProgramLoyaltyTransaction programLoyaltyTransaction = getProgramLoyaltyTransactionbyParam(programLoyalty.getId(),transactionTypeId, channelId);
             if (programLoyaltyTransaction.getTransactionId().getSubTypeTransactionId().getCode().equals(SubTransactionE.ADMINI.getCode())){
-                try {
-                    BonusCard bonusCard = new BonusCard();
-                    bonusCard.setCardId(card);
-                    bonusCard.setCreateDate(new Date());
-                    bonusCard.setProgramLoyaltyTransactionId(programLoyaltyTransaction);
-                    bonusCard.setUpdateDate(new Date());
-                    saveBonusCard(bonusCard);
-                } catch (Exception ex) {
-                    return new CalculateBonusResponse(ResponseCode.INTERNAL_ERROR, "Error");
-                }
+                // Guardar transaccion y ajustar bonificacion
+//                BonusCard bonusCard = getCurrentBonusCardByCardByDate(card.getId(),EjbUtils.getBeginningDate(new Date()), EjbUtils.getEndingDate(new Date()));
+//                bonusCard = updateBalanceBonusCard(bonusCard, card, programLoyaltyTransaction, programLoyaltyTransaction.getTotalBonificationValue(), programLoyaltyTransaction.getTotalPointsValue().intValue(),  programLoyaltyTransaction.getProgramLoyaltyId().getProgramLoyaltyTypeId());
+//                try {
+//                    saveBonusCard(bonusCard);
+//                } catch (Exception ex) {
+//                    return new CalculateBonusResponse(ResponseCode.INTERNAL_ERROR, "Error");
+//                }
             }
             totalTransactionsByCardDaily = getTransactionsByCardByTransactionByProductCurrentDate(cardNumber, EjbUtils.getBeginningDate(new Date()), EjbUtils.getEndingDate(new Date()), transactionTypeId, channelId, ResponseCode.SUCCESS.getCode(),isTransactionLocal, country.getId());
             if ((totalTransactionsByCardDaily + 1) > programLoyaltyTransaction.getTotalMaximumTransactions()) {
@@ -728,5 +728,70 @@ public class APIOperations {
         return bonusCard;
     }
      
+    public TransactionsManagement saveTransactionsManagement(TransactionsManagement transactionsManagement) throws Exception{
+        try {
+            if (transactionsManagement.getId()==null)
+                entityManager.persist(transactionsManagement);
+            else
+                entityManager.merge(transactionsManagement);
+        } catch (Exception e) {
+            e.printStackTrace();
+           throw new Exception();
+        }
+        return transactionsManagement;
+    }
+     
+   public TransactionsManagementHistory saveTransactionsManagementHistory(TransactionsManagementHistory transactionsManagement) throws Exception{
+        try {
+            if (transactionsManagement.getId()==null)
+                entityManager.persist(transactionsManagement);
+            else
+                entityManager.merge(transactionsManagement);
+        } catch (Exception e) {
+            e.printStackTrace();
+           throw new Exception();
+        }
+        return transactionsManagement;
+    }
+   
+    private BonusCard getCurrentBonusCardByCardByDate(Long cardId,Date begginingDateTime, Date endingDateTime) {
+        String sql = "SELECT b FROM BonusCard b WHERE t.createDate between ?1 AND ?2 AND t.cardId.id = ?3";
+        StringBuilder sqlBuilder = new StringBuilder(sql);
+        Query query = entityManager.createNativeQuery(sqlBuilder.toString());
+        query.setParameter("1", begginingDateTime);
+        query.setParameter("2", endingDateTime);
+        query.setParameter("3", cardId);
+        try{
+        BonusCard result = (BonusCard) query.setHint("toplink.refresh", "true").getSingleResult();
+            return result;
+        } catch (NoResultException e) {
+            return null;
+        }       
+    } 
+    
+     private BonusCard updateBalanceBonusCard(BonusCard bonusCard,Card card, ProgramLoyaltyTransaction programLoyaltyTransaction,float amountBonus,int points, ProgramLoyaltyType programLoyaltyType){
+         float newBalance = 0f;
+         int newPoints = 0;
+         if (bonusCard == null){
+             bonusCard.setCardId(card);
+             bonusCard.setCreateDate(new Date());
+             bonusCard.setProgramLoyaltyTransactionId(programLoyaltyTransaction);
+             bonusCard.setUpdateDate(new Date());
+             if (programLoyaltyType.getCode().equals(ProgramLoyaltyTypeE.BONIFICACION.getCode()))
+                 bonusCard.setTotalAmountBonuses(amountBonus);
+             else
+                 bonusCard.setTotalPointsAccumulatedDaily(points);
+         }else{
+             bonusCard.setUpdateDate(new Date());
+             if (programLoyaltyType.getCode().equals(ProgramLoyaltyTypeE.BONIFICACION.getCode())){
+                 newBalance = bonusCard.getTotalAmountBonuses() + amountBonus;
+                 bonusCard.setTotalAmountBonuses(newBalance);
+             }else{
+                 newPoints = bonusCard.getTotalPointsAccumulatedDaily() + points;
+                 bonusCard.setTotalPointsAccumulatedDaily(newPoints);
+             }
+         }
+         return bonusCard;
+     }
 
 }
