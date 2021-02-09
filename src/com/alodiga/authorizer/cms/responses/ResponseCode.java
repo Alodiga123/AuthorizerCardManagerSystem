@@ -21,8 +21,7 @@ public enum ResponseCode {
       
     //Mensajes Status Card
     CARD_EXISTS("50","The Card exists in the Card Manager System database"),
-    CARD_NOT_EXISTS("51","The card does not exist in the Card Manager System database"),  
-    
+    CARD_NOT_EXISTS("51","The card does not exist in the Card Manager System database"),      
     THE_CARDHOLDER_IS_VERIFIED("145","Cardholder data has been successfully verified"),
     THE_CARDHOLDER_NOT_MATCH("145","Cardholder details do not match"),
     CARD_OWNER_NOT_FOUND("146","Error finding card owner"),
