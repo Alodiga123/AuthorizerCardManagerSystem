@@ -9,6 +9,7 @@ public enum ResponseCode {
     INVALID_CREDENTIALS("05",""),
     BLOCKED_USER("06",""),
     COUNTRY_NOT_FOUND("07","The country not found"),
+    CHANNEL_NOT_FOUND("07","The channel not found"),
     INTERNAL_ERROR("99",""),
     
      //Validacion de Limites
@@ -25,6 +26,7 @@ public enum ResponseCode {
     
     //validaciones para calcular bonificaciones
     PROGRAM_LOYALTY_BY_CARD_NOT_EXISTS("60","The card does not have a loyalty program associated with it"), 
+    TRANSACTION_MANAGER_BY_NUMBER_NOT_EXISTS("60","The transaction number does not exist"), 
     
     THE_CARDHOLDER_IS_VERIFIED("145","Cardholder data has been successfully verified"),
     THE_CARDHOLDER_NOT_MATCH("145","Cardholder details do not match"),

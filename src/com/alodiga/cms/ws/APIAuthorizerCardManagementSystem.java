@@ -96,8 +96,9 @@ public class APIAuthorizerCardManagementSystem {
         @WebParam(name = "channelId") Integer channelId,
         @WebParam(name = "commerceId") Long commerceId,
         @WebParam(name = "countryCode") String countryCode,
-        @WebParam(name = "amountTransaction") Float amountTransaction)   {
-        return operations.calculateBonus(cardNumber, transactionTypeId, channelId,commerceId,countryCode,amountTransaction);
+        @WebParam(name = "amountTransaction") Float amountTransaction,
+        @WebParam(name = "transactionNumber") String transactionNumber){
+        return operations.calculateBonus(cardNumber, transactionTypeId, channelId,commerceId,countryCode,amountTransaction,transactionNumber);
     }
     
 }
