@@ -33,11 +33,24 @@ public enum ResponseCode {
     CARD_OWNER_NOT_FOUND("146","Error finding card owner"),
     CARD_NOT_FOUND("147","Error finding the card to verify cardholder data"),
     THE_CARD_IS_NOT_ACTIVE("148", ""),
+    THE_IDENTIFICATION_NUMBER_IS_VERIFIED("150","The identification number matches"),
+    THE_IDENTIFICATION_NUMBER_NOT_MATCH("149","The identification number does not match"),
+    THE_CARD_STATUS_NOT_BE_CHANGED("151",""),
+    CVV_DIFFERENT("152","The CVV is Different"),
+    DATE_DIFFERENT("153","Expiration Date is Different"),
+    ACCOUNT_NOT_ASSOCIATED("154","There is no Account Associated with the Card"),
+    
+    
     
     //Cáculo Tarifas CMS
     RATE_BY_CARD_NOT_FOUND("401","The rate for the card has not been defined"),
-    RATE_BY_PRODUCT_NOT_FOUND("403","The rate for the product has not been defined");
+    RATE_BY_PRODUCT_NOT_FOUND("403","The rate for the product has not been defined"),
     
+    //Algoritmo LUNH
+    
+    
+    //Consulta de Saldo
+    INVALID_CARD("70","INVALID CARD");
            
     private final String code;
     private final String message;
