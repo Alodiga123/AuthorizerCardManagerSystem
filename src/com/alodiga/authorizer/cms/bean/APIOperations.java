@@ -1209,43 +1209,54 @@ public class APIOperations {
        TransactionsManagement transactionsManagement = new TransactionsManagement();
        transactionsManagement.setAcquirerTerminalCode(management.getAcquirerTerminalCode());
        transactionsManagement.setAcquirerCountryId(management.getAcquirerCountryId());
-       transactionsManagement.setTransactionNumberIssuer(transactionNumber);
-       transactionsManagement.setAcquirerSettlementCommissionAmount(0F);
+       String transactionNumberIssuer = generateNumberSequence(getSequencesByDocumentTypeByOriginApplication(DocumentTypeE.BONUS_TRANSACTION_CMS.getId(), Constants.ORIGIN_APPLICATION_CMS_ID));
+       transactionsManagement.setTransactionNumberIssuer(transactionNumberIssuer);
+       transactionsManagement.setTransactionDateIssuer(new Timestamp(new Date().getTime()));
+       transactionsManagement.setTransactionTypeId(TransactionE.BONIFICACIONES.getId());
+       transactionsManagement.setChannelId(channelId);
+       transactionsManagement.setDateTransaction(management.getDateTransaction());
+       transactionsManagement.setTransactionReference(transactionNumber);
+       transactionsManagement.setSettlementTransactionAmount(bonusAmount);
+       transactionsManagement.setSettlementCurrencyTransactionId(currencyId);  
+       transactionsManagement.setStatusTransactionManagementId(StatusTransactionManagementE.APPROVED.getId());
        transactionsManagement.setCardHolder(management.getCardHolder());
        transactionsManagement.setCardNumber(management.getCardNumber());
        transactionsManagement.setChannelId(channelId);
-       transactionsManagement.setCreateDate(new Date());
        transactionsManagement.setCvv(management.getCvv());
-       transactionsManagement.setDateTimeTransmissionTerminal(management.getDateTimeTransmissionTerminal());
-       transactionsManagement.setDateTransaction(management.getDateTransaction());
        transactionsManagement.setExpirationCardDate(management.getExpirationCardDate());
        transactionsManagement.setIssuerId(management.getIssuerId());
-       transactionsManagement.setSettlementTransactionAmount(bonusAmount);
-       transactionsManagement.setSettlementCurrencyTransactionId(currencyId);
-       transactionsManagement.setUpdateDate(new Date());
-       transactionsManagement.setTransactionReference(transactionNumber);
+       transactionsManagement.setMccCodeTrade(management.getMccCodeTrade());
+       transactionsManagement.setTradeName(management.getTradeName());
+       transactionsManagement.setResponseCode("00 APROBADA");
+       transactionsManagement.setCreateDate(new Date());
+       
        return transactionsManagement;
    }
    
    public TransactionsManagementHistory createTransactionsManagementHistory(TransactionsManagement management, int channelId, Float bonusAmount, int currencyId, String transactionNumber){
        TransactionsManagementHistory transactionsManagement = new TransactionsManagementHistory();
-       transactionsManagement.setAcquirerCommisionAmount(0F);
+       transactionsManagement.setAcquirerTerminalCode(management.getAcquirerTerminalCode());
        transactionsManagement.setAcquirerCountryId(management.getAcquirerCountryId());
-       transactionsManagement.setAcquirerId(management.getAcquirerId());
-       transactionsManagement.setAcquirerSettlementCommissionAmount(0F);
+       String transactionNumberIssuer = generateNumberSequence(getSequencesByDocumentTypeByOriginApplication(DocumentTypeE.BONUS_TRANSACTION_CMS.getId(), Constants.ORIGIN_APPLICATION_CMS_ID));
+       transactionsManagement.setTransactionNumberIssuer(transactionNumberIssuer);
+       transactionsManagement.setTransactionDateIssuer(new Timestamp(new Date().getTime()));
+       transactionsManagement.setTransactionTypeId(TransactionE.BONIFICACIONES.getId());
+       transactionsManagement.setChannelId(channelId);
+       transactionsManagement.setDateTransaction(management.getDateTransaction());
+       transactionsManagement.setTransactionReference(transactionNumber);
+       transactionsManagement.setSettlementTransactionAmount(bonusAmount);
+       transactionsManagement.setSettlementCurrencyTransactionId(currencyId);  
+       transactionsManagement.setStatusTransactionManagementId(StatusTransactionManagementE.APPROVED.getId());
        transactionsManagement.setCardHolder(management.getCardHolder());
        transactionsManagement.setCardNumber(management.getCardNumber());
        transactionsManagement.setChannelId(channelId);
-       transactionsManagement.setCreateDate(new Date());
        transactionsManagement.setCvv(management.getCvv());
-       transactionsManagement.setDateTimeTransmissionTerminal(management.getDateTimeTransmissionTerminal());
-       transactionsManagement.setDateTransaction(management.getDateTransaction());
        transactionsManagement.setExpirationCardDate(management.getExpirationCardDate());
        transactionsManagement.setIssuerId(management.getIssuerId());
-       transactionsManagement.setSettlementTransactionAmount(bonusAmount);
-       transactionsManagement.setSettlementCurrencyTransactionId(currencyId);
-       transactionsManagement.setUpdateDate(new Date());
-       transactionsManagement.setTransactionReference(transactionNumber);
+       transactionsManagement.setMccCodeTrade(management.getMccCodeTrade());
+       transactionsManagement.setTradeName(management.getTradeName());
+       transactionsManagement.setResponseCode("00 APROBADA");
+       transactionsManagement.setCreateDate(new Date());
        return transactionsManagement;
    }
    
