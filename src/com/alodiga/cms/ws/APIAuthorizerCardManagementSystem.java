@@ -6,7 +6,7 @@ import javax.jws.WebParam;
 import javax.jws.WebService;
 import org.apache.log4j.Logger;
 import com.alodiga.authorizer.cms.bean.APIOperations;
-import com.alodiga.authorizer.cms.responses.CalculateBonusResponse;
+import com.alodiga.authorizer.cms.responses.CalculateBonusCardResponse;
 import com.alodiga.authorizer.cms.responses.CountryListResponse;
 import com.alodiga.authorizer.cms.responses.CardResponse;
 import com.alodiga.authorizer.cms.responses.OperationCardBalanceInquiryResponse;
@@ -153,15 +153,14 @@ public class APIAuthorizerCardManagementSystem {
     }
       
     @WebMethod    
-    public CalculateBonusResponse calculateBonus(
+    public CalculateBonusCardResponse calculateBonus(
         @WebParam(name = "cardNumber") String cardNumber,
         @WebParam(name = "transactionTypeId") Integer transactionTypeId,
         @WebParam(name = "channelId") Integer channelId,
-        @WebParam(name = "commerceId") Long commerceId,
         @WebParam(name = "countryCode") String countryCode,
         @WebParam(name = "amountTransaction") Float amountTransaction,
         @WebParam(name = "transactionNumber") String transactionNumber){
-        return operations.calculateBonus(cardNumber, transactionTypeId, channelId,commerceId,countryCode,amountTransaction,transactionNumber);
+        return operations.calculateBonus(cardNumber, transactionTypeId, channelId,countryCode,amountTransaction,transactionNumber);
     }
     
 }

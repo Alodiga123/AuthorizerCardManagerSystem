@@ -1,6 +1,6 @@
 package com.alodiga.authorizer.cms.bean;
 
-import com.alodiga.authorizer.cms.responses.CalculateBonusResponse;
+import com.alodiga.authorizer.cms.responses.CalculateBonusCardResponse;
 import com.cms.commons.models.Country;
 import com.cms.commons.models.Card;
 import com.cms.commons.models.NaturalCustomer;
@@ -988,7 +988,7 @@ public class APIOperations {
         }
     }
      
-     public CalculateBonusResponse calculateBonus(String cardNumber, Integer transactionTypeId, Integer channelId, Long commerceId, String countryCode,Float amountTransaction, String transactionNumber){   
+     public CalculateBonusCardResponse calculateBonus(String cardNumber, Integer transactionTypeId, Integer channelId, String countryCode,Float amountTransaction, String transactionNumber){   
         Long totalTransactionsByCardDaily = 0L;
         Double totalAmountByCardDaily = 0.00D;
         Long totalTransactionsByCardMonthly = 0L;
@@ -998,26 +998,26 @@ public class APIOperations {
         
         
         if (cardNumber == null || countryCode ==null || transactionNumber  == null)
-            return new CalculateBonusResponse(ResponseCode.INVALID_DATA, "The invalid data");
+            return new CalculateBonusCardResponse(ResponseCode.INVALID_DATA, "The invalid data");
         
         TransactionsManagement transactionsManagement = getTransactionsManagementByNumber(transactionNumber);
         if (transactionsManagement==null)
-             return new CalculateBonusResponse(ResponseCode.TRANSACTION_MANAGER_BY_NUMBER_NOT_EXISTS, ResponseCode.TRANSACTION_MANAGER_BY_NUMBER_NOT_EXISTS.getMessage());
+             return new CalculateBonusCardResponse(ResponseCode.TRANSACTION_MANAGER_BY_NUMBER_NOT_EXISTS, ResponseCode.TRANSACTION_MANAGER_BY_NUMBER_NOT_EXISTS.getMessage());
        
         Card card = getCardByCardNumber(cardNumber);
         if (card==null)
-             return new CalculateBonusResponse(ResponseCode.CARD_NOT_EXISTS, ResponseCode.CARD_NOT_FOUND.getMessage());
+             return new CalculateBonusCardResponse(ResponseCode.CARD_NOT_EXISTS, ResponseCode.CARD_NOT_FOUND.getMessage());
         
         Country country = getCountry(countryCode);
         if (country==null)
-            return new CalculateBonusResponse(ResponseCode.COUNTRY_NOT_FOUND, ResponseCode.COUNTRY_NOT_FOUND.getMessage());
+            return new CalculateBonusCardResponse(ResponseCode.COUNTRY_NOT_FOUND, ResponseCode.COUNTRY_NOT_FOUND.getMessage());
         
         if (country.getId().equals(card.getProductId().getCountryId().getId()))
             isTransactionLocal = true;
         
         ProgramLoyalty programLoyalty = getProgramLoyaltybyProductId(card.getProductId().getId());
         if (programLoyalty==null)
-             return new CalculateBonusResponse(ResponseCode.PROGRAM_LOYALTY_BY_CARD_NOT_EXISTS, ResponseCode.PROGRAM_LOYALTY_BY_CARD_NOT_EXISTS.getMessage());
+             return new CalculateBonusCardResponse(ResponseCode.PROGRAM_LOYALTY_BY_CARD_NOT_EXISTS, ResponseCode.PROGRAM_LOYALTY_BY_CARD_NOT_EXISTS.getMessage());
         
         DaysWeek dayWeek = getDaysWeekByDate();
         boolean addBonus = false;
@@ -1061,7 +1061,7 @@ public class APIOperations {
                          bonusCard = updateBonusCard(bonusCard, programLoyaltyTransaction.getTotalPointsValue().intValue(), true); // actualizar los puntos por tarjeta
                          saveBonusCard(bonusCard);
                      } catch (Exception ex) {
-                         return new CalculateBonusResponse(ResponseCode.INTERNAL_ERROR, "Error add points");
+                         return new CalculateBonusCardResponse(ResponseCode.INTERNAL_ERROR, "Error add points");
                      }
                  } else {
                      try {
@@ -1084,12 +1084,12 @@ public class APIOperations {
                          balanceHistory.setCreateDate(balanceHistoryDate);
                          entityManager.persist(balanceHistory);
                      } catch (Exception ex) {
-                         return new CalculateBonusResponse(ResponseCode.INTERNAL_ERROR, "Error save transactionManagement");
+                         return new CalculateBonusCardResponse(ResponseCode.INTERNAL_ERROR, "Error save transactionManagement");
                      }
                  }
              }
          }
-        return new CalculateBonusResponse(ResponseCode.SUCCESS, "SUCCESS");
+        return new CalculateBonusCardResponse(ResponseCode.SUCCESS, "SUCCESS");
     }
      
     private ProgramLoyalty getProgramLoyaltybyProductId(Long productId) {
