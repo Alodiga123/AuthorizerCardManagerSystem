@@ -30,9 +30,9 @@ public enum ResponseCode {
     THE_IDENTIFICATION_NUMBER_IS_VERIFIED("150","The identification number matches"),
     THE_IDENTIFICATION_NUMBER_NOT_MATCH("149","The identification number does not match"),
     THE_CARD_STATUS_NOT_BE_CHANGED("151",""),
-    CVV_DIFFERENT("149","The CVV is Different"),
-    DATE_DIFFERENT("150","Expiration Date is Different"),
-    ACCOUNT_NOT_ASSOCIATED("151","There is no Account Associated with the Card"),
+    CVV_DIFFERENT("152","The CVV is Different"),
+    DATE_DIFFERENT("153","Expiration Date is Different"),
+    ACCOUNT_NOT_ASSOCIATED("154","There is no Account Associated with the Card"),
     
     
     
