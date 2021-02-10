@@ -39,6 +39,7 @@ import com.cms.commons.models.BonusCard;
 import com.cms.commons.models.Channel;
 import com.cms.commons.models.DaysWeek;
 import com.cms.commons.models.CardStatus;
+import com.cms.commons.models.DaysWeekHasProgramLoyalty;
 import com.cms.commons.models.Product;
 import com.cms.commons.models.ProductHasChannelHasTransaction;
 import com.cms.commons.models.ProgramLoyalty;
@@ -280,7 +281,7 @@ public class APIOperations {
         Long totalTransactionsPerMonthByCard = 0L;
         int transactionsInitialExempt = 0;
         int transactionExemptPerMonth = 0;
-        Float transactionFeesAmount = 0.00F;
+        Float transactionCommisionAmount = 0.00F;
         Float fixedRate = 0.00F;
         Float percentRate = 0.00F;
         String transactionNumberIssuer;
@@ -321,26 +322,26 @@ public class APIOperations {
         totalTransactionsByCard = getTotalTransactionsByCard(card.getCardNumber(), channelId, transactionTypeId);
         if (totalTransactionsByCard > transactionsInitialExempt) {
             if (fixedRate != null) {
-                transactionFeesAmount = fixedRate;
+                transactionCommisionAmount = fixedRate;
             } else {
-                transactionFeesAmount = (settlementTransactionAmount * percentRate) / 100;
+                transactionCommisionAmount = (settlementTransactionAmount * percentRate) / 100;
             }
         }
 
         //2. Transacciones mensuales excentas
-        if (transactionFeesAmount == 0) {
+        if (transactionCommisionAmount == 0) {
             totalTransactionsPerMonthByCard = getTotalTransactionsByCardByDate(card.getCardNumber(), EjbUtils.getBeginningDateMonth(new Date()), EjbUtils.getEndingDateMonth(new Date()), channelId, transactionTypeId);
             if (totalTransactionsPerMonthByCard > transactionExemptPerMonth) {
                 if (fixedRate != null) {
-                    transactionFeesAmount = fixedRate;
+                    transactionCommisionAmount = fixedRate;
                 } else {
-                    transactionFeesAmount = (settlementTransactionAmount * percentRate) / 100;
+                    transactionCommisionAmount = (settlementTransactionAmount * percentRate) / 100;
                 }
             }
         }
 
         //Si aplica la tarifa a la transacción se registra la transacción para guardar la comisión de Alodiga en la BD
-        if (transactionFeesAmount > 0) {
+        if (transactionCommisionAmount > 0) {
             //Se obtiene el número de la transacción
             transactionNumberIssuer = generateNumberSequence(getSequencesByDocumentTypeByOriginApplication(DocumentTypeE.COMMISION_CMS.getId(), Constants.ORIGIN_APPLICATION_CMS_ID));
 
@@ -358,7 +359,7 @@ public class APIOperations {
             SimpleDateFormat simpleDateFormat = new SimpleDateFormat(pattern);
             String expirationCardDate = simpleDateFormat.format(card.getExpirationDate());
             transactionCommisionCMS.setExpirationCardDate(expirationCardDate);
-            transactionCommisionCMS.setSettlementTransactionAmount(transactionFeesAmount);
+            transactionCommisionCMS.setSettlementTransactionAmount(transactionCommisionAmount);
             transactionCommisionCMS.setSettlementCurrencyTransactionId(card.getProductId().getDomesticCurrencyId().getId());
             transactionCommisionCMS.setStatusTransactionManagementId(StatusTransactionManagementE.APPROVED.getId());
             transactionCommisionCMS.setCreateDate(new Timestamp(new Date().getTime()));
@@ -374,7 +375,7 @@ public class APIOperations {
             transactionHistoryCommisionCMS.setCardNumber(cardNumber);
             transactionHistoryCommisionCMS.setCvv(card.getSecurityCodeCard());
             transactionHistoryCommisionCMS.setExpirationCardDate(expirationCardDate);
-            transactionHistoryCommisionCMS.setSettlementTransactionAmount(transactionFeesAmount);
+            transactionHistoryCommisionCMS.setSettlementTransactionAmount(transactionCommisionAmount);
             transactionHistoryCommisionCMS.setSettlementCurrencyTransactionId(card.getProductId().getDomesticCurrencyId().getId());
             transactionHistoryCommisionCMS.setStatusTransactionManagementId(StatusTransactionManagementE.APPROVED.getId());
             transactionHistoryCommisionCMS.setCreateDate(new Timestamp(new Date().getTime()));
@@ -382,7 +383,7 @@ public class APIOperations {
         } else {
             return new TransactionFeesResponse(ResponseCode.SUCCESS.getCode(),"The transaction received did not generate commission to be charged");
         }     
-        return new TransactionFeesResponse(ResponseCode.SUCCESS.getCode(),"The transaction to record the Alodiga commission corresponding to the received transaction was successfully saved in the database.",transactionFeesAmount,transactionCommisionCMS); 
+        return new TransactionFeesResponse(ResponseCode.SUCCESS.getCode(),"The transaction to record the Alodiga commission corresponding to the received transaction was successfully saved in the database.",transactionCommisionAmount,transactionCommisionCMS); 
     }
 
     private RateByCard getRateByCard(Long cardId, Integer channelId, Integer transactionTypeId) {
@@ -658,16 +659,44 @@ public class APIOperations {
     public TransactionResponse activateCard(String cardNumber, String cardHolder, String CVV, String cardDueDate, String documentIdentificationNumber, 
                                             String numberPhoneCustomer, Date dateBirth, String emailCustomer, Long messageMiddlewareId,
                                             Integer transactionTypeId, Integer channelId, Date transactionDate, Timestamp localTimeTransaction,
-                                            String acquirerTerminalCodeId, Integer acquirerCountryId) {
+                                            String acquirerTerminalCodeId, String transactionNumberAcquirer, Integer acquirerCountryId) {
         
         String ARQC = null;
+        String transactionNumberIssuer;
+        TransactionsManagement transactionActivateCard = null;
+        TransactionsManagementHistory transactionHistoryActivateCard = null;
+        Card card = null;
         
         try {
         //Se valida la tarjeta
         CardResponse validateCard = validateCard(cardNumber, ARQC, cardHolder, CVV, cardDueDate);
         if (validateCard.getCodigoRespuesta().equals(ResponseCode.SUCCESS.getCode())) {
-            //Se registra la transacción en el CMS
+            //Se obtiene la tarjeta asociada a la transacción
+            card = getCardByCardNumber(cardNumber);
+        
+            //Se obtiene el número de la transacción
+            transactionNumberIssuer = generateNumberSequence(getSequencesByDocumentTypeByOriginApplication(DocumentTypeE.ACTIVATE_CARD.getId(), Constants.ORIGIN_APPLICATION_CMS_ID));
             
+            //Se validan si las respuestas del tarjetahabiente son correctas
+            
+
+            //Se registra la transacción de Activación de Tarjeta en el CMS
+            transactionActivateCard = new TransactionsManagement();
+            transactionActivateCard.setTransactionNumberIssuer(transactionNumberIssuer);
+            transactionActivateCard.setDateTransaction(new Date());
+            transactionActivateCard.setChannelId(ChannelE.INT.getId());
+            transactionActivateCard.setTransactionTypeId(TransactionE.ACTIVACION_TARJETA.getId());
+            transactionActivateCard.setTransactionReference(transactionNumberAcquirer);
+            transactionActivateCard.setCardHolder(card.getCardHolder());
+            transactionActivateCard.setCardNumber(cardNumber);
+            transactionActivateCard.setCvv(card.getSecurityCodeCard());
+            String pattern = "MMyy";
+            SimpleDateFormat simpleDateFormat = new SimpleDateFormat(pattern);
+            String expirationCardDate = simpleDateFormat.format(card.getExpirationDate());
+            transactionActivateCard.setExpirationCardDate(expirationCardDate);
+            transactionActivateCard.setStatusTransactionManagementId(StatusTransactionManagementE.INPROC.getId());
+            transactionActivateCard.setCreateDate(new Timestamp(new Date().getTime()));
+            entityManager.persist(transactionActivateCard);
             
             
             
@@ -1015,76 +1044,92 @@ public class APIOperations {
         if (country.getId().equals(card.getProductId().getCountryId().getId()))
             isTransactionLocal = true;
         
-        ProgramLoyalty programLoyalty = getProgramLoyaltybyProductId(card.getProductId().getId());
-        if (programLoyalty==null)
+        List<ProgramLoyalty> programLoyaltys = getProgramLoyaltybyProductId(card.getProductId().getId());
+        if (programLoyaltys.isEmpty())
              return new CalculateBonusCardResponse(ResponseCode.PROGRAM_LOYALTY_BY_CARD_NOT_EXISTS, ResponseCode.PROGRAM_LOYALTY_BY_CARD_NOT_EXISTS.getMessage());
-        
-        DaysWeek dayWeek = getDaysWeekByDate();
-        boolean addBonus = false;
-        if (checkActiveProgramLoyalty(programLoyalty.getId(),dayWeek.getId())){
-            ProgramLoyaltyTransaction programLoyaltyTransaction = getProgramLoyaltyTransactionbyParam(programLoyalty.getId(),transactionTypeId, channelId);
-            if (programLoyaltyTransaction.getTransactionId().getSubTypeTransactionId().getCode().equals(SubTransactionE.ADMINI.getCode())){
-                 addBonus = true;        
-            }
-            totalTransactionsByCardDaily = getTransactionsByCardByTransactionByProductCurrentDate(cardNumber, EjbUtils.getBeginningDate(new Date()), EjbUtils.getEndingDate(new Date()), transactionTypeId, channelId, ResponseCode.SUCCESS.getCode(),isTransactionLocal, country.getId());
-            if ((totalTransactionsByCardDaily + 1) > programLoyaltyTransaction.getTotalMaximumTransactions()) {
-                addBonus = true; 
-            }
-            totalAmountByCardDaily = getAmountMaxByUserByUserByTransactionByProductCurrentDate(cardNumber, EjbUtils.getBeginningDate(new Date()), EjbUtils.getEndingDate(new Date()), transactionTypeId, channelId, ResponseCode.SUCCESS.getCode(),isTransactionLocal, country.getId());
-            if ((totalAmountByCardDaily + amountTransaction) > Double.parseDouble(programLoyaltyTransaction.getTotalAmountDaily().toString())) {
-               addBonus = true; 
-            }
  
-            totalAmountByUserMonthly = getAmountMaxByUserByUserByTransactionByProductCurrentDate(cardNumber, EjbUtils.getBeginningDateMonth(new Date()), EjbUtils.getEndingDate(new Date()), transactionTypeId, channelId, ResponseCode.SUCCESS.getCode(),isTransactionLocal, country.getId());
-            if ((totalAmountByUserMonthly + amountTransaction) > Double.parseDouble(programLoyaltyTransaction.getTotalAmountMonthly().toString())) {
-                addBonus = true; 
-            }
-           // si la variable addBonus esta activa 
-            if (addBonus) {
-                 // Guardar transaccion y ajustar bonificacion
-                 if (programLoyaltyTransaction.getProgramLoyaltyId().getProgramLoyaltyTypeId().getCode().equals(ProgramLoyaltyTypeE.PUNTOS.getCode())) {
-                     try {
-                         TransactionPoint transactionPoint = new TransactionPoint();
-                         transactionPoint.setCardId(card);
-                         transactionPoint.setCreateDate(new Date());
-                         transactionPoint.setProgramLoyaltyTransactionId(programLoyaltyTransaction);
-                         transactionPoint.setPoints(programLoyaltyTransaction.getTotalPointsValue().intValue());
-                         transactionPoint.setTransactionReference(transactionNumber);
-                         saveTransactionPoint(transactionPoint);  // registrar transaccion de asignacion de puntos
-                         BonusCard bonusCard = getBonusCardByCardId(card.getId());
-                         if (bonusCard == null) {
-                             bonusCard = new BonusCard();
-                             bonusCard.setCardId(card);
-                             bonusCard.setCreateDate(new Date());
-                             bonusCard.setTotalPointsAccumulated(0);
-                         }
-                         bonusCard = updateBonusCard(bonusCard, programLoyaltyTransaction.getTotalPointsValue().intValue(), true); // actualizar los puntos por tarjeta
-                         saveBonusCard(bonusCard);
-                     } catch (Exception ex) {
-                         return new CalculateBonusCardResponse(ResponseCode.INTERNAL_ERROR, "Error add points");
+         for (ProgramLoyalty programLoyalty : programLoyaltys) {
+
+             DaysWeek dayWeek = getDaysWeekByDate();
+             boolean addBonus = false;
+             if (checkActiveProgramLoyalty(programLoyalty.getId(), dayWeek.getId())) {
+                 ProgramLoyaltyTransaction programLoyaltyTransaction = getProgramLoyaltyTransactionbyParam(programLoyalty.getId(), transactionTypeId, channelId);
+                 if (programLoyaltyTransaction != null) {
+                     if (programLoyaltyTransaction.getTransactionId().getSubTypeTransactionId().getCode().equals(SubTransactionE.ADMINI.getCode())) {
+                         addBonus = true;
                      }
-                 } else {
-                     try {
-                         TransactionsManagement newTransactionManagement = createTransactionsManagement(transactionsManagement, channelId, programLoyaltyTransaction.getTotalBonificationValue(), card.getProductId().getProgramId().getCurrencyId().getId(), transactionNumber);
-                         saveTransactionsManagement(transactionsManagement);
-                         TransactionsManagementHistory newTransactionManagementHistory = createTransactionsManagementHistory(transactionsManagement, channelId, programLoyaltyTransaction.getTotalBonificationValue(), card.getProductId().getProgramId().getCurrencyId().getId(), transactionNumber);
-                         saveTransactionsManagementHistory(newTransactionManagementHistory);
-                         //actualiazar balance_history
-                         BalanceHistoryCard balanceHistoryOld = loadLastBalanceHistoryByCard(card.getId());
-                         BalanceHistoryCard balanceHistory = new BalanceHistoryCard();
-                         balanceHistory.setId(null);
-                         balanceHistory.setCardUserId(card);
-                         Float previosAmount = balanceHistoryOld!=null?balanceHistoryOld.getCurrentBalance():0f;
-                         balanceHistory.setPreviousBalance(previosAmount);
-                         Float currentAmount = previosAmount + programLoyaltyTransaction.getTotalBonificationValue();
-                         balanceHistory.setCurrentBalance(currentAmount);
-                         balanceHistory.setTransactionsManagementId(newTransactionManagement);
-                         Date balanceDate = new Date();
-                         Timestamp balanceHistoryDate = new Timestamp(balanceDate.getTime());
-                         balanceHistory.setCreateDate(balanceHistoryDate);
-                         entityManager.persist(balanceHistory);
-                     } catch (Exception ex) {
-                         return new CalculateBonusCardResponse(ResponseCode.INTERNAL_ERROR, "Error save transactionManagement");
+                     totalTransactionsByCardDaily = getTransactionsByCardByTransactionByProductCurrentDate(cardNumber, EjbUtils.getBeginningDate(new Date()), EjbUtils.getEndingDate(new Date()), transactionTypeId, channelId, ResponseCode.SUCCESS.getCode(), isTransactionLocal, country.getId());
+                     if (programLoyaltyTransaction.getTotalMaximumTransactions() != null) {
+                         if ((totalTransactionsByCardDaily + 1) > programLoyaltyTransaction.getTotalMaximumTransactions()) {
+                             addBonus = true;
+                         }
+                     }
+                     totalAmountByCardDaily = getAmountMaxByUserByUserByTransactionByProductCurrentDate(cardNumber, EjbUtils.getBeginningDate(new Date()), EjbUtils.getEndingDate(new Date()), transactionTypeId, channelId, ResponseCode.SUCCESS.getCode(), isTransactionLocal, country.getId());
+                     if (programLoyaltyTransaction.getTotalAmountDaily() != null) {
+                         if ((totalAmountByCardDaily + amountTransaction) > Double.parseDouble(programLoyaltyTransaction.getTotalAmountDaily().toString())) {
+                             addBonus = true;
+                         }
+                     }
+                     totalAmountByUserMonthly = getAmountMaxByUserByUserByTransactionByProductCurrentDate(cardNumber, EjbUtils.getBeginningDateMonth(new Date()), EjbUtils.getEndingDate(new Date()), transactionTypeId, channelId, ResponseCode.SUCCESS.getCode(), isTransactionLocal, country.getId());
+                     if (programLoyaltyTransaction.getTotalAmountMonthly() != null) {
+                         if ((totalAmountByUserMonthly + amountTransaction) > Double.parseDouble(programLoyaltyTransaction.getTotalAmountMonthly().toString())) {
+                             addBonus = true;
+                         }
+                     }
+                     // si la variable addBonus esta activa 
+                     if (addBonus) {
+                         // Guardar transaccion y ajustar bonificacion
+                         if (programLoyaltyTransaction.getProgramLoyaltyId().getProgramLoyaltyTypeId().getCode().equals(ProgramLoyaltyTypeE.PUNTOS.getCode())) {
+                             try {
+                                 TransactionPoint transactionPoint = new TransactionPoint();
+                                 transactionPoint.setCardId(card);
+                                 transactionPoint.setCreateDate(new Date());
+                                 transactionPoint.setProgramLoyaltyTransactionId(programLoyaltyTransaction);
+                                 transactionPoint.setPoints(programLoyaltyTransaction.getTotalPointsValue().intValue());
+                                 transactionPoint.setTransactionReference(transactionNumber);
+                                 saveTransactionPoint(transactionPoint);  // registrar transaccion de asignacion de puntos
+                                 BonusCard bonusCard = getBonusCardByCardId(card.getId());
+                                 if (bonusCard == null) {
+                                     bonusCard = new BonusCard();
+                                     bonusCard.setCardId(card);
+                                     bonusCard.setCreateDate(new Date());
+                                     bonusCard.setTotalPointsAccumulated(0);
+                                 }
+                                 bonusCard = updateBonusCard(bonusCard, programLoyaltyTransaction.getTotalPointsValue().intValue(), true); // actualizar los puntos por tarjeta
+                                 saveBonusCard(bonusCard);
+                             } catch (Exception ex) {
+                                 return new CalculateBonusCardResponse(ResponseCode.INTERNAL_ERROR, "Error add points");
+                             }
+                         } else {
+                             try {
+                                 TransactionsManagement newTransactionManagement = createTransactionsManagement(transactionsManagement, channelId, programLoyaltyTransaction.getTotalBonificationValue(), card.getProductId().getProgramId().getCurrencyId().getId(), transactionNumber);
+                                 newTransactionManagement = saveTransactionsManagement(newTransactionManagement);
+                                 TransactionsManagementHistory newTransactionManagementHistory = createTransactionsManagementHistory(transactionsManagement, channelId, programLoyaltyTransaction.getTotalBonificationValue(), card.getProductId().getProgramId().getCurrencyId().getId(), transactionNumber);
+                                 saveTransactionsManagementHistory(newTransactionManagementHistory);
+                                 entityManager.flush();
+                                 //actualiazar balance_history
+                                 BalanceHistoryCard balanceHistoryOld = loadLastBalanceHistoryByCard(card.getId());
+                                 BalanceHistoryCard balanceHistory = new BalanceHistoryCard();
+                                 balanceHistory.setId(null);
+                                 balanceHistory.setCardUserId(card);
+                                 Float previosAmount = balanceHistoryOld != null ? balanceHistoryOld.getCurrentBalance() : 0f;
+                                 balanceHistory.setPreviousBalance(previosAmount);
+                                 Float currentAmount = previosAmount + programLoyaltyTransaction.getTotalBonificationValue();
+                                 balanceHistory.setCurrentBalance(currentAmount);
+                                 balanceHistory.setTransactionsManagementId(newTransactionManagement);
+                                 Date balanceDate = new Date();
+                                 Timestamp balanceHistoryDate = new Timestamp(balanceDate.getTime());
+                                 balanceHistory.setCreateDate(balanceHistoryDate);
+                                 entityManager.persist(balanceHistory);
+                                 //actualizar balance de accountCard
+                                 AccountCard accountCard = getAccountCardbyCardId(card.getId());
+                                 accountCard.setCurrentBalance(currentAmount);
+                                 entityManager.merge(accountCard);
+                             } catch (Exception ex) {
+                                 return new CalculateBonusCardResponse(ResponseCode.INTERNAL_ERROR, "Error save transactionManagement");
+                             }
+
+                         }
                      }
                  }
              }
@@ -1092,11 +1137,10 @@ public class APIOperations {
         return new CalculateBonusCardResponse(ResponseCode.SUCCESS, "SUCCESS");
     }
      
-    private ProgramLoyalty getProgramLoyaltybyProductId(Long productId) {
+    private List<ProgramLoyalty> getProgramLoyaltybyProductId(Long productId) {
         try {
             Query query = entityManager.createQuery("SELECT p FROM ProgramLoyalty p WHERE p.productId.id = " + productId + " AND p.statusProgramLoyaltyId.id=" + Constants.STATUS_LOYALTY_PROGRAM_ACTIVE);
-            query.setMaxResults(1);
-            ProgramLoyalty result = (ProgramLoyalty) query.setHint("toplink.refresh", "true").getSingleResult();
+            List<ProgramLoyalty> result = query.setHint("toplink.refresh", "true").getResultList();
             return result;
         } catch (NoResultException e) {
             return null;
@@ -1118,9 +1162,9 @@ public class APIOperations {
      
     private boolean checkActiveProgramLoyalty(Long programLoyaltyId, int dayWeekId) {
         try {
-            Query query = entityManager.createQuery("SELECT d FROM DaysWeekHasProgramLoyalty d WHERE p.programLoyalty.id = " + programLoyaltyId + " AND p.daysWeekId.id=" + dayWeekId);
+            Query query = entityManager.createQuery("SELECT d FROM DaysWeekHasProgramLoyalty d WHERE d.programLoyaltyId.id = " + programLoyaltyId + " AND d.daysWeekId.id=" + dayWeekId);
             query.setMaxResults(1);
-            ProgramLoyalty result = (ProgramLoyalty) query.setHint("toplink.refresh", "true").getSingleResult();
+            DaysWeekHasProgramLoyalty result = (DaysWeekHasProgramLoyalty) query.setHint("toplink.refresh", "true").getSingleResult();
             return true;
         } catch (NoResultException e) {
             return false;
@@ -1131,7 +1175,7 @@ public class APIOperations {
         Calendar now = Calendar.getInstance();
         int day = now.get(Calendar.DAY_OF_WEEK);		
         try {
-            Query query = entityManager.createQuery("SELECT d FROM DaysWeek d WHERE p.id = " + day );
+            Query query = entityManager.createQuery("SELECT d FROM DaysWeek d WHERE d.id = " + day );
             query.setMaxResults(1);
             DaysWeek result = (DaysWeek) query.setHint("toplink.refresh", "true").getSingleResult();
             return result;
@@ -1288,13 +1332,21 @@ public class APIOperations {
     
     public BalanceHistoryCard loadLastBalanceHistoryByCard(Long cardId) {
         try {
-              Query query = entityManager.createQuery("SELECT b FROM BalanceHistoryCard b WHERE b.cardUserId.id = '" + cardId + "'");
+            Query query = entityManager.createQuery("SELECT b FROM BalanceHistoryCard b WHERE b.cardUserId.id = '" + cardId + "'");
             query.setMaxResults(1);
             BalanceHistoryCard result = (BalanceHistoryCard) query.setHint("toplink.refresh", "true").getSingleResult();
             return result;
         } catch (NoResultException e) {
             return null;
         }
-    }
+    }  
     
+    public AccountCard getAccountCardbyCardId(Long cardId) {
+        try {
+            AccountCard result = (AccountCard) entityManager.createNamedQuery("AccountCard.findByCardId", AccountCard.class).setParameter("cardId", cardId).getSingleResult();
+            return result;
+        } catch (NoResultException e) {
+            return null;
+        }
+    } 
 }
