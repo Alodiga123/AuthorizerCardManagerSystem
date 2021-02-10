@@ -9,6 +9,7 @@ public enum ResponseCode {
     INVALID_CREDENTIALS("05",""),
     BLOCKED_USER("06",""),
     COUNTRY_NOT_FOUND("07","The country not found"),
+    CHANNEL_NOT_FOUND("07","The channel not found"),
     INTERNAL_ERROR("99",""),
     
      //Validacion de Limites
@@ -18,10 +19,14 @@ public enum ResponseCode {
     TRANSACTION_AMOUNT_LIMIT_MONTHLY("37","The card exceeded the maximum amount per month"),
     MIN_TRANSACTION_AMOUNT("38","The card exceeded the minimun amount per transaction"),
     MAX_TRANSACTION_AMOUNT("39","The card exceeded the maximum amount per transaction"),
-      
+         
     //Mensajes Status Card
     CARD_EXISTS("50","The Card exists in the Card Manager System database"),
     CARD_NOT_EXISTS("51","The card does not exist in the Card Manager System database"),  
+    
+    //validaciones para calcular bonificaciones
+    PROGRAM_LOYALTY_BY_CARD_NOT_EXISTS("60","The card does not have a loyalty program associated with it"), 
+    TRANSACTION_MANAGER_BY_NUMBER_NOT_EXISTS("60","The transaction number does not exist"), 
     
     THE_CARDHOLDER_IS_VERIFIED("145","Cardholder data has been successfully verified"),
     THE_CARDHOLDER_NOT_MATCH("145","Cardholder details do not match"),
@@ -31,11 +36,21 @@ public enum ResponseCode {
     THE_IDENTIFICATION_NUMBER_IS_VERIFIED("150","The identification number matches"),
     THE_IDENTIFICATION_NUMBER_NOT_MATCH("149","The identification number does not match"),
     THE_CARD_STATUS_NOT_BE_CHANGED("151",""),
+    CVV_DIFFERENT("152","The CVV is Different"),
+    DATE_DIFFERENT("153","Expiration Date is Different"),
+    ACCOUNT_NOT_ASSOCIATED("154","There is no Account Associated with the Card"),
+    
+    
     
     //Cáculo Tarifas CMS
     RATE_BY_CARD_NOT_FOUND("401","The rate for the card has not been defined"),
-    RATE_BY_PRODUCT_NOT_FOUND("403","The rate for the product has not been defined");
+    RATE_BY_PRODUCT_NOT_FOUND("403","The rate for the product has not been defined"),
     
+    //Algoritmo LUNH
+    
+    
+    //Consulta de Saldo
+    INVALID_CARD("70","INVALID CARD");
            
     private final String code;
     private final String message;
