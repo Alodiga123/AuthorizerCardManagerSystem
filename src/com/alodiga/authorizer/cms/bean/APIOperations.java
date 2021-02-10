@@ -1099,7 +1099,7 @@ public class APIOperations {
                              }
                          } else {
                              try {
-                                 TransactionsManagement newTransactionManagement = createTransactionsManagement(transactionsManagement, channelId, programLoyaltyTransaction.getTotalBonificationValue(), card.getProductId().getProgramId().getCurrencyId().getId(), transactionNumber);
+                                 TransactionsManagement newTransactionManagement = createTransactionsManagement2(transactionsManagement, channelId, programLoyaltyTransaction.getTotalBonificationValue(), card.getProductId().getProgramId().getCurrencyId().getId(), transactionNumber);
                                  newTransactionManagement = saveTransactionsManagement(newTransactionManagement);
                                  TransactionsManagementHistory newTransactionManagementHistory = createTransactionsManagementHistory(transactionsManagement, channelId, programLoyaltyTransaction.getTotalBonificationValue(), card.getProductId().getProgramId().getCurrencyId().getId(), transactionNumber);
                                  saveTransactionsManagementHistory(newTransactionManagementHistory);
