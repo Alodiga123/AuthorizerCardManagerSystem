@@ -52,9 +52,10 @@ import com.cms.commons.models.TransactionsManagement;
 import com.cms.commons.models.User;
 import com.cms.commons.util.EjbUtils;
 import java.util.Calendar;
+import com.alodiga.authorizer.cms.operationsBDImp.operationsBDImp;
 
 
-@Stateless(name = "FsProcessorWallet", mappedName = "ejb/FsProcessorWallet")
+@Stateless(name = "FsProcessorCMSAuthorizer", mappedName = "ejb/FsProcessorCMSAuthorizer")
 @TransactionManagement(TransactionManagementType.CONTAINER)
 public class APIOperations {
 
@@ -272,7 +273,7 @@ public class APIOperations {
         }
     }     
     
-    public TransactionFeesResponse calculateCommisionCMS(String cardNumber, Integer channelId, Integer transactionTypeId, Float settlementTransactionAmount, String transactionNumberAcquirer) {
+    public TransactionResponse calculateCommisionCMS(String cardNumber, Integer channelId, Integer transactionTypeId, Float settlementTransactionAmount, String transactionNumberAcquirer) {
         Card card = null;
         RateByCard rateByCard = null;
         RateByProduct rateByProduct = null;
@@ -296,7 +297,7 @@ public class APIOperations {
             //Se revisa si el producto tiene tarifas definidas
             rateByProduct = getRateByProduct(card.getProductId().getId(), channelId, transactionTypeId);
             if (rateByProduct == null) {
-                return new TransactionFeesResponse(ResponseCode.RATE_BY_PRODUCT_NOT_FOUND.getCode(), ResponseCode.RATE_BY_PRODUCT_NOT_FOUND.getMessage());
+                return new TransactionResponse(ResponseCode.RATE_BY_PRODUCT_NOT_FOUND.getCode(), ResponseCode.RATE_BY_PRODUCT_NOT_FOUND.getMessage());
             } else {
                 transactionsInitialExempt = rateByProduct.getTotalInitialTransactionsExempt();
                 transactionExemptPerMonth = rateByProduct.getTotalTransactionsExemptPerMonth();
@@ -341,28 +342,26 @@ public class APIOperations {
 
         //Si aplica la tarifa a la transacción se registra la transacción para guardar la comisión de Alodiga en la BD
         if (transactionCommisionAmount > 0) {
-            //Se obtiene el número de la transacción
-            transactionNumberIssuer = generateNumberSequence(getSequencesByDocumentTypeByOriginApplication(DocumentTypeE.COMMISION_CMS.getId(), Constants.ORIGIN_APPLICATION_CMS_ID));
-
-            //Se guarda la comisión de Alodiga en la BD
-            transactionCommisionCMS = new TransactionsManagement();
-            transactionCommisionCMS.setTransactionNumberIssuer(transactionNumberIssuer);
-            transactionCommisionCMS.setDateTransaction(new Date());
-            transactionCommisionCMS.setChannelId(ChannelE.INT.getId());
-            transactionCommisionCMS.setTransactionTypeId(TransactionE.COMISION_CMS.getId());
-            transactionCommisionCMS.setTransactionReference(transactionNumberAcquirer);
-            transactionCommisionCMS.setCardHolder(card.getCardHolder());
-            transactionCommisionCMS.setCardNumber(cardNumber);
-            transactionCommisionCMS.setCvv(card.getSecurityCodeCard());
+            //Se obtiene la transacción que generó la comisión
+            TransactionsManagement transactionsManagement = getTransactionsManagementByNumber(transactionNumberAcquirer);
+            
+            operationsBDImp operationsBD = new operationsBDImp();
             String pattern = "MMyy";
             SimpleDateFormat simpleDateFormat = new SimpleDateFormat(pattern);
             String expirationCardDate = simpleDateFormat.format(card.getExpirationDate());
-            transactionCommisionCMS.setExpirationCardDate(expirationCardDate);
-            transactionCommisionCMS.setSettlementTransactionAmount(transactionCommisionAmount);
-            transactionCommisionCMS.setSettlementCurrencyTransactionId(card.getProductId().getDomesticCurrencyId().getId());
-            transactionCommisionCMS.setStatusTransactionManagementId(StatusTransactionManagementE.APPROVED.getId());
-            transactionCommisionCMS.setCreateDate(new Timestamp(new Date().getTime()));
-            entityManager.persist(transactionCommisionCMS);
+            transactionCommisionCMS = operationsBD.createTransactionsManagement(transactionsManagement, null, null, null, null, null, null, 
+                                  TransactionE.COMISION_CMS.getId(), ChannelE.INT.getId(), null, null, null, null, null, 
+                                  card.getProductId().getDomesticCurrencyId().getId(), transactionCommisionAmount, null, null, null, null, 
+                                  null, StatusTransactionManagementE.APPROVED.getId(), cardNumber, card.getCardHolder(), card.getSecurityCodeCard(), expirationCardDate, null, null, null, null, 
+                                  null, null, null, ResponseCode.SUCCESS.getCode(), null, DocumentTypeE.COMMISION_CMS.getId(), entityManager);
+            try {
+                transactionCommisionCMS = operationsBD.saveTransactionsManagement(transactionCommisionCMS, entityManager);
+            } catch (Exception e) {
+                return new TransactionResponse(ResponseCode.INTERNAL_ERROR.getCode(), "Error save transactionManagement");
+            }
+            
+            //Se obtiene el número de la transacción
+            transactionNumberIssuer = generateNumberSequence(getSequencesByDocumentTypeByOriginApplication(DocumentTypeE.COMMISION_CMS.getId(), Constants.ORIGIN_APPLICATION_CMS_ID));
 
             transactionHistoryCommisionCMS = new TransactionsManagementHistory();
             transactionHistoryCommisionCMS.setTransactionNumberIssuer(transactionNumberIssuer);
@@ -380,9 +379,9 @@ public class APIOperations {
             transactionHistoryCommisionCMS.setCreateDate(new Timestamp(new Date().getTime()));
             entityManager.persist(transactionHistoryCommisionCMS);
         } else {
-            return new TransactionFeesResponse(ResponseCode.SUCCESS.getCode(),"The transaction received did not generate commission to be charged");
+            return new TransactionResponse(ResponseCode.SUCCESS.getCode(),"The transaction received did not generate commission to be charged");
         }     
-        return new TransactionFeesResponse(ResponseCode.SUCCESS.getCode(),"The transaction to record the Alodiga commission corresponding to the received transaction was successfully saved in the database.",transactionCommisionAmount,transactionCommisionCMS); 
+        return new TransactionResponse(ResponseCode.SUCCESS.getCode(),"The transaction to record the Alodiga commission corresponding to the received transaction was successfully saved in the database.",transactionCommisionAmount,transactionCommisionCMS); 
     }
 
     private RateByCard getRateByCard(Long cardId, Integer channelId, Integer transactionTypeId) {
@@ -1021,9 +1020,7 @@ public class APIOperations {
         Double totalAmountByCardDaily = 0.00D;
         Long totalTransactionsByCardMonthly = 0L;
         Double totalAmountByUserMonthly = 0.00D;
-        boolean isTransactionLocal = false;
-        
-        
+        boolean isTransactionLocal = false;      
         
         if (cardNumber == null || countryCode ==null || transactionNumber  == null)
             return new CalculateBonusCardResponse(ResponseCode.INVALID_DATA, "The invalid data");
@@ -1093,7 +1090,7 @@ public class APIOperations {
                      }
                  } else {
                      try {
-                         TransactionsManagement newTransactionManagement = createTransactionsManagement(transactionsManagement, channelId, programLoyaltyTransaction.getTotalBonificationValue(), card.getProductId().getProgramId().getCurrencyId().getId(), transactionNumber);
+                         TransactionsManagement newTransactionManagement = createTransactionsManagement2(transactionsManagement, channelId, programLoyaltyTransaction.getTotalBonificationValue(), card.getProductId().getProgramId().getCurrencyId().getId(), transactionNumber);
                          saveTransactionsManagement(transactionsManagement);
                          TransactionsManagementHistory newTransactionManagementHistory = createTransactionsManagementHistory(transactionsManagement, channelId, programLoyaltyTransaction.getTotalBonificationValue(), card.getProductId().getProgramId().getCurrencyId().getId(), transactionNumber);
                          saveTransactionsManagementHistory(newTransactionManagementHistory);
@@ -1233,7 +1230,7 @@ public class APIOperations {
         return transactionsManagement;
     }
    
-   public TransactionsManagement createTransactionsManagement(TransactionsManagement management, int channelId, Float bonusAmount, int currencyId, String transactionNumber){
+   public TransactionsManagement createTransactionsManagement2(TransactionsManagement management, int channelId, Float bonusAmount, int currencyId, String transactionNumber){
        TransactionsManagement transactionsManagement = new TransactionsManagement();
        transactionsManagement.setAcquirerTerminalCode(management.getAcquirerTerminalCode());
        transactionsManagement.setAcquirerCountryId(management.getAcquirerCountryId());
