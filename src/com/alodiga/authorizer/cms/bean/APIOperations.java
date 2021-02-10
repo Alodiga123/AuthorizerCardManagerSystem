@@ -1261,9 +1261,9 @@ public class APIOperations {
    }
    
    private TransactionsManagement getTransactionsManagementByNumber(String transactionNumber) {
-        String sql = "SELECT b FROM BonusCard b WHERE t.transactionNumberAcquirer = ?1";
+        String sql = "SELECT t FROM TransactionsManagement t WHERE t.transactionNumberAcquirer = ?1";
         StringBuilder sqlBuilder = new StringBuilder(sql);
-        Query query = entityManager.createNativeQuery(sqlBuilder.toString());
+        Query query = entityManager.createQuery(sqlBuilder.toString());
         query.setParameter("1", transactionNumber);
         try{
         TransactionsManagement result = (TransactionsManagement) query.setHint("toplink.refresh", "true").getSingleResult();
@@ -1274,9 +1274,9 @@ public class APIOperations {
     } 
    
     private BonusCard getBonusCardByCardId(Long cardId) {
-        String sql = "SELECT b FROM BonusCard b WHERE t.cardId.id = ?1";
+        String sql = "SELECT b FROM BonusCard b WHERE b.cardId.id = ?1";
         StringBuilder sqlBuilder = new StringBuilder(sql);
-        Query query = entityManager.createNativeQuery(sqlBuilder.toString());
+        Query query = entityManager.createQuery(sqlBuilder.toString());
         query.setParameter("1", cardId);
         try{
         BonusCard result = (BonusCard) query.setHint("toplink.refresh", "true").getSingleResult();
