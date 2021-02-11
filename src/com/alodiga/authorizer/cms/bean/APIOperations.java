@@ -63,6 +63,7 @@ public class APIOperations {
     @PersistenceContext(unitName = "cmsPu")
     private EntityManager entityManager;
     private static final Logger logger = Logger.getLogger(APIOperations.class);
+    operationsBDImp operationsBD = new operationsBDImp();
 
     public CountryListResponse getCountryList() {
         List<Country> countries = null;
@@ -293,10 +294,10 @@ public class APIOperations {
         card = getCardByCardNumber(cardNumber);
 
         //Se revisa si el tarjetahabiente tiene tarifas definidas
-        rateByCard = getRateByCard(card.getId(), channelId, transactionTypeId);
+        rateByCard = operationsBD.getRateByCard(card.getId(), channelId, transactionTypeId, entityManager);
         if (rateByCard == null) {
             //Se revisa si el producto tiene tarifas definidas
-            rateByProduct = getRateByProduct(card.getProductId().getId(), channelId, transactionTypeId);
+            rateByProduct = operationsBD.getRateByProduct(card.getProductId().getId(), channelId, transactionTypeId, entityManager);
             if (rateByProduct == null) {
                 return new TransactionResponse(ResponseCode.RATE_BY_PRODUCT_NOT_FOUND.getCode(), ResponseCode.RATE_BY_PRODUCT_NOT_FOUND.getMessage());
             } else {
@@ -320,7 +321,7 @@ public class APIOperations {
 
         //Validar si aplica el cobro de la tarifa
         //1. Transacciones iniciales excentas
-        totalTransactionsByCard = getTotalTransactionsByCard(card.getCardNumber(), channelId, transactionTypeId);
+        totalTransactionsByCard = operationsBD.getTotalTransactionsByCard(card.getCardNumber(), channelId, transactionTypeId, entityManager);
         if (totalTransactionsByCard > transactionsInitialExempt) {
             if (fixedRate != null) {
                 transactionCommisionAmount = fixedRate;
@@ -331,7 +332,7 @@ public class APIOperations {
 
         //2. Transacciones mensuales excentas
         if (transactionCommisionAmount == 0) {
-            totalTransactionsPerMonthByCard = getTotalTransactionsByCardByDate(card.getCardNumber(), EjbUtils.getBeginningDateMonth(new Date()), EjbUtils.getEndingDateMonth(new Date()), channelId, transactionTypeId);
+            totalTransactionsPerMonthByCard = operationsBD.getTotalTransactionsByCardByDate(card.getCardNumber(), EjbUtils.getBeginningDateMonth(new Date()), EjbUtils.getEndingDateMonth(new Date()), channelId, transactionTypeId, entityManager);
             if (totalTransactionsPerMonthByCard > transactionExemptPerMonth) {
                 if (fixedRate != null) {
                     transactionCommisionAmount = fixedRate;
@@ -347,7 +348,6 @@ public class APIOperations {
             TransactionsManagement transactionsManagement = getTransactionsManagementByNumber(transactionNumberAcquirer);
             
             //Se crea el objeto TransactionManagement y se guarda en BD
-            operationsBDImp operationsBD = new operationsBDImp();
             String pattern = "MMyy";
             SimpleDateFormat simpleDateFormat = new SimpleDateFormat(pattern);
             String expirationCardDate = simpleDateFormat.format(card.getExpirationDate());
@@ -378,50 +378,6 @@ public class APIOperations {
             return new TransactionResponse(ResponseCode.SUCCESS.getCode(),"The transaction received did not generate commission to be charged");
         }     
         return new TransactionResponse(ResponseCode.SUCCESS.getCode(),"The transaction to record the Alodiga commission corresponding to the received transaction was successfully saved in the database.",transactionCommisionAmount,transactionCommisionCMS); 
-    }
-
-    private RateByCard getRateByCard(Long cardId, Integer channelId, Integer transactionTypeId) {
-        try {
-            Query query = entityManager.createQuery("SELECT r FROM RateByCard r WHERE r.cardId.id = " + cardId + " AND r.channelId.id = " + channelId + " AND r.transactionId.id = " + transactionTypeId + "");
-            query.setMaxResults(1);
-            RateByCard result = (RateByCard) query.setHint("toplink.refresh", "true").getSingleResult();
-            return result;
-        } catch (NoResultException e) {
-            return null;
-        }
-    }
-
-    private RateByProduct getRateByProduct(Long productId, Integer channelId, Integer transactionTypeId) {
-        try {
-            Query query = entityManager.createQuery("SELECT r FROM RateByProduct r WHERE r.productId.id = " + productId + " AND r.channelId.id = " + channelId + " AND r.transactionId.id = " + transactionTypeId + "");
-            query.setMaxResults(1);
-            RateByProduct result = (RateByProduct) query.setHint("toplink.refresh", "true").getSingleResult();
-            return result;
-        } catch (NoResultException e) {
-            return null;
-        }
-    }
-
-    private Long getTotalTransactionsByCard(String cardNumber, Integer channelId, Integer transactionTypeId) {
-        StringBuilder sqlBuilder = new StringBuilder("SELECT COUNT(t.id) FROM transactionsManagementHistory t WHERE t.cardNumber = ?1 AND t.channelId = ?2 AND t.transactionTypeId = ?3 AND t.responseCode = '00'");
-        Query query = entityManager.createNativeQuery(sqlBuilder.toString());
-        query.setParameter("1", cardNumber);
-        query.setParameter("2", channelId);
-        query.setParameter("3", transactionTypeId);
-        List result = (List) query.setHint("toplink.refresh", "true").getResultList();
-        return result.get(0) != null ? (Long) result.get(0) : 0l;
-    }
-
-    public Long getTotalTransactionsByCardByDate(String cardNumber, Date begginingDateTime, Date endingDateTime, Integer channelId, Integer transactionTypeId) {
-        StringBuilder sqlBuilder = new StringBuilder("SELECT COUNT(t.id) FROM transactionsManagementHistory t WHERE t.createDate between ?1 AND ?2 AND t.cardNumber = ?3 AND t.channelId = ?4 AND t.transactionTypeId = ?5 AND t.responseCode = '00'");
-        Query query = entityManager.createNativeQuery(sqlBuilder.toString());
-        query.setParameter("1", begginingDateTime);
-        query.setParameter("2", endingDateTime);
-        query.setParameter("3", cardNumber);
-        query.setParameter("4", channelId);
-        query.setParameter("5", transactionTypeId);
-        List result = (List) query.setHint("toplink.refresh", "true").getResultList();
-        return result.get(0) != null ? (Long) result.get(0) : 0l;
     }
 
     public Sequences getSequencesByDocumentTypeByOriginApplication(int documentTypeId, int originApplicationId) {
@@ -493,7 +449,7 @@ public class APIOperations {
         Long totalTransactionsByCardMonthly = 0L;
         Double totalAmountByUserMonthly = 0.00D;
         boolean isTransactionLocal = false;
-
+        
         if (cardNumber == null || countryCode == null) {
             return new ValidateLimitsResponse(ResponseCode.INVALID_DATA, "The invalid data");
         }
@@ -513,7 +469,7 @@ public class APIOperations {
 
         }
 
-        ProductHasChannelHasTransaction productHasChannelHasTransaction = getSettingLimits(transactionTypeId, channelId, card.getProductId().getId());
+        ProductHasChannelHasTransaction productHasChannelHasTransaction = operationsBD.getSettingLimits(transactionTypeId, channelId, card.getProductId().getId(), entityManager);
 
         if (productHasChannelHasTransaction != null) {
 
@@ -523,81 +479,27 @@ public class APIOperations {
             if (amountTransaction > Double.parseDouble(isTransactionLocal ? productHasChannelHasTransaction.getAmountMaximumTransactionDomestic().toString() : productHasChannelHasTransaction.getAmountMaximumTransactionInternational().toString())) {
                 return new ValidateLimitsResponse(ResponseCode.MIN_TRANSACTION_AMOUNT, ResponseCode.MIN_TRANSACTION_AMOUNT.getMessage());
             }
-            totalTransactionsByCardDaily = getTransactionsByCardByTransactionByProductCurrentDate(cardNumber, EjbUtils.getBeginningDate(new Date()), EjbUtils.getEndingDate(new Date()), transactionTypeId, channelId, ResponseCode.SUCCESS.getCode(), isTransactionLocal, country.getId());
+            totalTransactionsByCardDaily = operationsBD.getTransactionsByCardByTransactionByProductCurrentDate(cardNumber, EjbUtils.getBeginningDate(new Date()), EjbUtils.getEndingDate(new Date()), transactionTypeId, channelId, ResponseCode.SUCCESS.getCode(), isTransactionLocal, country.getId(), entityManager);
             if ((totalTransactionsByCardDaily + 1) > productHasChannelHasTransaction.getMaximumNumberTransactionsDaily()) {
                 return new ValidateLimitsResponse(ResponseCode.TRANSACTION_QUANTITY_LIMIT_DIALY, ResponseCode.TRANSACTION_QUANTITY_LIMIT_DIALY.getMessage());
             }
-            totalAmountByCardDaily = getAmountMaxByUserByUserByTransactionByProductCurrentDate(cardNumber, EjbUtils.getBeginningDate(new Date()), EjbUtils.getEndingDate(new Date()), transactionTypeId, channelId, ResponseCode.SUCCESS.getCode(), isTransactionLocal, country.getId());
+            totalAmountByCardDaily = operationsBD.getAmountMaxByUserByUserByTransactionByProductCurrentDate(cardNumber, EjbUtils.getBeginningDate(new Date()), EjbUtils.getEndingDate(new Date()), transactionTypeId, channelId, ResponseCode.SUCCESS.getCode(), isTransactionLocal, country.getId(), entityManager);
             if ((totalAmountByCardDaily + amountTransaction) > Double.parseDouble(isTransactionLocal ? productHasChannelHasTransaction.getDailyAmountLimitDomestic().toString() : productHasChannelHasTransaction.getDailyAmountLimitInternational().toString())) {
                 return new ValidateLimitsResponse(ResponseCode.TRANSACTION_AMOUNT_LIMIT_DIALY, ResponseCode.TRANSACTION_AMOUNT_LIMIT_DIALY.getMessage());
             }
 
-            totalTransactionsByCardMonthly = getTransactionsByCardByTransactionByProductCurrentDate(cardNumber, EjbUtils.getBeginningDateMonth(new Date()), EjbUtils.getEndingDate(new Date()), transactionTypeId, channelId, ResponseCode.SUCCESS.getCode(), isTransactionLocal, country.getId());
+            totalTransactionsByCardMonthly = operationsBD.getTransactionsByCardByTransactionByProductCurrentDate(cardNumber, EjbUtils.getBeginningDateMonth(new Date()), EjbUtils.getEndingDate(new Date()), transactionTypeId, channelId, ResponseCode.SUCCESS.getCode(), isTransactionLocal, country.getId(), entityManager);
             if ((totalTransactionsByCardMonthly + 1) > productHasChannelHasTransaction.getMaximumNumberTransactionsMonthly()) {
                 return new ValidateLimitsResponse(ResponseCode.TRANSACTION_QUANTITY_LIMIT_MONTHLY, ResponseCode.TRANSACTION_QUANTITY_LIMIT_MONTHLY.getMessage());
             }
 
-            totalAmountByUserMonthly = getAmountMaxByUserByUserByTransactionByProductCurrentDate(cardNumber, EjbUtils.getBeginningDateMonth(new Date()), EjbUtils.getEndingDate(new Date()), transactionTypeId, channelId, ResponseCode.SUCCESS.getCode(), isTransactionLocal, country.getId());
+            totalAmountByUserMonthly = operationsBD.getAmountMaxByUserByUserByTransactionByProductCurrentDate(cardNumber, EjbUtils.getBeginningDateMonth(new Date()), EjbUtils.getEndingDate(new Date()), transactionTypeId, channelId, ResponseCode.SUCCESS.getCode(), isTransactionLocal, country.getId(), entityManager);
             if ((totalAmountByUserMonthly + amountTransaction) > Double.parseDouble(isTransactionLocal ? productHasChannelHasTransaction.getMonthlyAmountLimitDomestic().toString() : productHasChannelHasTransaction.getMonthlyAmountLimitInternational().toString())) {
                 return new ValidateLimitsResponse(ResponseCode.TRANSACTION_AMOUNT_LIMIT_MONTHLY, ResponseCode.TRANSACTION_AMOUNT_LIMIT_MONTHLY.getMessage());
             }
 
         }
         return new ValidateLimitsResponse(ResponseCode.SUCCESS, "SUCCESS");
-    }
-
-    private ProductHasChannelHasTransaction getSettingLimits(Integer transactionId, Integer channelId, Long productId) {
-        try {
-            Query query = entityManager.createQuery("SELECT P FROM ProductHasChannelHasTransaction p WHERE p.productId.id = " + productId + " AND p.channelId.id= " + channelId
-                    + " AND p.transactionId.id= " + transactionId + "");
-            query.setMaxResults(1);
-            ProductHasChannelHasTransaction result = (ProductHasChannelHasTransaction) query.setHint("toplink.refresh", "true").getSingleResult();
-            return result;
-        } catch (NoResultException e) {
-            e.printStackTrace();
-            return null;
-        }
-
-    }
-
-    public Long getTransactionsByCardByTransactionByProductCurrentDate(String cardNumber, Date begginingDateTime, Date endingDateTime, Integer transactionTypeId, Integer channelId, String code, boolean isTransactionLocal, Integer countryId) {
-        String sql = "SELECT * FROM transactionsManagementHistory t WHERE t.dateTransaction between ?1 AND ?2 AND t.cardNumber = ?3 AND t.transactionTypeId = ?4 AND t.channelId = ?5 AND t.responseCode =?6";
-        if (isTransactionLocal) {
-            sql += (" AND acquirerCountryId = ?7");
-        } else {
-            sql += (" AND acquirerCountryId <> ?7");
-        }
-        StringBuilder sqlBuilder = new StringBuilder(sql);
-        Query query = entityManager.createNativeQuery(sqlBuilder.toString());
-        query.setParameter("1", begginingDateTime);
-        query.setParameter("2", endingDateTime);
-        query.setParameter("3", cardNumber);
-        query.setParameter("4", transactionTypeId);
-        query.setParameter("5", channelId);
-        query.setParameter("6", code);
-        query.setParameter("7", countryId);
-        List result = (List) query.setHint("toplink.refresh", "true").getResultList();
-        return !result.isEmpty() ? (Long) result.get(0) : 0l;
-    }
-
-    public Double getAmountMaxByUserByUserByTransactionByProductCurrentDate(String cardNumber, Date begginingDateTime, Date endingDateTime, Integer transactionTypeId, Integer channelId, String code, boolean isTransactionLocal, Integer countryId) {
-        String sql = "SELECT SUM(t.settlementTransactionAmount) FROM transactionsManagementHistory t WHERE t.dateTransaction between ?1 AND ?2 AND t.cardNumber = ?3 AND t.transactionTypeId = ?4 AND t.channelId = ?5 AND t.responseCode =?6";
-        if (isTransactionLocal) {
-            sql += (" AND acquirerCountryId = ?7");
-        } else {
-            sql += (" AND acquirerCountryId <> ?7");
-        }
-        StringBuilder sqlBuilder = new StringBuilder(sql);
-        Query query = entityManager.createNativeQuery(sqlBuilder.toString());
-        query.setParameter("1", begginingDateTime);
-        query.setParameter("2", endingDateTime);
-        query.setParameter("3", cardNumber);
-        query.setParameter("4", transactionTypeId);
-        query.setParameter("5", channelId);
-        query.setParameter("6", code);
-        query.setParameter("7", countryId);
-        List result = (List) query.setHint("toplink.refresh", "true").getResultList();
-        return result.get(0) != null ? (double) result.get(0) : 0f;
     }
 
     private Country getCountry(String countryCode) {
@@ -1012,7 +914,7 @@ public class APIOperations {
         Double totalAmountByCardDaily = 0.00D;
         Long totalTransactionsByCardMonthly = 0L;
         Double totalAmountByUserMonthly = 0.00D;
-        boolean isTransactionLocal = false;      
+        boolean isTransactionLocal = false;        
         
         if (cardNumber == null || countryCode ==null || transactionNumber  == null)
             return new CalculateBonusCardResponse(ResponseCode.INVALID_DATA, "The invalid data");
@@ -1046,19 +948,19 @@ public class APIOperations {
                      if (programLoyaltyTransaction.getTransactionId().getSubTypeTransactionId().getCode().equals(SubTransactionE.ADMINI.getCode())) {
                          addBonus = true;
                      }
-                     totalTransactionsByCardDaily = getTransactionsByCardByTransactionByProductCurrentDate(cardNumber, EjbUtils.getBeginningDate(new Date()), EjbUtils.getEndingDate(new Date()), transactionTypeId, channelId, ResponseCode.SUCCESS.getCode(), isTransactionLocal, country.getId());
+                     totalTransactionsByCardDaily = operationsBD.getTransactionsByCardByTransactionByProductCurrentDate(cardNumber, EjbUtils.getBeginningDate(new Date()), EjbUtils.getEndingDate(new Date()), transactionTypeId, channelId, ResponseCode.SUCCESS.getCode(), isTransactionLocal, country.getId(), entityManager);
                      if (programLoyaltyTransaction.getTotalMaximumTransactions() != null) {
                          if ((totalTransactionsByCardDaily + 1) > programLoyaltyTransaction.getTotalMaximumTransactions()) {
                              addBonus = true;
                          }
                      }
-                     totalAmountByCardDaily = getAmountMaxByUserByUserByTransactionByProductCurrentDate(cardNumber, EjbUtils.getBeginningDate(new Date()), EjbUtils.getEndingDate(new Date()), transactionTypeId, channelId, ResponseCode.SUCCESS.getCode(), isTransactionLocal, country.getId());
+                     totalAmountByCardDaily = operationsBD.getAmountMaxByUserByUserByTransactionByProductCurrentDate(cardNumber, EjbUtils.getBeginningDate(new Date()), EjbUtils.getEndingDate(new Date()), transactionTypeId, channelId, ResponseCode.SUCCESS.getCode(), isTransactionLocal, country.getId(), entityManager);
                      if (programLoyaltyTransaction.getTotalAmountDaily() != null) {
                          if ((totalAmountByCardDaily + amountTransaction) > Double.parseDouble(programLoyaltyTransaction.getTotalAmountDaily().toString())) {
                              addBonus = true;
                          }
                      }
-                     totalAmountByUserMonthly = getAmountMaxByUserByUserByTransactionByProductCurrentDate(cardNumber, EjbUtils.getBeginningDateMonth(new Date()), EjbUtils.getEndingDate(new Date()), transactionTypeId, channelId, ResponseCode.SUCCESS.getCode(), isTransactionLocal, country.getId());
+                     totalAmountByUserMonthly = operationsBD.getAmountMaxByUserByUserByTransactionByProductCurrentDate(cardNumber, EjbUtils.getBeginningDateMonth(new Date()), EjbUtils.getEndingDate(new Date()), transactionTypeId, channelId, ResponseCode.SUCCESS.getCode(), isTransactionLocal, country.getId(), entityManager);
                      if (programLoyaltyTransaction.getTotalAmountMonthly() != null) {
                          if ((totalAmountByUserMonthly + amountTransaction) > Double.parseDouble(programLoyaltyTransaction.getTotalAmountMonthly().toString())) {
                              addBonus = true;
