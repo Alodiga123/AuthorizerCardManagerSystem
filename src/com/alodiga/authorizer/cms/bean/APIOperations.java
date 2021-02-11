@@ -341,11 +341,12 @@ public class APIOperations {
             }
         }
 
-        //Si aplica la tarifa a la transacción se registra la transacción para guardar la comisión de Alodiga en la BD
+        //Si aplica la tarifa a la transacción, registrando la comisión del emisor en la BD
         if (transactionCommisionAmount > 0) {
             //Se obtiene la transacción que generó la comisión
             TransactionsManagement transactionsManagement = getTransactionsManagementByNumber(transactionNumberAcquirer);
             
+            //Se crea el objeto TransactionManagement y se guarda en BD
             operationsBDImp operationsBD = new operationsBDImp();
             String pattern = "MMyy";
             SimpleDateFormat simpleDateFormat = new SimpleDateFormat(pattern);
@@ -358,27 +359,21 @@ public class APIOperations {
             try {
                 transactionCommisionCMS = operationsBD.saveTransactionsManagement(transactionCommisionCMS, entityManager);
             } catch (Exception e) {
-                return new TransactionResponse(ResponseCode.INTERNAL_ERROR.getCode(), "Error save transactionManagement");
+                return new TransactionResponse(ResponseCode.INTERNAL_ERROR.getCode(), "an error occurred while saving the transaction");
             }
             
-            //Se obtiene el número de la transacción
-            transactionNumberIssuer = generateNumberSequence(getSequencesByDocumentTypeByOriginApplication(DocumentTypeE.COMMISION_CMS.getId(), Constants.ORIGIN_APPLICATION_CMS_ID));
-
-            transactionHistoryCommisionCMS = new TransactionsManagementHistory();
-            transactionHistoryCommisionCMS.setTransactionNumberIssuer(transactionNumberIssuer);
-            transactionHistoryCommisionCMS.setDateTransaction(new Date());
-            transactionHistoryCommisionCMS.setChannelId(ChannelE.INT.getId());
-            transactionHistoryCommisionCMS.setTransactionTypeId(TransactionE.COMISION_CMS.getId());
-            transactionHistoryCommisionCMS.setTransactionReference(transactionNumberAcquirer);
-            transactionHistoryCommisionCMS.setCardHolder(card.getCardHolder());
-            transactionHistoryCommisionCMS.setCardNumber(cardNumber);
-            transactionHistoryCommisionCMS.setCvv(card.getSecurityCodeCard());
-            transactionHistoryCommisionCMS.setExpirationCardDate(expirationCardDate);
-            transactionHistoryCommisionCMS.setSettlementTransactionAmount(transactionCommisionAmount);
-            transactionHistoryCommisionCMS.setSettlementCurrencyTransactionId(card.getProductId().getDomesticCurrencyId().getId());
-            transactionHistoryCommisionCMS.setStatusTransactionManagementId(StatusTransactionManagementE.APPROVED.getId());
-            transactionHistoryCommisionCMS.setCreateDate(new Timestamp(new Date().getTime()));
-            entityManager.persist(transactionHistoryCommisionCMS);
+            //Se crea el objeto TransactionManagementHistory y se guarda en BD
+            transactionHistoryCommisionCMS = operationsBD.createTransactionsManagementHistory(transactionsManagement, null, null, null, null, null, null, 
+                                  TransactionE.COMISION_CMS.getId(), ChannelE.INT.getId(), null, null, null, null, null, 
+                                  card.getProductId().getDomesticCurrencyId().getId(), transactionCommisionAmount, null, null, null, null, 
+                                  null, StatusTransactionManagementE.APPROVED.getId(), cardNumber, card.getCardHolder(), card.getSecurityCodeCard(), expirationCardDate, null, null, null, null, 
+                                  null, null, null, ResponseCode.SUCCESS.getCode(), null, transactionCommisionCMS.getTransactionNumberIssuer(), entityManager);
+            
+            try {
+                transactionHistoryCommisionCMS = operationsBD.saveTransactionsManagementHistory(transactionHistoryCommisionCMS, entityManager);
+            } catch (Exception e) {
+                return new TransactionResponse(ResponseCode.INTERNAL_ERROR.getCode(), "an error occurred while saving the transaction");
+            }
         } else {
             return new TransactionResponse(ResponseCode.SUCCESS.getCode(),"The transaction received did not generate commission to be charged");
         }     
@@ -616,7 +611,7 @@ public class APIOperations {
         }
     }
     
-        public CardResponse validateCard(String cardNumber, String ARQC, String cardHolder, String CVV, String cardDueDate) {
+    public CardResponse validateCard(String cardNumber, String ARQC, String cardHolder, String CVV, String cardDueDate) {
         try {
             CardResponse validateCard = getValidateCard(cardNumber);
             //Se valida que la tarjeta exista en la BD del CMS
@@ -652,7 +647,7 @@ public class APIOperations {
         } catch (Exception e) {
             return new CardResponse(ResponseCode.INTERNAL_ERROR.getCode(), "an unexpected error occurred");
         }
-        
+
     }
     
     public TransactionResponse activateCard(String cardNumber, String cardHolder, String CVV, String cardDueDate, String documentIdentificationNumber, 
@@ -696,9 +691,7 @@ public class APIOperations {
             transactionActivateCard.setStatusTransactionManagementId(StatusTransactionManagementE.INPROC.getId());
             transactionActivateCard.setCreateDate(new Timestamp(new Date().getTime()));
             entityManager.persist(transactionActivateCard);
-            
-            
-            
+
         } else {
             return new TransactionResponse(ResponseCode.INTERNAL_ERROR.getCode(), validateCard.getMensajeRespuesta());
         }
@@ -936,9 +929,7 @@ public class APIOperations {
     }
 
     public OperationCardBalanceInquiryResponse cardBalanceInquiry(String cardNumber, String CVV, String ARQC, String documentIdentificationNumber, Integer transactionTypeId, Integer channelId, Date transactionDate, Date localTimeTransaction, String acquirerTerminalCodeId, Integer acquirerCountryId, Long messageMiddlewareId, String transactionNumberAcquirer, String cardDueDate, String cardHolder, String PinOffset) {
-
         try {
-
             CardResponse cardResponse = validateCard(cardNumber, ARQC, cardHolder, CVV, cardDueDate);
             String maskCardNumber = maskCCNumber(cardNumber);
             if (cardResponse.getCodigoRespuesta().equals("145")) {
@@ -1346,4 +1337,5 @@ public class APIOperations {
             return null;
         }
     } 
+    
 }
