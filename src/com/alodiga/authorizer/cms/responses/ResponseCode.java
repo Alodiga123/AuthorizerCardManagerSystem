@@ -39,7 +39,7 @@ public enum ResponseCode {
     CVV_DIFFERENT("152","The CVV is Different"),
     DATE_DIFFERENT("153","Expiration Date is Different"),
     ACCOUNT_NOT_ASSOCIATED("154","There is no Account Associated with the Card"),
-    
+    USER_HAS_NOT_BALANCE("155","The user has no balance available to complete the transaction"),
     
     
     //Cáculo Tarifas CMS
