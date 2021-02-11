@@ -23,7 +23,6 @@ import com.alodiga.authorizer.cms.responses.ResponseCode;
 import com.alodiga.authorizer.cms.responses.CountryListResponse;
 import com.alodiga.authorizer.cms.responses.OperationCardBalanceInquiryResponse;
 import com.alodiga.authorizer.cms.responses.ValidateLimitsResponse;
-import com.alodiga.authorizer.cms.responses.TransactionFeesResponse;
 import com.alodiga.authorizer.cms.responses.TransactionResponse;
 import java.sql.Timestamp;
 import com.cms.commons.enumeraciones.ChannelE;
@@ -64,7 +63,7 @@ public class APIOperations {
     private EntityManager entityManager;
     private static final Logger logger = Logger.getLogger(APIOperations.class);
     operationsBDImp operationsBD = new operationsBDImp();
-
+    
     public CountryListResponse getCountryList() {
         List<Country> countries = null;
         try {
@@ -552,8 +551,8 @@ public class APIOperations {
 
     }
     
-    public TransactionResponse activateCard(String cardNumber, String cardHolder, String CVV, String cardDueDate, String documentIdentificationNumber, 
-                                            String numberPhoneCustomer, Date dateBirth, String emailCustomer, Long messageMiddlewareId,
+    public TransactionResponse activateCard(String cardNumber, String cardHolder, String CVV, String cardDueDate, String answerDocumentIdentificationNumber, 
+                                            String answerNumberPhoneCustomer, Date answerDateBirth, String answerEmailCustomer, Long messageMiddlewareId,
                                             Integer transactionTypeId, Integer channelId, Date transactionDate, Timestamp localTimeTransaction,
                                             String acquirerTerminalCodeId, String transactionNumberAcquirer, Integer acquirerCountryId) {
         
@@ -562,6 +561,9 @@ public class APIOperations {
         TransactionsManagement transactionActivateCard = null;
         TransactionsManagementHistory transactionHistoryActivateCard = null;
         Card card = null;
+        String phoneNumberCustomer = "";
+        String emailCustomer = "";
+        Date dateBirthCustomer;
         
         try {
         //Se valida la tarjeta
@@ -574,7 +576,26 @@ public class APIOperations {
             transactionNumberIssuer = generateNumberSequence(getSequencesByDocumentTypeByOriginApplication(DocumentTypeE.ACTIVATE_CARD.getId(), Constants.ORIGIN_APPLICATION_CMS_ID));
             
             //Se validan si las respuestas del tarjetahabiente son correctas
-            
+            //1. Se valida el documento de identificación
+            CardResponse validateDocumentIdentification = validateDocumentIdentificationCustomer(cardNumber, answerDocumentIdentificationNumber);
+            if (validateDocumentIdentification.getCodigoRespuesta().equals(ResponseCode.SUCCESS.getCode())) {
+                //2. Se valida respuesta de número de teléfono del tarjehabiente
+                    phoneNumberCustomer = card.getPersonCustomerId().getPhonePerson().getAreaCode().concat(card.getPersonCustomerId().getPhonePerson().getNumberPhone());
+                    if (phoneNumberCustomer.equals(answerNumberPhoneCustomer)) {
+                        //3. Se valida respuesta del correo del tarjetabiente
+                        emailCustomer = card.getPersonCustomerId().getEmail();
+                        if (emailCustomer.equals(answerEmailCustomer)) {
+                            //4. Se valida respuesta de la fecha de nacimiento
+                            
+                        } else {
+                            return new TransactionResponse(ResponseCode.ACTIVE_CARD_NO.getCode(), ResponseCode.ACTIVE_CARD_NO.getMessage());
+                        }
+                    } else {
+                        return new TransactionResponse(ResponseCode.ACTIVE_CARD_NO.getCode(), ResponseCode.ACTIVE_CARD_NO.getMessage());
+                    }
+            } else {
+                return new TransactionResponse(ResponseCode.ACTIVE_CARD_NO.getCode(), ResponseCode.ACTIVE_CARD_NO.getMessage());
+            }
 
             //Se registra la transacción de Activación de Tarjeta en el CMS
             transactionActivateCard = new TransactionsManagement();
