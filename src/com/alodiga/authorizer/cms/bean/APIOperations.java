@@ -1264,7 +1264,7 @@ public class APIOperations {
     public TransactionResponse transferBetweenAccount(String cardNumberOrigin, String cardNumberDestinate, String CVVOrigin, String cardDueDateOrigin, String cardHolderOrigin, String documentIdentificationNumber, String ARQCOrigin, String CVVDestinate, String cardDueDateDestinate, String cardHolderDestinate, String ARQCDestinate, Integer channelId, Integer transactionTypeId,
             Long messageMiddlewareId, Date transactionDate, Timestamp localTimeTransaction, String acquirerTerminalCodeId, Integer acquirerCountryId, Float amountTransfer, Timestamp dateTimeTransmissionTerminal, Date localDateTransaction) {
 
-        TransactionFeesResponse transactionFeesResponse = new TransactionFeesResponse();
+        TransactionResponse transactionResponse = new TransactionResponse();
         TransactionsManagement transactionsManagement = new TransactionsManagement();
         TransactionsManagementHistory transactionsManagementHistory = new TransactionsManagementHistory();
         CardResponse cardResponseOrigin = validateCard(cardNumberOrigin, ARQCOrigin, cardHolderOrigin, CVVOrigin, cardDueDateOrigin);
@@ -1279,8 +1279,8 @@ public class APIOperations {
                     Card cardDestinate = getCardByCardNumber(cardNumberDestinate);
                     Float amountCardOrigin = getCurrentBalanceCard(cardOrigin.getId());
                     Float amountCardDestination = getCurrentBalanceCard(cardDestinate.getId());
-                    transactionFeesResponse = calculateCommisionCMS(cardNumberOrigin, channelId, transactionTypeId, amountTransfer, "1234");
-                    Float amountCommission = transactionFeesResponse.getTransactionFeesAmount();
+                    transactionResponse = calculateCommisionCMS(cardNumberOrigin, channelId, transactionTypeId, amountTransfer, "1234");
+                    Float amountCommission = transactionResponse.getTransactionFeesAmount();
                     Float amountTransferTotal = amountTransfer + amountCommission;
                     if (amountCardOrigin == null || amountCardOrigin < amountTransferTotal) {
                         return new TransactionResponse(ResponseCode.USER_HAS_NOT_BALANCE.getCode(), ResponseCode.USER_HAS_NOT_BALANCE.getMessage());
