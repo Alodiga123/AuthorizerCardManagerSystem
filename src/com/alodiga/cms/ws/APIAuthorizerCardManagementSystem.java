@@ -63,7 +63,7 @@ public class APIAuthorizerCardManagementSystem {
     }
     
     @WebMethod
-    public TransactionFeesResponse calculateCommisionCMS(
+    public TransactionResponse calculateCommisionCMS(
         @WebParam(name = "cardNumber") String cardNumber,
         @WebParam(name = "channelId") Integer channelId,
         @WebParam(name = "transactionTypeId") Integer transactionTypeId,
