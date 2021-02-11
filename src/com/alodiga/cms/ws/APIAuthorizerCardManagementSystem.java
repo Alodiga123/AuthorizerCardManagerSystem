@@ -6,6 +6,7 @@ import javax.jws.WebParam;
 import javax.jws.WebService;
 import org.apache.log4j.Logger;
 import com.alodiga.authorizer.cms.bean.APIOperations;
+import com.alodiga.authorizer.cms.responses.CalculateBonusCardResponse;
 import com.alodiga.authorizer.cms.responses.CountryListResponse;
 import com.alodiga.authorizer.cms.responses.CardResponse;
 import com.alodiga.authorizer.cms.responses.OperationCardBalanceInquiryResponse;
@@ -62,7 +63,7 @@ public class APIAuthorizerCardManagementSystem {
     }
     
     @WebMethod
-    public TransactionFeesResponse calculateCommisionCMS(
+    public TransactionResponse calculateCommisionCMS(
         @WebParam(name = "cardNumber") String cardNumber,
         @WebParam(name = "channelId") Integer channelId,
         @WebParam(name = "transactionTypeId") Integer transactionTypeId,
@@ -91,7 +92,7 @@ public class APIAuthorizerCardManagementSystem {
         @WebParam(name = "amountTransaction") Float amountTransaction)   {
         return operations.getValidateLimits(cardNumber, transactionTypeId, channelId,countryCode,amountTransaction);
     }
-    
+       
     @WebMethod
     public CardResponse validateCard(
             @WebParam(name = "cardNumber") String cardNumber,
@@ -150,8 +151,16 @@ public class APIAuthorizerCardManagementSystem {
             @WebParam(name = "PinOffset") String PinOffset) {
         return operations.cardBalanceInquiry(cardNumber, CVV, ARQC, documentIdentificationNumber, transactionTypeId, channelId, transactionDate, localTimeTransaction, acquirerTerminalCodeId, acquirerCountryId, messageMiddlewareId, transactionNumberAcquirer, cardDueDate, cardHolder, PinOffset);
     }
-    
-    
-    
+      
+    @WebMethod    
+    public CalculateBonusCardResponse calculateBonus(
+        @WebParam(name = "cardNumber") String cardNumber,
+        @WebParam(name = "transactionTypeId") Integer transactionTypeId,
+        @WebParam(name = "channelId") Integer channelId,
+        @WebParam(name = "countryCode") String countryCode,
+        @WebParam(name = "amountTransaction") Float amountTransaction,
+        @WebParam(name = "transactionNumber") String transactionNumber){
+        return operations.calculateBonus(cardNumber, transactionTypeId, channelId,countryCode,amountTransaction,transactionNumber);
+    }
     
 }
