@@ -1013,10 +1013,29 @@ public class APIOperations {
                              }
                          } else {
                              try {
-                                 TransactionsManagement newTransactionManagement = createTransactionsManagement2(transactionsManagement, channelId, programLoyaltyTransaction.getTotalBonificationValue(), card.getProductId().getProgramId().getCurrencyId().getId(), transactionNumber);
-                                 newTransactionManagement = saveTransactionsManagement(newTransactionManagement);
-                                 TransactionsManagementHistory newTransactionManagementHistory = createTransactionsManagementHistory(transactionsManagement, channelId, programLoyaltyTransaction.getTotalBonificationValue(), card.getProductId().getProgramId().getCurrencyId().getId(), transactionNumber);
-                                 saveTransactionsManagementHistory(newTransactionManagementHistory);
+                                 TransactionsManagement newTransactionManagement = operationsBD.createTransactionsManagement(transactionsManagement, null, null, null, null, null,
+                                         null, ChannelE.INT.getId(), null, null, null, null, null,
+                                         card.getProductId().getDomesticCurrencyId().getId(), programLoyaltyTransaction.getTotalBonificationValue(), null, null, null, null,
+                                         null, StatusTransactionManagementE.APPROVED.getId(), cardNumber, card.getCardHolder(), card.getSecurityCodeCard(), transactionsManagement.getExpirationCardDate(), null, null, null, null,
+                                         null, null, null, ResponseCode.SUCCESS.getCode(), null, DocumentTypeE.BONUS_TRANSACTION_CMS.getId(), entityManager);
+                                 try {
+                                     newTransactionManagement = operationsBD.saveTransactionsManagement(newTransactionManagement, entityManager);
+                                 } catch (Exception e) {
+                                     return new CalculateBonusCardResponse(ResponseCode.INTERNAL_ERROR, "an error occurred while saving the transaction");
+                                 }
+            
+                                //Se crea el objeto TransactionManagementHistory y se guarda en BD
+                                TransactionsManagementHistory newTransactionManagementHistory = operationsBD.createTransactionsManagementHistory(transactionsManagement, null, null, null, null, null,
+                                                      newTransactionManagement.getTransactionSequence(), TransactionE.BONIFICACIONES.getId(), ChannelE.INT.getId(), null, null, null, null, null, 
+                                                      card.getProductId().getDomesticCurrencyId().getId(), programLoyaltyTransaction.getTotalBonificationValue(), null, null, null, null, 
+                                                      null, StatusTransactionManagementE.APPROVED.getId(), cardNumber, card.getCardHolder(), card.getSecurityCodeCard(), transactionsManagement.getExpirationCardDate(), null, null, null, null, 
+                                                      null, null, null, ResponseCode.SUCCESS.getCode(), null, newTransactionManagement.getTransactionNumberIssuer(), entityManager);
+
+                                try {
+                                    newTransactionManagementHistory = operationsBD.saveTransactionsManagementHistory(newTransactionManagementHistory, entityManager);
+                                } catch (Exception e) {
+                                    return new CalculateBonusCardResponse(ResponseCode.INTERNAL_ERROR, "an error occurred while saving the transaction");
+                                }
                                  entityManager.flush();
                                  //actualiazar balance_history
                                  BalanceHistoryCard balanceHistoryOld = loadLastBalanceHistoryByCard(card.getId());
@@ -1160,61 +1179,7 @@ public class APIOperations {
         return transactionsManagement;
     }
    
-   public TransactionsManagement createTransactionsManagement2(TransactionsManagement management, int channelId, Float bonusAmount, int currencyId, String transactionNumber){
-       TransactionsManagement transactionsManagement = new TransactionsManagement();
-       transactionsManagement.setAcquirerTerminalCode(management.getAcquirerTerminalCode());
-       transactionsManagement.setAcquirerCountryId(management.getAcquirerCountryId());
-       String transactionNumberIssuer = generateNumberSequence(getSequencesByDocumentTypeByOriginApplication(DocumentTypeE.BONUS_TRANSACTION_CMS.getId(), Constants.ORIGIN_APPLICATION_CMS_ID));
-       transactionsManagement.setTransactionNumberIssuer(transactionNumberIssuer);
-       transactionsManagement.setTransactionDateIssuer(new Timestamp(new Date().getTime()));
-       transactionsManagement.setTransactionTypeId(TransactionE.BONIFICACIONES.getId());
-       transactionsManagement.setChannelId(channelId);
-       transactionsManagement.setDateTransaction(management.getDateTransaction());
-       transactionsManagement.setTransactionReference(transactionNumber);
-       transactionsManagement.setSettlementTransactionAmount(bonusAmount);
-       transactionsManagement.setSettlementCurrencyTransactionId(currencyId);  
-       transactionsManagement.setStatusTransactionManagementId(StatusTransactionManagementE.APPROVED.getId());
-       transactionsManagement.setCardHolder(management.getCardHolder());
-       transactionsManagement.setCardNumber(management.getCardNumber());
-       transactionsManagement.setChannelId(channelId);
-       transactionsManagement.setCvv(management.getCvv());
-       transactionsManagement.setExpirationCardDate(management.getExpirationCardDate());
-       transactionsManagement.setIssuerId(management.getIssuerId());
-       transactionsManagement.setMccCodeTrade(management.getMccCodeTrade());
-       transactionsManagement.setTradeName(management.getTradeName());
-       transactionsManagement.setResponseCode("00 APROBADA");
-       transactionsManagement.setCreateDate(new Date());
-       
-       return transactionsManagement;
-   }
-   
-   public TransactionsManagementHistory createTransactionsManagementHistory(TransactionsManagement management, int channelId, Float bonusAmount, int currencyId, String transactionNumber){
-       TransactionsManagementHistory transactionsManagement = new TransactionsManagementHistory();
-       transactionsManagement.setAcquirerTerminalCode(management.getAcquirerTerminalCode());
-       transactionsManagement.setAcquirerCountryId(management.getAcquirerCountryId());
-       String transactionNumberIssuer = generateNumberSequence(getSequencesByDocumentTypeByOriginApplication(DocumentTypeE.BONUS_TRANSACTION_CMS.getId(), Constants.ORIGIN_APPLICATION_CMS_ID));
-       transactionsManagement.setTransactionNumberIssuer(transactionNumberIssuer);
-       transactionsManagement.setTransactionDateIssuer(new Timestamp(new Date().getTime()));
-       transactionsManagement.setTransactionTypeId(TransactionE.BONIFICACIONES.getId());
-       transactionsManagement.setChannelId(channelId);
-       transactionsManagement.setDateTransaction(management.getDateTransaction());
-       transactionsManagement.setTransactionReference(transactionNumber);
-       transactionsManagement.setSettlementTransactionAmount(bonusAmount);
-       transactionsManagement.setSettlementCurrencyTransactionId(currencyId);  
-       transactionsManagement.setStatusTransactionManagementId(StatusTransactionManagementE.APPROVED.getId());
-       transactionsManagement.setCardHolder(management.getCardHolder());
-       transactionsManagement.setCardNumber(management.getCardNumber());
-       transactionsManagement.setChannelId(channelId);
-       transactionsManagement.setCvv(management.getCvv());
-       transactionsManagement.setExpirationCardDate(management.getExpirationCardDate());
-       transactionsManagement.setIssuerId(management.getIssuerId());
-       transactionsManagement.setMccCodeTrade(management.getMccCodeTrade());
-       transactionsManagement.setTradeName(management.getTradeName());
-       transactionsManagement.setResponseCode("00 APROBADA");
-       transactionsManagement.setCreateDate(new Date());
-       return transactionsManagement;
-   }
-   
+    
    private TransactionsManagement getTransactionsManagementByNumber(String transactionNumber) {
         String sql = "SELECT t FROM TransactionsManagement t WHERE t.transactionNumberAcquirer = ?1";
         StringBuilder sqlBuilder = new StringBuilder(sql);
