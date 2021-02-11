@@ -351,7 +351,7 @@ public class APIOperations {
             String pattern = "MMyy";
             SimpleDateFormat simpleDateFormat = new SimpleDateFormat(pattern);
             String expirationCardDate = simpleDateFormat.format(card.getExpirationDate());
-            transactionCommisionCMS = operationsBD.createTransactionsManagement(transactionsManagement, null, null, null, null, null, null, 
+            transactionCommisionCMS = operationsBD.createTransactionsManagement(transactionsManagement, null, null, null, null, null, 
                                   TransactionE.COMISION_CMS.getId(), ChannelE.INT.getId(), null, null, null, null, null, 
                                   card.getProductId().getDomesticCurrencyId().getId(), transactionCommisionAmount, null, null, null, null, 
                                   null, StatusTransactionManagementE.APPROVED.getId(), cardNumber, card.getCardHolder(), card.getSecurityCodeCard(), expirationCardDate, null, null, null, null, 
@@ -363,8 +363,8 @@ public class APIOperations {
             }
             
             //Se crea el objeto TransactionManagementHistory y se guarda en BD
-            transactionHistoryCommisionCMS = operationsBD.createTransactionsManagementHistory(transactionsManagement, null, null, null, null, null, null, 
-                                  TransactionE.COMISION_CMS.getId(), ChannelE.INT.getId(), null, null, null, null, null, 
+            transactionHistoryCommisionCMS = operationsBD.createTransactionsManagementHistory(transactionsManagement, null, null, null, null, null,
+                                  transactionCommisionCMS.getTransactionSequence(), TransactionE.COMISION_CMS.getId(), ChannelE.INT.getId(), null, null, null, null, null, 
                                   card.getProductId().getDomesticCurrencyId().getId(), transactionCommisionAmount, null, null, null, null, 
                                   null, StatusTransactionManagementE.APPROVED.getId(), cardNumber, card.getCardHolder(), card.getSecurityCodeCard(), expirationCardDate, null, null, null, null, 
                                   null, null, null, ResponseCode.SUCCESS.getCode(), null, transactionCommisionCMS.getTransactionNumberIssuer(), entityManager);

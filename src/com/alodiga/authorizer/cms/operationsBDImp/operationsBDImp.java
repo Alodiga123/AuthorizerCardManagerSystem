@@ -60,14 +60,18 @@ public class operationsBDImp implements operationsBD {
     }
     
     @Override
-    public TransactionsManagement createTransactionsManagement(TransactionsManagement management, Integer acquirerId, String acquirerTerminalCode, Integer acquirerCountryId, String transactionNumberAcquirer, Date dateTransaction, String transactionSequence, 
+    public TransactionsManagement createTransactionsManagement(TransactionsManagement management, Integer acquirerId, String acquirerTerminalCode, Integer acquirerCountryId, String transactionNumberAcquirer, Date dateTransaction, 
                                   Integer transactionTypeId, Integer channelId, Timestamp dateTimeTransmissionTerminal, Timestamp localTimeTransmission, Date localDateTransaction, Integer localCurrencyTransactionId, Float localCurrencyTransactionAmount, 
                                   Integer settlementCurrencyTransactionId, Float settlementTransactionAmount, Float rateConvertionSettlement, Float acquirerCommisionAmount, Float acquirerSettlementCommisionAmount, Float transactionRateAmount, 
-                                  Integer transactionCityId, Integer statusTransactionManagementId, String cardNumber, String cardHolder, String CVV, String expirationCardDate, Integer pinLenght, String transferDestinationCardNumber, Integer issuerId, String mccCodeTrade, 
-                                  String tradeName, String systemTraceAuditNumber, Integer numberMovementsCheckBalance, String responseCode, Integer messageMiddlewareId, Integer DocumentTypeId, EntityManager entityManager) {
+                                  Integer transactionCityId, Integer statusTransactionManagementId, String cardNumber, String cardHolder, String CVV, String expirationCardDate, Integer pinLenght, String transferDestinationCardNumber, Integer issuerId, 
+                                  String mccCodeTrade, String tradeName, String systemTraceAuditNumber, Integer numberMovementsCheckBalance, String responseCode, Integer messageMiddlewareId, Integer DocumentTypeId, EntityManager entityManager) {
     
        TransactionsManagement transactionsManagement = new TransactionsManagement();
-       String transactionNumberIssuer = generateNumberSequence(getSequencesByDocumentTypeByOriginApplication(DocumentTypeId, Constants.ORIGIN_APPLICATION_CMS_ID, entityManager),entityManager);
+       Sequences sequence = getSequencesByDocumentTypeByOriginApplication(DocumentTypeId, Constants.ORIGIN_APPLICATION_CMS_ID, entityManager);
+       String transactionNumberIssuer = generateNumberSequence(sequence,entityManager);
+       Calendar cal = Calendar.getInstance();
+       int year = cal.get(Calendar.YEAR);
+       String transactionSequenceNumber = transactionTypeId.toString().concat(String.valueOf(year)).concat(sequence.getCurrentValue().toString());
        if (management == null) {
            transactionsManagement.setAcquirerTerminalCode(acquirerTerminalCode);
            transactionsManagement.setAcquirerCountryId(acquirerCountryId);
@@ -94,6 +98,7 @@ public class operationsBDImp implements operationsBD {
        }       
        transactionsManagement.setTransactionNumberIssuer(transactionNumberIssuer);
        transactionsManagement.setTransactionDateIssuer(new Timestamp(new Date().getTime()));
+       transactionsManagement.setTransactionSequence(transactionSequenceNumber);
        transactionsManagement.setTransactionTypeId(transactionTypeId);
        transactionsManagement.setChannelId(channelId);              
        transactionsManagement.setSettlementTransactionAmount(settlementTransactionAmount);
@@ -140,6 +145,7 @@ public class operationsBDImp implements operationsBD {
        }       
        transactionsManagementHistory.setTransactionNumberIssuer(transactionNumberIssuer);
        transactionsManagementHistory.setTransactionDateIssuer(new Timestamp(new Date().getTime()));
+       transactionsManagementHistory.setTransactionSequence(transactionSequence);
        transactionsManagementHistory.setTransactionTypeId(transactionTypeId);
        transactionsManagementHistory.setChannelId(channelId);              
        transactionsManagementHistory.setSettlementTransactionAmount(settlementTransactionAmount);
