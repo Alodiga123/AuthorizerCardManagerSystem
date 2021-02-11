@@ -5,9 +5,6 @@
  */
 package com.alodiga.authorizer.cms.operationsBDImp;
 import com.alodiga.authorizer.cms.operationsBD.operationsBD;
-import com.cms.commons.enumeraciones.DocumentTypeE;
-import com.cms.commons.enumeraciones.StatusTransactionManagementE;
-import com.cms.commons.enumeraciones.TransactionE;
 import com.cms.commons.models.Sequences;
 import com.cms.commons.models.TransactionsManagement;
 import com.cms.commons.models.TransactionsManagementHistory;
@@ -15,19 +12,13 @@ import com.cms.commons.util.Constants;
 import java.sql.Timestamp;
 import java.util.Calendar;
 import java.util.Date;
-import javax.ejb.Stateless;
-import javax.ejb.TransactionManagement;
-import javax.ejb.TransactionManagementType;
 import javax.persistence.Query;
 import javax.persistence.EntityManager;
 import javax.persistence.NoResultException;
-import javax.persistence.PersistenceContext;
-import com.alodiga.authorizer.cms.bean.APIOperations;
 import com.cms.commons.models.ProductHasChannelHasTransaction;
 import com.cms.commons.models.RateByCard;
 import com.cms.commons.models.RateByProduct;
 import java.util.List;
-import org.apache.log4j.Logger;
 
 /**
  *
