@@ -106,8 +106,49 @@ public class operationsBDImp implements operationsBD {
     }
 
     @Override
-    public TransactionsManagementHistory createTransactionsManagementHistory(TransactionsManagement management, int channelId, Float bonusAmount, int currencyId, String transactionNumber) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    public TransactionsManagementHistory createTransactionsManagementHistory(TransactionsManagement transactionManagement, Integer acquirerId, String acquirerTerminalCode, Integer acquirerCountryId, String transactionNumberAcquirer, Date dateTransaction, 
+                                  String transactionSequence, Integer transactionTypeId, Integer channelId, Timestamp dateTimeTransmissionTerminal, Timestamp localTimeTransmission, Date localDateTransaction, 
+                                  Integer localCurrencyTransactionId, Float localCurrencyTransactionAmount, Integer settlementCurrencyTransactionId, Float settlementTransactionAmount, Float rateConvertionSettlement, 
+                                  Float acquirerCommisionAmount, Float acquirerSettlementCommisionAmount, Float transactionRateAmount, Integer transactionCityId, Integer statusTransactionManagementId, String cardNumber,
+                                  String cardHolder, String CVV, String expirationCardDate, Integer pinLenght, String transferDestinationCardNumber, Integer issuerId, String mccCodeTrade, String tradeName, String systemTraceAuditNumber,
+                                  Integer numberMovementsCheckBalance, String responseCode, Integer messageMiddlewareId, String transactionNumberIssuer, EntityManager entityManager) {
+        
+       TransactionsManagementHistory transactionsManagementHistory = new TransactionsManagementHistory();
+       if (transactionManagement == null) {
+           transactionsManagementHistory.setAcquirerTerminalCode(acquirerTerminalCode);
+           transactionsManagementHistory.setAcquirerCountryId(acquirerCountryId);
+           transactionsManagementHistory.setDateTransaction(dateTransaction);
+           transactionsManagementHistory.setCardHolder(cardHolder);
+           transactionsManagementHistory.setCardNumber(cardNumber);
+           transactionsManagementHistory.setCvv(CVV);
+           transactionsManagementHistory.setExpirationCardDate(expirationCardDate);
+           transactionsManagementHistory.setIssuerId(issuerId);
+           transactionsManagementHistory.setMccCodeTrade(mccCodeTrade);
+           transactionsManagementHistory.setTradeName(tradeName);
+       } else {
+           transactionsManagementHistory.setAcquirerTerminalCode(transactionManagement.getAcquirerTerminalCode());
+           transactionsManagementHistory.setAcquirerCountryId(transactionManagement.getAcquirerCountryId());
+           transactionsManagementHistory.setTransactionReference(transactionManagement.getTransactionNumberAcquirer());
+           transactionsManagementHistory.setDateTransaction(transactionManagement.getDateTransaction());
+           transactionsManagementHistory.setCardHolder(transactionManagement.getCardHolder());
+           transactionsManagementHistory.setCardNumber(transactionManagement.getCardNumber());
+           transactionsManagementHistory.setCvv(transactionManagement.getCvv());
+           transactionsManagementHistory.setExpirationCardDate(transactionManagement.getExpirationCardDate());
+           transactionsManagementHistory.setIssuerId(transactionManagement.getIssuerId());
+           transactionsManagementHistory.setMccCodeTrade(transactionManagement.getMccCodeTrade());
+           transactionsManagementHistory.setTradeName(transactionManagement.getTradeName());
+       }       
+       transactionsManagementHistory.setTransactionNumberIssuer(transactionNumberIssuer);
+       transactionsManagementHistory.setTransactionDateIssuer(new Timestamp(new Date().getTime()));
+       transactionsManagementHistory.setTransactionTypeId(transactionTypeId);
+       transactionsManagementHistory.setChannelId(channelId);              
+       transactionsManagementHistory.setSettlementTransactionAmount(settlementTransactionAmount);
+       transactionsManagementHistory.setSettlementCurrencyTransactionId(settlementCurrencyTransactionId);  
+       transactionsManagementHistory.setStatusTransactionManagementId(statusTransactionManagementId);      
+       transactionsManagementHistory.setResponseCode(responseCode);
+       transactionsManagementHistory.setCreateDate(new Date()); 
+        
+        return transactionsManagementHistory;
     }
 
     @Override
@@ -125,8 +166,17 @@ public class operationsBDImp implements operationsBD {
     }
 
     @Override
-    public TransactionsManagementHistory saveTransactionsManagementHistory(TransactionsManagementHistory transactionsManagement) throws Exception {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    public TransactionsManagementHistory saveTransactionsManagementHistory(TransactionsManagementHistory transactionsManagementHistory, EntityManager entityManager) throws Exception {
+        try {
+            if (transactionsManagementHistory.getId()==null)
+                entityManager.persist(transactionsManagementHistory);
+            else
+                entityManager.merge(transactionsManagementHistory);
+        } catch (Exception e) {
+            e.printStackTrace();
+           throw new Exception();
+        }
+        return transactionsManagementHistory;
     }
     
 }
