@@ -1,9 +1,11 @@
 package com.alodiga.authorizer.cms.responses;
 import com.cms.commons.models.TransactionsManagement;
 import com.cms.commons.models.Card;
+import com.cms.commons.models.TransactionsManagementHistory;
 import java.io.Serializable;
 import java.sql.Timestamp;
 import java.util.Date;
+import java.util.List;
 
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
@@ -22,6 +24,11 @@ public class TransactionResponse extends Response {
         public Timestamp transactionDateIssuer;
         public TransactionsManagement transactionsManagement;
         private Float transactionFeesAmount;
+        private Float currentBalance; 
+        private Date startDate;
+        private Date endingDate;
+        private Integer totalMovements;
+        public List<TransactionsManagementHistory> transactionsManagementHistory;
         
 	public TransactionResponse() {
 		super();
@@ -53,6 +60,23 @@ public class TransactionResponse extends Response {
         this.transactionDateIssuer = transactionDateIssuer;
         
     }
+        
+    public TransactionResponse(String code, String mensaje, String cardNumber, int cardStatusId,
+                                   String descriptionStatusCard, Long messageMiddlewareId, String transactionNumberIssuer,Float currentBalance, Date startDate, Date endingDate,Integer totalMovements, List<TransactionsManagementHistory> transactionsManagementHistory) {
+        super(new Date(), code, mensaje);
+        this.cardNumber = cardNumber;
+        this.cardStatusId = cardStatusId;
+        this.descriptionStatusCard = descriptionStatusCard;
+        this.messageMiddlewareId = messageMiddlewareId;
+        this.transactionNumberIssuer = transactionNumberIssuer;
+        this.currentBalance = currentBalance; 
+        this.startDate = startDate;
+        this.endingDate = endingDate;
+        this.totalMovements = totalMovements;
+        this.transactionsManagementHistory = transactionsManagementHistory;
+        
+
+    }    
 
     public String getCardNumber() {
         return cardNumber;

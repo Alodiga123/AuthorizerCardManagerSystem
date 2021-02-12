@@ -163,6 +163,24 @@ public class APIAuthorizerCardManagementSystem {
         return operations.calculateBonus(cardNumber, transactionTypeId, channelId,countryCode,amountTransaction,transactionNumber);
     }
     
+    @WebMethod
+    public TransactionResponse viewCardMovements(
+            @WebParam(name = "cardNumber") String cardNumber,
+            @WebParam(name = "CVV") String CVV,
+            @WebParam(name = "cardDueDate") String cardDueDate,
+            @WebParam(name = "cardHolder") String cardHolder,
+            @WebParam(name = "documentIdentificationNumber") String documentIdentificationNumber,
+            @WebParam(name = "channelId") Integer channelId,
+            @WebParam(name = "transactionTypeId") Integer transactionTypeId,
+            @WebParam(name = "messageMiddlewareId") Long messageMiddlewareId,
+            @WebParam(name = "transactionDate") Date transactionDate,
+            @WebParam(name = "localTimeTransaction") Timestamp localTimeTransaction,
+            @WebParam(name = "acquirerTerminalCodeId") String acquirerTerminalCodeId,
+            @WebParam(name = "acquirerCountryId") Integer acquirerCountryId,
+            @WebParam(name = "startDate") String startDate,
+            @WebParam(name = "endingDate") String endingDate) {
+        return operations.viewCardMovements(cardNumber,CVV,cardDueDate,cardHolder,documentIdentificationNumber,channelId,transactionTypeId,messageMiddlewareId,transactionDate,localTimeTransaction,acquirerTerminalCodeId,acquirerCountryId,startDate,endingDate);
+    }
     @WebMethod    
     public TransactionResponse transferBetweenAccount(
         @WebParam(name = "cardNumberOrigin") String cardNumberOrigin,

@@ -29,6 +29,7 @@ public enum ResponseCode {
     PROGRAM_LOYALTY_BY_CARD_NOT_EXISTS("60","The card does not have a loyalty program associated with it"), 
     TRANSACTION_MANAGER_BY_NUMBER_NOT_EXISTS("60","The transaction number does not exist"), 
     
+    //validacion de Tarjeta
     THE_CARDHOLDER_IS_VERIFIED("145","Cardholder data has been successfully verified"),
     THE_CARDHOLDER_NOT_MATCH("145","Cardholder details do not match"),
     CARD_OWNER_NOT_FOUND("146","Error finding card owner"),
@@ -41,7 +42,11 @@ public enum ResponseCode {
     DATE_DIFFERENT("153","Expiration Date is Different"),
     ACCOUNT_NOT_ASSOCIATED("154","There is no Account Associated with the Card"),
     USER_HAS_NOT_BALANCE("155","The user has no balance available to complete the transaction"),
+    THE_CARD_HAS_NO_MOVEMENTS("155","The card has no movements"),
     
+    //Activación de Tarjeta
+    ACTIVE_CARD_NO("20","The card cannot be activated. Security responses do not match"),
+    ACTIVE_CARD_YES("21","The card was activated"),
     //Validaciones de la tarjeta
     MINIMUM_AMOUNT_NOT_ALLOWED("156","The minimum amount is not allowed"),
     MAXIMUM_AMOUNT_IS_NOT_ALLOWED("157","The maximum amount is not allowed"),

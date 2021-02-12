@@ -5,8 +5,6 @@
  */
 package com.alodiga.authorizer.cms.operationsBDImp;
 import com.alodiga.authorizer.cms.operationsBD.operationsBD;
-import com.cms.commons.enumeraciones.DocumentTypeE;
-import com.cms.commons.enumeraciones.StatusTransactionManagementE;
 import com.cms.commons.enumeraciones.TransactionE;
 import com.cms.commons.models.Sequences;
 import com.cms.commons.models.TransactionsManagement;
@@ -15,19 +13,14 @@ import com.cms.commons.util.Constants;
 import java.sql.Timestamp;
 import java.util.Calendar;
 import java.util.Date;
-import javax.ejb.Stateless;
-import javax.ejb.TransactionManagement;
-import javax.ejb.TransactionManagementType;
 import javax.persistence.Query;
 import javax.persistence.EntityManager;
 import javax.persistence.NoResultException;
-import javax.persistence.PersistenceContext;
-import com.alodiga.authorizer.cms.bean.APIOperations;
 import com.cms.commons.models.ProductHasChannelHasTransaction;
 import com.cms.commons.models.RateByCard;
 import com.cms.commons.models.RateByProduct;
+import java.util.ArrayList;
 import java.util.List;
-import org.apache.log4j.Logger;
 
 /**
  *
@@ -68,7 +61,7 @@ public class operationsBDImp implements operationsBD {
                                   Integer transactionTypeId, Integer channelId, Timestamp dateTimeTransmissionTerminal, Timestamp localTimeTransmission, Date localDateTransaction, Integer localCurrencyTransactionId, Float localCurrencyTransactionAmount, 
                                   Integer settlementCurrencyTransactionId, Float settlementTransactionAmount, Float rateConvertionSettlement, Float acquirerCommisionAmount, Float acquirerSettlementCommisionAmount, Float transactionRateAmount, 
                                   Integer transactionCityId, Integer statusTransactionManagementId, String cardNumber, String cardHolder, String CVV, String expirationCardDate, Integer pinLenght, String transferDestinationCardNumber, Integer issuerId, 
-                                  String mccCodeTrade, String tradeName, String systemTraceAuditNumber, Integer numberMovementsCheckBalance, String responseCode, Integer messageMiddlewareId, Integer DocumentTypeId, EntityManager entityManager) {
+                                  String mccCodeTrade, String tradeName, String systemTraceAuditNumber, Integer numberMovementsCheckBalance, String responseCode, Long messageMiddlewareId, Integer DocumentTypeId, EntityManager entityManager) {
     
        TransactionsManagement transactionsManagement = new TransactionsManagement();
        Sequences sequence = getSequencesByDocumentTypeByOriginApplication(DocumentTypeId, Constants.ORIGIN_APPLICATION_CMS_ID, entityManager);
@@ -120,7 +113,7 @@ public class operationsBDImp implements operationsBD {
                                   Integer localCurrencyTransactionId, Float localCurrencyTransactionAmount, Integer settlementCurrencyTransactionId, Float settlementTransactionAmount, Float rateConvertionSettlement, 
                                   Float acquirerCommisionAmount, Float acquirerSettlementCommisionAmount, Float transactionRateAmount, Integer transactionCityId, Integer statusTransactionManagementId, String cardNumber,
                                   String cardHolder, String CVV, String expirationCardDate, Integer pinLenght, String transferDestinationCardNumber, Integer issuerId, String mccCodeTrade, String tradeName, String systemTraceAuditNumber,
-                                  Integer numberMovementsCheckBalance, String responseCode, Integer messageMiddlewareId, String transactionNumberIssuer, EntityManager entityManager) {
+                                  Integer numberMovementsCheckBalance, String responseCode, Long messageMiddlewareId, String transactionNumberIssuer, EntityManager entityManager) {
         
        TransactionsManagementHistory transactionsManagementHistory = new TransactionsManagementHistory();
        if (transactionManagement == null) {
@@ -293,4 +286,29 @@ public class operationsBDImp implements operationsBD {
         return result.get(0) != null ? (double) result.get(0) : 0f;
     }
     
+    @Override
+    public List<TransactionsManagementHistory> getCardMovements(String cardNumber, Date startDate, Date endingDate, EntityManager entityManager){
+        List<TransactionsManagementHistory> transactionsManagementHistory = new ArrayList<TransactionsManagementHistory>();
+        String sql = "SELECT t.transactionReference, t.transactionTypeId,t.dateTransaction,t.settlementTransactionAmount,t.transactionConcept  FROM TransactionsManagementHistory t WHERE t.cardNumber = '"+ cardNumber + "' AND t.dateTransaction BETWEEN ?1 AND ?2 AND t.transactionTypeId IN(?3,?4,?5,?6,?7,?8,?9,?10,?11)";
+        
+        StringBuilder sqlBuilder = new StringBuilder(sql);
+        Query query = entityManager.createQuery(sqlBuilder.toString());
+        query.setParameter("1", startDate);
+        query.setParameter("2", endingDate);
+        query.setParameter("3", TransactionE.RECARGA.getId());
+        query.setParameter("4", TransactionE.RECARGA_INICIAL.getId());
+        query.setParameter("5", TransactionE.RETIRO_DOMESTICO.getId());
+        query.setParameter("6", TransactionE.RETIRO_INTERNACIONAL.getId());
+        query.setParameter("7", TransactionE.COMPRA_DOMESTICA_PIN.getId());
+        query.setParameter("8", TransactionE.COMPRA_INTERNACIONAL_PIN.getId());
+        query.setParameter("9", TransactionE.DEPOSITO.getId());
+        query.setParameter("10", TransactionE.TRANSFERENCIAS_PROPIAS.getId());
+        query.setParameter("11", TransactionE.RECARGA_MANUAL.getId());
+        try{
+        transactionsManagementHistory = query.setHint("toplink.refresh", "true").getResultList();
+        } catch (NoResultException e) {
+            return null;
+        }
+        return transactionsManagementHistory;
+    }   
 }
