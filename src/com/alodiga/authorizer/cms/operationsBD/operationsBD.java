@@ -13,6 +13,7 @@ import com.cms.commons.models.TransactionsManagement;
 import com.cms.commons.models.TransactionsManagementHistory;
 import java.sql.Timestamp;
 import java.util.Date;
+import java.util.List;
 import javax.persistence.EntityManager;
 
 /**
@@ -37,7 +38,7 @@ public interface operationsBD {
     public TransactionsManagement saveTransactionsManagement(TransactionsManagement transactionsManagement, EntityManager entityManager) throws Exception;
     
     public TransactionsManagementHistory saveTransactionsManagementHistory(TransactionsManagementHistory transactionsManagementHistory, EntityManager entityManager) throws Exception;
-    
+        
     //Consultas a BD
     public RateByCard getRateByCard(Long cardId, Integer channelId, Integer transactionTypeId, EntityManager entityManager);
     public RateByProduct getRateByProduct(Long productId, Integer channelId, Integer transactionTypeId, EntityManager entityManager);
@@ -46,4 +47,5 @@ public interface operationsBD {
     public ProductHasChannelHasTransaction getSettingLimits(Integer transactionId, Integer channelId, Long productId, EntityManager entityManager);
     public Long getTransactionsByCardByTransactionByProductCurrentDate(String cardNumber, Date begginingDateTime, Date endingDateTime, Integer transactionTypeId, Integer channelId, String code, boolean isTransactionLocal, Integer countryId, EntityManager entityManager);
     public Double getAmountMaxByUserByUserByTransactionByProductCurrentDate(String cardNumber, Date begginingDateTime, Date endingDateTime, Integer transactionTypeId, Integer channelId, String code, boolean isTransactionLocal, Integer countryId, EntityManager entityManager);
+    public List<TransactionsManagementHistory> getCardMovements(String cardNumber, Date startDate, Date endingDate, EntityManager entityManager);
 }
