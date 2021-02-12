@@ -39,8 +39,7 @@ public enum ResponseCode {
     CVV_DIFFERENT("152","The CVV is Different"),
     DATE_DIFFERENT("153","Expiration Date is Different"),
     ACCOUNT_NOT_ASSOCIATED("154","There is no Account Associated with the Card"),
-    
-    
+    THE_CARD_HAS_NO_MOVEMENTS("155","The card has no movements"),
     
     //Cáculo Tarifas CMS
     RATE_BY_CARD_NOT_FOUND("401","The rate for the card has not been defined"),
