@@ -41,6 +41,7 @@ public enum ResponseCode {
     DATE_DIFFERENT("153","Expiration Date is Different"),
     ACCOUNT_NOT_ASSOCIATED("154","There is no Account Associated with the Card"),
     USER_HAS_NOT_BALANCE("155","The user has no balance available to complete the transaction"),
+    THE_CARD_HAS_NO_MOVEMENTS("155","The card has no movements"),
     
     //Activación de Tarjeta
     ACTIVE_CARD_NO("20","The card cannot be activated. Security responses do not match"),
