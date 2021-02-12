@@ -172,7 +172,7 @@ public class APIAuthorizerCardManagementSystem {
             @WebParam(name = "documentIdentificationNumber") String documentIdentificationNumber,
             @WebParam(name = "channelId") Integer channelId,
             @WebParam(name = "transactionTypeId") Integer transactionTypeId,
-            @WebParam(name = "messageMiddlewareId") Integer messageMiddlewareId,
+            @WebParam(name = "messageMiddlewareId") Long messageMiddlewareId,
             @WebParam(name = "transactionDate") Date transactionDate,
             @WebParam(name = "localTimeTransaction") Timestamp localTimeTransaction,
             @WebParam(name = "acquirerTerminalCodeId") String acquirerTerminalCodeId,
