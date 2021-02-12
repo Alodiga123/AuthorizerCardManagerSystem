@@ -156,15 +156,15 @@ public class APIOperations {
     }
 
     public CardResponse getValidateCVVAndDueDateCard(String cardNumber, String cvv, String cardDueDate) {
-        Card cards = new Card();
+        Card card;
         CardResponse cardResponse = new CardResponse();
         try {
-            cards = getCardByCardNumber(cardNumber);
-            if (cards == null) {
-                if (!cards.getSecurityCodeCard().equals(cvv)) {
+            card = getCardByCardNumber(cardNumber);
+            if (card.getCardNumber() != null) {
+                if (!card.getSecurityCodeCard().equals(cvv)) {
                     return new CardResponse(ResponseCode.CVV_DIFFERENT.getCode(), ResponseCode.CVV_DIFFERENT.getMessage());
                 }
-                Date cardExpiration = cards.getExpirationDate();
+                Date cardExpiration = card.getExpirationDate();
                 SimpleDateFormat sdf = new SimpleDateFormat("MMyy");
                 if (!sdf.format(cardExpiration).equals(cardDueDate)) {
                     return new CardResponse(ResponseCode.DATE_DIFFERENT.getCode(), ResponseCode.DATE_DIFFERENT.getMessage());
@@ -177,7 +177,7 @@ public class APIOperations {
         } catch (Exception e) {
             return new CardResponse(ResponseCode.INTERNAL_ERROR.getCode(), "Error loading card");
         }
-        cardResponse.setCard(cards);
+        cardResponse.setCard(card);
         return new CardResponse(ResponseCode.SUCCESS.getCode(), "The Card exists in the CMS");
     }
 
@@ -1376,7 +1376,7 @@ public class APIOperations {
         return transactionsManagementHistory;
     }
     
-    public TransactionResponse viewCardMovements(String cardNumber,String CVV,String cardDueDate,String cardHolder,String documentIdentificationNumber,Integer channelId,Integer transactionTypeId,Integer messageMiddlewareId,Date transactionDate,
+    public TransactionResponse viewCardMovements(String cardNumber,String CVV,String cardDueDate,String cardHolder,String documentIdentificationNumber,Integer channelId,Integer transactionTypeId,Long messageMiddlewareId,Date transactionDate,
             Timestamp localTimeTransaction,String acquirerTerminalCodeId,Integer acquirerCountryId,String startDate,String endingDate){
         Card card = null;
         TransactionsManagement transactionManagement = null;
