@@ -5,9 +5,6 @@
  */
 package com.alodiga.authorizer.cms.operationsBDImp;
 import com.alodiga.authorizer.cms.operationsBD.operationsBD;
-import com.cms.commons.enumeraciones.DocumentTypeE;
-import com.cms.commons.enumeraciones.StatusTransactionManagementE;
-import com.cms.commons.enumeraciones.TransactionE;
 import com.cms.commons.models.Sequences;
 import com.cms.commons.models.TransactionsManagement;
 import com.cms.commons.models.TransactionsManagementHistory;
@@ -15,15 +12,13 @@ import com.cms.commons.util.Constants;
 import java.sql.Timestamp;
 import java.util.Calendar;
 import java.util.Date;
-import javax.ejb.Stateless;
-import javax.ejb.TransactionManagement;
-import javax.ejb.TransactionManagementType;
 import javax.persistence.Query;
 import javax.persistence.EntityManager;
 import javax.persistence.NoResultException;
-import javax.persistence.PersistenceContext;
-import com.alodiga.authorizer.cms.bean.APIOperations;
-import org.apache.log4j.Logger;
+import com.cms.commons.models.ProductHasChannelHasTransaction;
+import com.cms.commons.models.RateByCard;
+import com.cms.commons.models.RateByProduct;
+import java.util.List;
 
 /**
  *
@@ -183,6 +178,110 @@ public class operationsBDImp implements operationsBD {
            throw new Exception();
         }
         return transactionsManagementHistory;
+    }
+
+    @Override
+    public RateByCard getRateByCard(Long cardId, Integer channelId, Integer transactionTypeId, EntityManager entityManager) {
+        try {
+            Query query = entityManager.createQuery("SELECT r FROM RateByCard r WHERE r.cardId.id = " + cardId + " AND r.channelId.id = " + channelId + " AND r.transactionId.id = " + transactionTypeId + "");
+            query.setMaxResults(1);
+            RateByCard result = (RateByCard) query.setHint("toplink.refresh", "true").getSingleResult();
+            return result;
+        } catch (NoResultException e) {
+            return null;
+        }
+    }
+
+    @Override
+    public RateByProduct getRateByProduct(Long productId, Integer channelId, Integer transactionTypeId, EntityManager entityManager) {
+        try {
+            Query query = entityManager.createQuery("SELECT r FROM RateByProduct r WHERE r.productId.id = " + productId + " AND r.channelId.id = " + channelId + " AND r.transactionId.id = " + transactionTypeId + "");
+            query.setMaxResults(1);
+            RateByProduct result = (RateByProduct) query.setHint("toplink.refresh", "true").getSingleResult();
+            return result;
+        } catch (NoResultException e) {
+            return null;
+        }
+    }
+
+    @Override
+    public Long getTotalTransactionsByCard(String cardNumber, Integer channelId, Integer transactionTypeId, EntityManager entityManager) {
+        StringBuilder sqlBuilder = new StringBuilder("SELECT COUNT(t.id) FROM transactionsManagementHistory t WHERE t.cardNumber = ?1 AND t.channelId = ?2 AND t.transactionTypeId = ?3 AND t.responseCode = '00'");
+        Query query = entityManager.createNativeQuery(sqlBuilder.toString());
+        query.setParameter("1", cardNumber);
+        query.setParameter("2", channelId);
+        query.setParameter("3", transactionTypeId);
+        List result = (List) query.setHint("toplink.refresh", "true").getResultList();
+        return result.get(0) != null ? (Long) result.get(0) : 0l;
+    }
+
+    @Override
+    public Long getTotalTransactionsByCardByDate(String cardNumber, Date begginingDateTime, Date endingDateTime, Integer channelId, Integer transactionTypeId, EntityManager entityManager) {
+        StringBuilder sqlBuilder = new StringBuilder("SELECT COUNT(t.id) FROM transactionsManagementHistory t WHERE t.createDate between ?1 AND ?2 AND t.cardNumber = ?3 AND t.channelId = ?4 AND t.transactionTypeId = ?5 AND t.responseCode = '00'");
+        Query query = entityManager.createNativeQuery(sqlBuilder.toString());
+        query.setParameter("1", begginingDateTime);
+        query.setParameter("2", endingDateTime);
+        query.setParameter("3", cardNumber);
+        query.setParameter("4", channelId);
+        query.setParameter("5", transactionTypeId);
+        List result = (List) query.setHint("toplink.refresh", "true").getResultList();
+        return result.get(0) != null ? (Long) result.get(0) : 0l;
+    }   
+
+    @Override
+    public ProductHasChannelHasTransaction getSettingLimits(Integer transactionId, Integer channelId, Long productId, EntityManager entityManager) {
+        try {
+            Query query = entityManager.createQuery("SELECT P FROM ProductHasChannelHasTransaction p WHERE p.productId.id = " + productId + " AND p.channelId.id= " + channelId
+                    + " AND p.transactionId.id= " + transactionId + "");
+            query.setMaxResults(1);
+            ProductHasChannelHasTransaction result = (ProductHasChannelHasTransaction) query.setHint("toplink.refresh", "true").getSingleResult();
+            return result;
+        } catch (NoResultException e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    @Override
+    public Long getTransactionsByCardByTransactionByProductCurrentDate(String cardNumber, Date begginingDateTime, Date endingDateTime, Integer transactionTypeId, Integer channelId, String code, boolean isTransactionLocal, Integer countryId, EntityManager entityManager) {
+        String sql = "SELECT * FROM transactionsManagementHistory t WHERE t.dateTransaction between ?1 AND ?2 AND t.cardNumber = ?3 AND t.transactionTypeId = ?4 AND t.channelId = ?5 AND t.responseCode =?6";
+        if (isTransactionLocal) {
+            sql += (" AND acquirerCountryId = ?7");
+        } else {
+            sql += (" AND acquirerCountryId <> ?7");
+        }
+        StringBuilder sqlBuilder = new StringBuilder(sql);
+        Query query = entityManager.createNativeQuery(sqlBuilder.toString());
+        query.setParameter("1", begginingDateTime);
+        query.setParameter("2", endingDateTime);
+        query.setParameter("3", cardNumber);
+        query.setParameter("4", transactionTypeId);
+        query.setParameter("5", channelId);
+        query.setParameter("6", code);
+        query.setParameter("7", countryId);
+        List result = (List) query.setHint("toplink.refresh", "true").getResultList();
+        return !result.isEmpty() ? (Long) result.get(0) : 0l;
+    }
+
+    @Override
+    public Double getAmountMaxByUserByUserByTransactionByProductCurrentDate(String cardNumber, Date begginingDateTime, Date endingDateTime, Integer transactionTypeId, Integer channelId, String code, boolean isTransactionLocal, Integer countryId, EntityManager entityManager) {
+        String sql = "SELECT SUM(t.settlementTransactionAmount) FROM transactionsManagementHistory t WHERE t.dateTransaction between ?1 AND ?2 AND t.cardNumber = ?3 AND t.transactionTypeId = ?4 AND t.channelId = ?5 AND t.responseCode =?6";
+        if (isTransactionLocal) {
+            sql += (" AND acquirerCountryId = ?7");
+        } else {
+            sql += (" AND acquirerCountryId <> ?7");
+        }
+        StringBuilder sqlBuilder = new StringBuilder(sql);
+        Query query = entityManager.createNativeQuery(sqlBuilder.toString());
+        query.setParameter("1", begginingDateTime);
+        query.setParameter("2", endingDateTime);
+        query.setParameter("3", cardNumber);
+        query.setParameter("4", transactionTypeId);
+        query.setParameter("5", channelId);
+        query.setParameter("6", code);
+        query.setParameter("7", countryId);
+        List result = (List) query.setHint("toplink.refresh", "true").getResultList();
+        return result.get(0) != null ? (double) result.get(0) : 0f;
     }
     
 }
