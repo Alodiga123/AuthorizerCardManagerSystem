@@ -23,6 +23,7 @@ public enum ResponseCode {
     //Mensajes Status Card
     CARD_EXISTS("50","The Card exists in the Card Manager System database"),
     CARD_NOT_EXISTS("51","The card does not exist in the Card Manager System database"),  
+    CARD_NOT_VALIDATE("52","The card did not pass the validations"),
     
     //validaciones para calcular bonificaciones
     PROGRAM_LOYALTY_BY_CARD_NOT_EXISTS("60","The card does not have a loyalty program associated with it"), 
@@ -40,6 +41,10 @@ public enum ResponseCode {
     DATE_DIFFERENT("153","Expiration Date is Different"),
     ACCOUNT_NOT_ASSOCIATED("154","There is no Account Associated with the Card"),
     USER_HAS_NOT_BALANCE("155","The user has no balance available to complete the transaction"),
+    
+    //Validaciones de la tarjeta
+    MINIMUM_AMOUNT_NOT_ALLOWED("156","The minimum amount is not allowed"),
+    MAXIMUM_AMOUNT_IS_NOT_ALLOWED("157","The maximum amount is not allowed"),
     
     
     //Cáculo Tarifas CMS

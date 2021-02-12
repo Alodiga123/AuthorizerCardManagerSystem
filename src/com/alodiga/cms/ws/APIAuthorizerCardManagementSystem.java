@@ -141,7 +141,7 @@ public class APIAuthorizerCardManagementSystem {
             @WebParam(name = "transactionTypeId") Integer transactionTypeId,
             @WebParam(name = "channelId") Integer channelId,
             @WebParam(name = "transactionDate") Date transactionDate,
-            @WebParam(name = "localTimeTransaction") Date localTimeTransaction,
+            @WebParam(name = "localTimeTransaction") Timestamp localTimeTransaction,
             @WebParam(name = "acquirerTerminalCodeId") String acquirerTerminalCodeId,
             @WebParam(name = "acquirerCountryId") Integer acquirerCountryId,
             @WebParam(name = "messageMiddlewareId") Long messageMiddlewareId,
@@ -162,5 +162,32 @@ public class APIAuthorizerCardManagementSystem {
         @WebParam(name = "transactionNumber") String transactionNumber){
         return operations.calculateBonus(cardNumber, transactionTypeId, channelId,countryCode,amountTransaction,transactionNumber);
     }
+    
+    @WebMethod    
+    public TransactionResponse transferBetweenAccount(
+        @WebParam(name = "cardNumberOrigin") String cardNumberOrigin,
+        @WebParam(name = "cardNumberDestinate") String cardNumberDestinate,
+        @WebParam(name = "CVVOrigin") String CVVOrigin,
+        @WebParam(name = "cardDueDateOrigin") String cardDueDateOrigin,
+        @WebParam(name = "cardHolderOrigin") String cardHolderOrigin,
+        @WebParam(name = "documentIdentificationNumber") String documentIdentificationNumber,
+        @WebParam(name = "ARQCOrigin") String ARQCOrigin,
+        @WebParam(name = "CVVDestinate") String CVVDestinate,
+        @WebParam(name = "cardDueDateDestinate") String cardDueDateDestinate,
+        @WebParam(name = "cardHolderDestinate") String cardHolderDestinate,
+        @WebParam(name = "ARQCDestinate") String ARQCDestinate,
+        @WebParam(name = "channelId") Integer channelId,
+        @WebParam(name = "transactionTypeId") Integer transactionTypeId,
+        @WebParam(name = "messageMiddlewareId") Long messageMiddlewareId,
+        @WebParam(name = "transactionDate") Date transactionDate,
+        @WebParam(name = "localTimeTransaction") Timestamp localTimeTransaction,
+        @WebParam(name = "acquirerTerminalCodeId") String acquirerTerminalCodeId,
+        @WebParam(name = "acquirerCountryId") Integer acquirerCountryId,
+        @WebParam(name = "amountTransfer") Float amountTransfer,
+        @WebParam(name = "dateTimeTransmissionTerminal")Timestamp dateTimeTransmissionTerminal,
+        @WebParam(name = "localDateTransaction")Date localDateTransaction){
+        return operations.transferBetweenAccount(cardNumberOrigin, cardNumberDestinate, CVVOrigin,cardDueDateOrigin,cardHolderOrigin,documentIdentificationNumber,ARQCOrigin,CVVDestinate,cardDueDateDestinate,cardHolderDestinate,ARQCDestinate,channelId,transactionTypeId,messageMiddlewareId,transactionDate,localTimeTransaction,acquirerTerminalCodeId,acquirerCountryId,amountTransfer,dateTimeTransmissionTerminal,localDateTransaction);
+    }
+    
     
 }
