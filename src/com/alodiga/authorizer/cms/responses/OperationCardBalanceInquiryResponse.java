@@ -21,8 +21,8 @@ public class OperationCardBalanceInquiryResponse extends Response {
         super();
     }
 
-    public OperationCardBalanceInquiryResponse(ResponseCode code, String message) {
-        super(new Date(), code.getCode(), message);
+    public OperationCardBalanceInquiryResponse(String code, String message) {
+        super(new Date(), code, message);
 
     }
 
