@@ -154,12 +154,19 @@ public class APIOperations {
     }
 
     public CardResponse getValidateCVVAndDueDateCard(String cardNumber, String cvv, String cardDueDate) {
-        Card cards = new Card();
+        Card card;
         CardResponse cardResponse = new CardResponse();
         try {
-            cards = getCardByCardNumber(cardNumber);
-            if (cards == null) {
-                return new CardResponse(ResponseCode.CARD_NOT_EXISTS.getCode(), ResponseCode.CARD_NOT_EXISTS.getMessage());
+            card = getCardByCardNumber(cardNumber);
+            if (card.getCardNumber() != null) {
+                if (!card.getSecurityCodeCard().equals(cvv)) {
+                    return new CardResponse(ResponseCode.CVV_DIFFERENT.getCode(), ResponseCode.CVV_DIFFERENT.getMessage());
+                }
+                Date cardExpiration = card.getExpirationDate();
+                SimpleDateFormat sdf = new SimpleDateFormat("MMyy");
+                if (!sdf.format(cardExpiration).equals(cardDueDate)) {
+                    return new CardResponse(ResponseCode.DATE_DIFFERENT.getCode(), ResponseCode.DATE_DIFFERENT.getMessage());
+                }
 
             }
             if (!cards.getSecurityCodeCard().equals(cvv)) {
@@ -175,7 +182,7 @@ public class APIOperations {
         } catch (Exception e) {
             return new CardResponse(ResponseCode.INTERNAL_ERROR.getCode(), "Error loading card");
         }
-        cardResponse.setCard(cards);
+        cardResponse.setCard(card);
         return new CardResponse(ResponseCode.SUCCESS.getCode(), "The Card exists in the CMS");
     }
 

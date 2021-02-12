@@ -181,6 +181,27 @@ public class APIAuthorizerCardManagementSystem {
             @WebParam(name = "endingDate") String endingDate) {
         return operations.viewCardMovements(cardNumber,CVV,cardDueDate,cardHolder,documentIdentificationNumber,channelId,transactionTypeId,messageMiddlewareId,transactionDate,localTimeTransaction,acquirerTerminalCodeId,acquirerCountryId,startDate,endingDate);
     }
+    
+    @WebMethod
+    public TransactionResponse activateCard(
+            @WebParam(name = "cardNumber") String cardNumber,
+            @WebParam(name = "cardHolder") String cardHolder,
+            @WebParam(name = "CVV") String CVV,
+            @WebParam(name = "cardDueDate") String cardDueDate,
+            @WebParam(name = "answerDocumentIdentificationNumber") String answerDocumentIdentificationNumber,
+            @WebParam(name = "answerNumberPhoneCustomer") String answerNumberPhoneCustomer,
+            @WebParam(name = "answerDateBirth") Date answerDateBirth,
+            @WebParam(name = "answerEmailCustomer") String answerEmailCustomer,
+            @WebParam(name = "messageMiddlewareId") Long messageMiddlewareId,
+            @WebParam(name = "transactionTypeId") Integer transactionTypeId,
+            @WebParam(name = "channelId") Integer channelId,
+            @WebParam(name = "transactionDate") Date transactionDate,
+            @WebParam(name = "localTimeTransaction") Timestamp localTimeTransaction,       
+            @WebParam(name = "acquirerTerminalCodeId") String acquirerTerminalCodeId,
+            @WebParam(name = "transactionNumberAcquirer") String transactionNumberAcquirer,
+            @WebParam(name = "acquirerCountryId") Integer acquirerCountryId) {
+        return operations.activateCard(cardNumber,cardHolder,CVV,cardDueDate,answerDocumentIdentificationNumber,answerNumberPhoneCustomer,answerDateBirth,answerEmailCustomer,messageMiddlewareId,transactionTypeId,channelId,transactionDate,localTimeTransaction,acquirerTerminalCodeId,transactionNumberAcquirer,acquirerCountryId);
+    }
     @WebMethod    
     public TransactionResponse transferBetweenAccount(
         @WebParam(name = "cardNumberOrigin") String cardNumberOrigin,
