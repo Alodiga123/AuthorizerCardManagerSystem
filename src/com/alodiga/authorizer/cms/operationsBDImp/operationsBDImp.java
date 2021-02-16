@@ -5,7 +5,16 @@
  */
 package com.alodiga.authorizer.cms.operationsBDImp;
 import com.alodiga.authorizer.cms.operationsBD.operationsBD;
+import com.alodiga.authorizer.cms.responses.CardResponse;
+import com.alodiga.authorizer.cms.responses.ResponseCode;
 import com.cms.commons.enumeraciones.TransactionE;
+import com.cms.commons.models.AccountCard;
+import com.cms.commons.models.BalanceHistoryCard;
+import com.cms.commons.models.BonusCard;
+import com.cms.commons.models.Channel;
+import com.cms.commons.models.Country;
+import com.cms.commons.models.DaysWeek;
+import com.cms.commons.models.DaysWeekHasProgramLoyalty;
 import com.cms.commons.models.Sequences;
 import com.cms.commons.models.TransactionsManagement;
 import com.cms.commons.models.TransactionsManagementHistory;
@@ -17,6 +26,8 @@ import javax.persistence.Query;
 import javax.persistence.EntityManager;
 import javax.persistence.NoResultException;
 import com.cms.commons.models.ProductHasChannelHasTransaction;
+import com.cms.commons.models.ProgramLoyalty;
+import com.cms.commons.models.ProgramLoyaltyTransaction;
 import com.cms.commons.models.RateByCard;
 import com.cms.commons.models.RateByProduct;
 import java.util.ArrayList;
@@ -150,8 +161,8 @@ public class operationsBDImp implements operationsBD {
        transactionsManagementHistory.setStatusTransactionManagementId(statusTransactionManagementId);      
        transactionsManagementHistory.setResponseCode(responseCode);
        transactionsManagementHistory.setCreateDate(new Date()); 
-        
-        return transactionsManagementHistory;
+
+       return transactionsManagementHistory;
     }
 
     @Override
@@ -311,4 +322,155 @@ public class operationsBDImp implements operationsBD {
         }
         return transactionsManagementHistory;
     }   
+
+    @Override
+    public List<ProgramLoyalty> getProgramLoyaltybyProductId(Long productId, EntityManager entityManager) {
+        try {
+            Query query = entityManager.createQuery("SELECT p FROM ProgramLoyalty p WHERE p.productId.id = " + productId + " AND p.statusProgramLoyaltyId.id=" + Constants.STATUS_LOYALTY_PROGRAM_ACTIVE);
+            List<ProgramLoyalty> result = query.setHint("toplink.refresh", "true").getResultList();
+            return result;
+        } catch (NoResultException e) {
+            return null;
+        }
+    }
+
+    @Override
+    public ProgramLoyaltyTransaction getProgramLoyaltyTransactionbyParam(Long programLoyaltyId, Integer transactionId, Integer channelId, EntityManager entityManager) {
+        try {
+            Query query = entityManager.createQuery("SELECT P FROM ProgramLoyaltyTransaction p WHERE p.programLoyaltyId.id = " + programLoyaltyId + " AND p.channelId.id= " + channelId
+                    + " AND p.transactionId.id= " + transactionId + "");
+            query.setMaxResults(1);
+            ProgramLoyaltyTransaction result = (ProgramLoyaltyTransaction) query.setHint("toplink.refresh", "true").getSingleResult();
+            return result;
+        } catch (NoResultException e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    @Override
+    public boolean checkActiveProgramLoyalty(Long programLoyaltyId, int dayWeekId, EntityManager entityManager) {
+        try {
+            Query query = entityManager.createQuery("SELECT d FROM DaysWeekHasProgramLoyalty d WHERE d.programLoyaltyId.id = " + programLoyaltyId + " AND d.daysWeekId.id=" + dayWeekId);
+            query.setMaxResults(1);
+            DaysWeekHasProgramLoyalty result = (DaysWeekHasProgramLoyalty) query.setHint("toplink.refresh", "true").getSingleResult();
+            return true;
+        } catch (NoResultException e) {
+            return false;
+        }
+    }
+
+    @Override
+    public DaysWeek getDaysWeekByDate(EntityManager entityManager) {
+        Calendar now = Calendar.getInstance();
+        int day = now.get(Calendar.DAY_OF_WEEK);
+        try {
+            Query query = entityManager.createQuery("SELECT d FROM DaysWeek d WHERE d.id = " + day);
+            query.setMaxResults(1);
+            DaysWeek result = (DaysWeek) query.setHint("toplink.refresh", "true").getSingleResult();
+            return result;
+        } catch (NoResultException e) {
+            return null;
+        }
+    }
+
+    @Override
+    public TransactionsManagement getTransactionsManagementByNumber(String transactionNumber, EntityManager entityManager) {
+        String sql = "SELECT t FROM TransactionsManagement t WHERE t.transactionNumberAcquirer = ?1";
+        StringBuilder sqlBuilder = new StringBuilder(sql);
+        Query query = entityManager.createQuery(sqlBuilder.toString());
+        query.setParameter("1", transactionNumber);
+        try {
+            TransactionsManagement result = (TransactionsManagement) query.setHint("toplink.refresh", "true").getSingleResult();
+            return result;
+        } catch (NoResultException e) {
+            return null;
+        }
+    }
+
+    @Override
+    public BonusCard getBonusCardByCardId(Long cardId, EntityManager entityManager) {
+        String sql = "SELECT b FROM BonusCard b WHERE b.cardId.id = ?1";
+        StringBuilder sqlBuilder = new StringBuilder(sql);
+        Query query = entityManager.createQuery(sqlBuilder.toString());
+        query.setParameter("1", cardId);
+        try {
+            BonusCard result = (BonusCard) query.setHint("toplink.refresh", "true").getSingleResult();
+            return result;
+        } catch (NoResultException e) {
+            return null;
+        }
+    }
+
+    @Override
+    public BalanceHistoryCard loadLastBalanceHistoryByCard(Long cardId, EntityManager entityManager) {
+        try {
+            Query query = entityManager.createQuery("SELECT b FROM BalanceHistoryCard b WHERE b.cardUserId.id = '" + cardId + "'");
+            query.setMaxResults(1);
+            BalanceHistoryCard result = (BalanceHistoryCard) query.setHint("toplink.refresh", "true").getSingleResult();
+            return result;
+        } catch (NoResultException e) {
+            return null;
+        }
+    }
+
+    @Override
+    public AccountCard getAccountCardbyCardId(Long cardId, EntityManager entityManager) {
+        try {
+            AccountCard result = (AccountCard) entityManager.createNamedQuery("AccountCard.findByCardId", AccountCard.class).setParameter("cardId", cardId).getSingleResult();
+            return result;
+        } catch (NoResultException e) {
+            return null;
+        }
+    }
+
+    @Override
+    public Channel getChannelById(Integer channelId, EntityManager entityManager) {
+        try {
+            Query query = entityManager.createQuery("SELECT c FROM Channel c WHERE c.id = " + channelId);
+            query.setMaxResults(1);
+            Channel result = (Channel) query.setHint("toplink.refresh", "true").getSingleResult();
+            return result;
+        } catch (NoResultException e) {
+            return null;
+        }
+    }
+
+    @Override
+    public Country getCountry(String countryCode, EntityManager entityManager) {
+        try {
+            Query query = entityManager.createQuery("SELECT c FROM Country c WHERE c.code = '" + countryCode + "'");
+            query.setMaxResults(1);
+            Country result = (Country) query.setHint("toplink.refresh", "true").getSingleResult();
+            return result;
+        } catch (NoResultException e) {
+            return null;
+        }
+    }
+
+    @Override
+    public String transformCardNumber(String cardNumber) {
+        StringBuilder cadena = new StringBuilder(cardNumber);
+        for (int i = 5; i < cadena.length(); i++) {
+            if (i <= 11) {
+                cadena.setCharAt(i, '*');
+            }
+        }
+        return cadena.toString();
+    }
+
+    @Override
+    public String maskCCNumber(String ccnum) {
+        int total = ccnum.length();
+        int startlen = 4, endlen = 4;
+        int masklen = total - (startlen + endlen);
+        StringBuffer maskedbuf = new StringBuffer(ccnum.substring(0, startlen));
+        for (int i = 0; i < masklen; i++) {
+            maskedbuf.append('X');
+        }
+        maskedbuf.append(ccnum.substring(startlen + masklen, total));
+        String masked = maskedbuf.toString();
+        return masked;
+    }
+
 }
