@@ -5,7 +5,16 @@
  */
 package com.alodiga.authorizer.cms.operationsBD;
 
+import com.alodiga.authorizer.cms.responses.CardResponse;
+import com.cms.commons.models.AccountCard;
+import com.cms.commons.models.BalanceHistoryCard;
+import com.cms.commons.models.BonusCard;
+import com.cms.commons.models.Channel;
+import com.cms.commons.models.Country;
+import com.cms.commons.models.DaysWeek;
 import com.cms.commons.models.ProductHasChannelHasTransaction;
+import com.cms.commons.models.ProgramLoyalty;
+import com.cms.commons.models.ProgramLoyaltyTransaction;
 import com.cms.commons.models.RateByCard;
 import com.cms.commons.models.RateByProduct;
 import com.cms.commons.models.Sequences;
@@ -48,4 +57,18 @@ public interface operationsBD {
     public Long getTransactionsByCardByTransactionByProductCurrentDate(String cardNumber, Date begginingDateTime, Date endingDateTime, Integer transactionTypeId, Integer channelId, String code, boolean isTransactionLocal, Integer countryId, EntityManager entityManager);
     public Double getAmountMaxByUserByUserByTransactionByProductCurrentDate(String cardNumber, Date begginingDateTime, Date endingDateTime, Integer transactionTypeId, Integer channelId, String code, boolean isTransactionLocal, Integer countryId, EntityManager entityManager);
     public List<TransactionsManagementHistory> getCardMovements(String cardNumber, Date startDate, Date endingDate, EntityManager entityManager);
+    public List<ProgramLoyalty> getProgramLoyaltybyProductId(Long productId, EntityManager entityManager);
+    public ProgramLoyaltyTransaction getProgramLoyaltyTransactionbyParam(Long programLoyaltyId, Integer transactionId, Integer channelId, EntityManager entityManager);
+    public boolean checkActiveProgramLoyalty(Long programLoyaltyId, int dayWeekId, EntityManager entityManager);
+    public DaysWeek getDaysWeekByDate(EntityManager entityManager);
+    public TransactionsManagement getTransactionsManagementByNumber(String transactionNumber, EntityManager entityManager);
+    public BonusCard getBonusCardByCardId(Long cardId, EntityManager entityManager);
+    public BalanceHistoryCard loadLastBalanceHistoryByCard(Long cardId, EntityManager entityManager);
+    public AccountCard getAccountCardbyCardId(Long cardId, EntityManager entityManager);
+    public Channel getChannelById(Integer channelId, EntityManager entityManager);
+    public Country getCountry(String countryCode, EntityManager entityManager);
+    
+    //Métodos reutilizados por la API
+    public String transformCardNumber(String cardNumber);
+    public String maskCCNumber(String ccnum);
 }
