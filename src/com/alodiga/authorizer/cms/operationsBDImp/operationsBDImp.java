@@ -11,10 +11,13 @@ import com.cms.commons.enumeraciones.TransactionE;
 import com.cms.commons.models.AccountCard;
 import com.cms.commons.models.BalanceHistoryCard;
 import com.cms.commons.models.BonusCard;
+import com.cms.commons.models.Card;
+import com.cms.commons.models.CardStatus;
 import com.cms.commons.models.Channel;
 import com.cms.commons.models.Country;
 import com.cms.commons.models.DaysWeek;
 import com.cms.commons.models.DaysWeekHasProgramLoyalty;
+import com.cms.commons.models.HistoryCardStatusChanges;
 import com.cms.commons.models.Sequences;
 import com.cms.commons.models.TransactionsManagement;
 import com.cms.commons.models.TransactionsManagementHistory;
@@ -30,6 +33,8 @@ import com.cms.commons.models.ProgramLoyalty;
 import com.cms.commons.models.ProgramLoyaltyTransaction;
 import com.cms.commons.models.RateByCard;
 import com.cms.commons.models.RateByProduct;
+import com.cms.commons.models.StatusUpdateReason;
+import com.cms.commons.models.User;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -113,7 +118,7 @@ public class operationsBDImp implements operationsBD {
        transactionsManagement.setSettlementCurrencyTransactionId(settlementCurrencyTransactionId);  
        transactionsManagement.setStatusTransactionManagementId(statusTransactionManagementId);      
        transactionsManagement.setResponseCode(responseCode);
-       transactionsManagement.setCreateDate(new Date()); 
+       transactionsManagement.setCreateDate(new Timestamp(new Date().getTime())); 
        
        return transactionsManagement;
     }
@@ -160,7 +165,7 @@ public class operationsBDImp implements operationsBD {
        transactionsManagementHistory.setSettlementCurrencyTransactionId(settlementCurrencyTransactionId);  
        transactionsManagementHistory.setStatusTransactionManagementId(statusTransactionManagementId);      
        transactionsManagementHistory.setResponseCode(responseCode);
-       transactionsManagementHistory.setCreateDate(new Date()); 
+       transactionsManagementHistory.setCreateDate(new Timestamp(new Date().getTime())); 
 
        return transactionsManagementHistory;
     }
@@ -471,6 +476,55 @@ public class operationsBDImp implements operationsBD {
         maskedbuf.append(ccnum.substring(startlen + masklen, total));
         String masked = maskedbuf.toString();
         return masked;
+    }
+
+    @Override
+    public Card saveCard(Card card, EntityManager entityManager) throws Exception {
+        try {
+            if (card.getId()==null)
+                entityManager.persist(card);
+            else
+                entityManager.merge(card);
+        } catch (Exception e) {
+            e.printStackTrace();
+           throw new Exception();
+        }
+        return card;
+    }
+
+    @Override
+    public CardStatus getStatusCard(int cardStatusId, EntityManager entityManager) {
+        try {
+            CardStatus result = (CardStatus) entityManager.createNamedQuery("CardStatus.findById", CardStatus.class).setParameter("id", cardStatusId).getSingleResult();
+            return result;
+        } catch (NoResultException e) {
+            return null;
+        }
+    }
+
+    @Override
+    public HistoryCardStatusChanges createHistoryCardStatusChanges(Card cardId, CardStatus cardStatusId, User userResponsabileId, StatusUpdateReason statusUpdateReasonId, EntityManager entityManager) {
+        HistoryCardStatusChanges historyCardStatusChanges = new HistoryCardStatusChanges();
+        historyCardStatusChanges.setCardId(cardId);
+        historyCardStatusChanges.setCardStatusId(cardStatusId);
+        historyCardStatusChanges.setStatusUpdateReasonId(statusUpdateReasonId);
+        historyCardStatusChanges.setUserResponsabileId(userResponsabileId);
+        historyCardStatusChanges.setCreateDate(new Timestamp(new Date().getTime()));
+        return historyCardStatusChanges;
+    }
+
+    @Override
+    public HistoryCardStatusChanges saveHistoryCardStatusChanges(HistoryCardStatusChanges historyCardStatusChanges, EntityManager entityManager) throws Exception {
+        try {
+            if (historyCardStatusChanges.getId()==null)
+                entityManager.persist(historyCardStatusChanges);
+            else
+                entityManager.merge(historyCardStatusChanges);
+        } catch (Exception e) {
+            e.printStackTrace();
+           throw new Exception();
+        }
+        return historyCardStatusChanges;
     }
 
 }

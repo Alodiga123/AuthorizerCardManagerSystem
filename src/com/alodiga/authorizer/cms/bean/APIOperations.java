@@ -54,6 +54,7 @@ import com.cms.commons.models.Transaction;
 import com.cms.commons.util.EjbUtils;
 import java.util.Calendar;
 import com.alodiga.authorizer.cms.operationsBDImp.operationsBDImp;
+import com.cms.commons.models.HistoryCardStatusChanges;
 import java.util.ArrayList;
 
 @Stateless(name = "FsProcessorCMSAuthorizer", mappedName = "ejb/FsProcessorCMSAuthorizer")
@@ -532,14 +533,44 @@ public class APIOperations {
         String phoneNumberCustomer = "";
         String emailCustomer = "";
         Date dateBirthCustomer;
+        CardStatus cardStatusActive;
+        HistoryCardStatusChanges historyCardStatusChanges;
         
         try {
+            //Se registra la transacción de Activación de Tarjeta en el CMS en la BD
+            String pattern = "MMyy";
+            SimpleDateFormat simpleDateFormat = new SimpleDateFormat(pattern);
+            String expirationCardDate = simpleDateFormat.format(card.getExpirationDate());
+            transactionActivateCard = operationsBD.createTransactionsManagement(null, null, acquirerTerminalCodeId, acquirerCountryId, transactionNumberAcquirer, transactionDate, 
+                                  TransactionE.ACTIVACION_TARJETA.getId(), ChannelE.INT.getId(), null, localTimeTransaction, null, null, null, 
+                                  card.getProductId().getDomesticCurrencyId().getId(), null, null, null, null, null, 
+                                  null, StatusTransactionManagementE.APPROVED.getId(), cardNumber, card.getCardHolder(), card.getSecurityCodeCard(), expirationCardDate, null, null, null, null, 
+                                  null, null, null, ResponseCode.SUCCESS.getCode(), messageMiddlewareId, DocumentTypeE.ACTIVATE_CARD.getId(), entityManager);
+
+            try {
+                transactionActivateCard = operationsBD.saveTransactionsManagement(transactionActivateCard, entityManager);
+            } catch (Exception e) {
+                return new TransactionResponse(ResponseCode.INTERNAL_ERROR.getCode(), "an error occurred while saving the transaction");
+            }
+
+            transactionHistoryActivateCard = operationsBD.createTransactionsManagementHistory(null, null, acquirerTerminalCodeId, acquirerCountryId, transactionNumberAcquirer, transactionDate, 
+                                  transactionActivateCard.getTransactionSequence(),TransactionE.ACTIVACION_TARJETA.getId(), ChannelE.INT.getId(), null, localTimeTransaction, null, null, null, 
+                                  card.getProductId().getDomesticCurrencyId().getId(), null, null, null, null, null, 
+                                  null, StatusTransactionManagementE.APPROVED.getId(), cardNumber, card.getCardHolder(), card.getSecurityCodeCard(), expirationCardDate, null, null, null, null, 
+                                  null, null, null, ResponseCode.SUCCESS.getCode(), messageMiddlewareId, transactionActivateCard.getTransactionNumberIssuer(), entityManager);
+
+            try {
+                transactionHistoryActivateCard = operationsBD.saveTransactionsManagementHistory(transactionHistoryActivateCard, entityManager);
+            } catch (Exception e) {
+                return new TransactionResponse(ResponseCode.INTERNAL_ERROR.getCode(), "an error occurred while saving the transaction");
+            }
             //Se valida la tarjeta
             CardResponse validateCard = validateCard(cardNumber, ARQC, cardHolder, CVV, cardDueDate);
             if (validateCard.getCodigoRespuesta().equals(ResponseCode.SUCCESS.getCode())) {
                 //Se obtiene la tarjeta asociada a la transacción
                 card = getCardByCardNumber(cardNumber);
                 //Se validan si las respuestas del tarjetahabiente son correctas
+                //TODO: Validar si la tarjeta ya está ACTIVA
                 //1. Se valida respuesta del documento de identificación
                 CardResponse validateDocumentIdentification = validateDocumentIdentificationCustomer(cardNumber, answerDocumentIdentificationNumber);
                 if (validateDocumentIdentification.getCodigoRespuesta().equals(ResponseCode.THE_IDENTIFICATION_NUMBER_IS_VERIFIED.getCode())) {
@@ -553,48 +584,61 @@ public class APIOperations {
                                 answerDateBirth = card.getPersonCustomerId().getNaturalCustomer().getDateBirth();
                                 dateBirthCustomer = card.getPersonCustomerId().getNaturalCustomer().getDateBirth();
                                 if (dateBirthCustomer.compareTo(answerDateBirth) == 0) {
-                                    //Se registra la transacción de Activación de Tarjeta en el CMS en la BD
-                                    String pattern = "MMyy";
-                                    SimpleDateFormat simpleDateFormat = new SimpleDateFormat(pattern);
-                                    String expirationCardDate = simpleDateFormat.format(card.getExpirationDate());
-                                    transactionActivateCard = operationsBD.createTransactionsManagement(null, null, acquirerTerminalCodeId, acquirerCountryId, transactionNumberAcquirer, transactionDate, 
-                                                          TransactionE.ACTIVACION_TARJETA.getId(), ChannelE.INT.getId(), null, localTimeTransaction, null, null, null, 
-                                                          card.getProductId().getDomesticCurrencyId().getId(), null, null, null, null, null, 
-                                                          null, StatusTransactionManagementE.APPROVED.getId(), cardNumber, card.getCardHolder(), card.getSecurityCodeCard(), expirationCardDate, null, null, null, null, 
-                                                          null, null, null, ResponseCode.SUCCESS.getCode(), messageMiddlewareId, DocumentTypeE.ACTIVATE_CARD.getId(), entityManager);
+                                    //Se activa la tarjeta cambiando el estatus a ACTIVADA
+                                    cardStatusActive = operationsBD.getStatusCard(StatusCardE.ACTIVA.getId(), entityManager);
+                                    card.setCardStatusId(cardStatusActive);
+                                    card.setUpdateDate(new Timestamp(new Date().getTime()));
+                                    operationsBD.saveCard(card, entityManager);                                    
                                     
+                                    //Se actualiza el historial de cambios de estados de la tarjeta
+                                    historyCardStatusChanges = operationsBD.createHistoryCardStatusChanges(card, cardStatusActive, null, null, entityManager);
+                                    operationsBD.saveHistoryCardStatusChanges(historyCardStatusChanges, entityManager);
+                                        
+                                    //Se retorna que la tarjeta fué activada con éxito
+                                    return new TransactionResponse(ResponseCode.ACTIVE_CARD_YES.getCode(), ResponseCode.ACTIVE_CARD_YES.getMessage());                                    
+                                } else {
+                                    //La tarjeta no fué activada debido a que la fecha de nacimiento no coincide
+                                    transactionActivateCard.setStatusTransactionManagementId(StatusTransactionManagementE.REJECTED.getId());
+                                    transactionActivateCard.setResponseCode(ResponseCode.DATE_BIRTH_NOT_MATCH.getCode());
                                     try {
                                         transactionActivateCard = operationsBD.saveTransactionsManagement(transactionActivateCard, entityManager);
                                     } catch (Exception e) {
                                         return new TransactionResponse(ResponseCode.INTERNAL_ERROR.getCode(), "an error occurred while saving the transaction");
                                     }
-                                    
-                                    transactionHistoryActivateCard = operationsBD.createTransactionsManagementHistory(null, null, acquirerTerminalCodeId, acquirerCountryId, transactionNumberAcquirer, transactionDate, 
-                                                          transactionActivateCard.getTransactionSequence(),TransactionE.ACTIVACION_TARJETA.getId(), ChannelE.INT.getId(), null, localTimeTransaction, null, null, null, 
-                                                          card.getProductId().getDomesticCurrencyId().getId(), null, null, null, null, null, 
-                                                          null, StatusTransactionManagementE.APPROVED.getId(), cardNumber, card.getCardHolder(), card.getSecurityCodeCard(), expirationCardDate, null, null, null, null, 
-                                                          null, null, null, ResponseCode.SUCCESS.getCode(), messageMiddlewareId, transactionActivateCard.getTransactionNumberIssuer(), entityManager);
-                                    
-                                    try {
-                                        transactionHistoryActivateCard = operationsBD.saveTransactionsManagementHistory(transactionHistoryActivateCard, entityManager);
-                                    } catch (Exception e) {
-                                        return new TransactionResponse(ResponseCode.INTERNAL_ERROR.getCode(), "an error occurred while saving the transaction");
-                                    }
-                                    
-                                    //retorna que la tarjeta fué activada con éxito
-                                    return new TransactionResponse(ResponseCode.ACTIVE_CARD_YES.getCode(), ResponseCode.ACTIVE_CARD_YES.getMessage());
-                                    
-                                } else {
-                                    return new TransactionResponse(ResponseCode.ACTIVE_CARD_NO.getCode(), ResponseCode.ACTIVE_CARD_NO.getMessage());
+                                    return new TransactionResponse(ResponseCode.DATE_BIRTH_NOT_MATCH.getCode(), ResponseCode.DATE_BIRTH_NOT_MATCH.getMessage());
                                 }
                             } else {
-                                return new TransactionResponse(ResponseCode.ACTIVE_CARD_NO.getCode(), ResponseCode.ACTIVE_CARD_NO.getMessage());
+                                //La tarjeta no fué activada debido a que el correo suministrado no coincide
+                                transactionActivateCard.setStatusTransactionManagementId(StatusTransactionManagementE.REJECTED.getId());
+                                transactionActivateCard.setResponseCode(ResponseCode.EMAIL_CUSTOMER_NOT_MATCH.getCode());
+                                try {
+                                    transactionActivateCard = operationsBD.saveTransactionsManagement(transactionActivateCard, entityManager);
+                                } catch (Exception e) {
+                                    return new TransactionResponse(ResponseCode.INTERNAL_ERROR.getCode(), "an error occurred while saving the transaction");
+                                }
+                                return new TransactionResponse(ResponseCode.EMAIL_CUSTOMER_NOT_MATCH.getCode(), ResponseCode.EMAIL_CUSTOMER_NOT_MATCH.getMessage());
                             }
                         } else {
-                            return new TransactionResponse(ResponseCode.ACTIVE_CARD_NO.getCode(), ResponseCode.ACTIVE_CARD_NO.getMessage());
+                            //La tarjeta no fué activada debido a que el teléfono del cliente no coincide
+                            transactionActivateCard.setStatusTransactionManagementId(StatusTransactionManagementE.REJECTED.getId());
+                            transactionActivateCard.setResponseCode(ResponseCode.PHONE_CUSTOMER_NOT_MATCH.getCode());
+                            try {
+                                transactionActivateCard = operationsBD.saveTransactionsManagement(transactionActivateCard, entityManager);
+                            } catch (Exception e) {
+                                return new TransactionResponse(ResponseCode.INTERNAL_ERROR.getCode(), "an error occurred while saving the transaction");
+                            }
+                            return new TransactionResponse(ResponseCode.PHONE_CUSTOMER_NOT_MATCH.getCode(), ResponseCode.PHONE_CUSTOMER_NOT_MATCH.getMessage());
                         }
                 } else {
-                    return new TransactionResponse(ResponseCode.ACTIVE_CARD_NO.getCode(), ResponseCode.ACTIVE_CARD_NO.getMessage());
+                    //La tarjeta no fué activada debido a que el documento de identificaciónd del cliente no coincide
+                    transactionActivateCard.setStatusTransactionManagementId(StatusTransactionManagementE.REJECTED.getId());
+                    transactionActivateCard.setResponseCode(ResponseCode.THE_IDENTIFICATION_NUMBER_NOT_MATCH.getCode());
+                    try {
+                        transactionActivateCard = operationsBD.saveTransactionsManagement(transactionActivateCard, entityManager);
+                    } catch (Exception e) {
+                        return new TransactionResponse(ResponseCode.INTERNAL_ERROR.getCode(), "an error occurred while saving the transaction");
+                    }
+                    return new TransactionResponse(ResponseCode.THE_IDENTIFICATION_NUMBER_NOT_MATCH.getCode(), ResponseCode.THE_IDENTIFICATION_NUMBER_NOT_MATCH.getMessage());
                 }
             } else {
                 return new TransactionResponse(ResponseCode.INTERNAL_ERROR.getCode(), validateCard.getMensajeRespuesta());
