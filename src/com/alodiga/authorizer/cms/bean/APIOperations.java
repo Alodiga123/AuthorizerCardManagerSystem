@@ -867,7 +867,7 @@ public class APIOperations {
                         TransactionE.CONSULTA.getId(), channelId, null, localTimeTransaction, null, null, null,
                         null, null, null, null, null, null,
                         null, StatusTransactionManagementE.APPROVED.getId(), cardNumber, cardHolder, CVV, expirationCardDate, null, null, null, null,
-                        null, null, null, ResponseCode.SUCCESS.getCode(), Math.toIntExact(messageMiddlewareId), DocumentTypeE.CARD_BALANCE_INQUIRY.getId(), entityManager);
+                        null, null, null, ResponseCode.SUCCESS.getCode(), messageMiddlewareId, DocumentTypeE.CARD_BALANCE_INQUIRY.getId(), entityManager);
                 try {
                     transactionsManagement = operationsBD.saveTransactionsManagement(transactionsManagement, entityManager);
                 } catch (Exception e) {
@@ -879,7 +879,7 @@ public class APIOperations {
                         transactionsManagement.getTransactionSequence(), TransactionE.CONSULTA.getId(), channelId, null, localTimeTransaction, null, null, null,
                         null, null, null, null, null, null,
                         null, StatusTransactionManagementE.APPROVED.getId(), cardNumber, cardHolder, CVV, expirationCardDate, null, null, null, null,
-                        null, null, null, ResponseCode.SUCCESS.getCode(), Math.toIntExact(messageMiddlewareId), transactionsManagement.getTransactionNumberIssuer(), entityManager);
+                        null, null, null, ResponseCode.SUCCESS.getCode(), messageMiddlewareId, transactionsManagement.getTransactionNumberIssuer(), entityManager);
 
                 try {
                     transactionsManagementHistory = operationsBD.saveTransactionsManagementHistory(transactionsManagementHistory, entityManager);
