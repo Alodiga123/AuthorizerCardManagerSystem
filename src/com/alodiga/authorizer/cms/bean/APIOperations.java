@@ -1211,7 +1211,7 @@ public class APIOperations {
                 Date date1=new SimpleDateFormat("dd/MM/yyyy").parse(startDate);  
                 Date date2=new SimpleDateFormat("dd/MM/yyyy").parse(endingDate);
                 //Se buscan los movimientos de la tarjeta
-                List<TransactionsManagementHistory> transactionsManagementHistory = operationsBD.getCardMovements(cardNumber, date2, date2, entityManager);
+                List<TransactionsManagementHistory> transactionsManagementHistory = operationsBD.getCardMovements(cardNumber, date1, date2, entityManager);
                 if(transactionsManagementHistory != null){
                     //Se obtiene la tarjeta asociada a la transacción y el saldo actual
                     card = getCardByCardNumber(cardNumber);
