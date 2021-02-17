@@ -481,12 +481,17 @@ public class APIOperations {
         return new ValidateLimitsResponse(ResponseCode.SUCCESS, "SUCCESS");
     }
 
-    public CardResponse validateCard(String cardNumber, String ARQC, String cardHolder, String CVV, String cardDueDate) {
+    public CardResponse validateCard(String cardNumber, String ARQC, String cardHolder, String CVV, String cardDueDate, int indValidateCardActive) {
+        CardResponse verifyActiveCard = null;
         try {
             CardResponse validateCard = getValidateCard(cardNumber);
             //Se valida que la tarjeta exista en la BD del CMS
             if (validateCard.getCodigoRespuesta().equals(ResponseCode.CARD_EXISTS.getCode())) {
-                CardResponse verifyActiveCard = verifyActiveCard(cardNumber);
+                if (indValidateCardActive == 1) {
+                    verifyActiveCard = verifyActiveCard(cardNumber);
+                } else {
+                   verifyActiveCard.setCodigoRespuesta(ResponseCode.SUCCESS.getCode());
+                }                
                 //Se valida que la tarjeta este en estatus ACTIVA
                 if (verifyActiveCard.getCodigoRespuesta().equals(ResponseCode.SUCCESS.getCode())) {
                     CardResponse validateCardByLUNH = getValidateCardByLUNH(cardNumber);
@@ -535,6 +540,7 @@ public class APIOperations {
         Date dateBirthCustomer;
         CardStatus cardStatusActive;
         HistoryCardStatusChanges historyCardStatusChanges;
+        int indValidateCardActive = 1;
         
         try {
             //Se registra la transacción de Activación de Tarjeta en el CMS en la BD
@@ -565,7 +571,7 @@ public class APIOperations {
                 return new TransactionResponse(ResponseCode.INTERNAL_ERROR.getCode(), "an error occurred while saving the transaction");
             }
             //Se valida la tarjeta
-            CardResponse validateCard = validateCard(cardNumber, ARQC, cardHolder, CVV, cardDueDate);
+            CardResponse validateCard = validateCard(cardNumber, ARQC, cardHolder, CVV, cardDueDate, indValidateCardActive);
             if (validateCard.getCodigoRespuesta().equals(ResponseCode.SUCCESS.getCode())) {
                 //Se obtiene la tarjeta asociada a la transacción
                 card = getCardByCardNumber(cardNumber);
@@ -674,8 +680,8 @@ public class APIOperations {
 
     }
 
-    public TransactionResponse changeCardStatus(String cardNumber, String CVV, String cardDueDate, String cardHolder, Long messageMiddlewareId, Long newStatusCardId, Integer statusUpdateReasonId, String observations,
-            Date statusUpdateReasonDate, Long userResponsabibleStatusUpdateId, String documentIdentificationNumber, Integer transactionTypeId, Integer channelId, Date transactionDate, Timestamp localTimeTransaction, String acquirerTerminalCodeId, Integer acquirerCountryId) {
+    public TransactionResponse changeCardStatus(String cardNumber, String CVV, String cardDueDate, String cardHolder, Long messageMiddlewareId, Long newStatusCardId, Integer statusUpdateReasonId, String observations, Date statusUpdateReasonDate, Long userResponsabibleStatusUpdateId,
+                                                String documentIdentificationNumber, Integer transactionTypeId, Integer channelId, Date transactionDate, Timestamp localTimeTransaction, String acquirerTerminalCodeId, Integer acquirerCountryId) {
         //Se valida que la tarjeta exista en la BD del CMS
         CardResponse validateCard = getValidateCard(cardNumber);
         if (validateCard.getCodigoRespuesta().equals(ResponseCode.CARD_EXISTS.getCode())) {
@@ -848,8 +854,9 @@ public class APIOperations {
     }
 
     public OperationCardBalanceInquiryResponse cardBalanceInquiry(String cardNumber, String CVV, String ARQC, String documentIdentificationNumber, Integer transactionTypeId, Integer channelId, Date transactionDate, Timestamp localTimeTransaction, String acquirerTerminalCodeId, Integer acquirerCountryId, Long messageMiddlewareId, String transactionNumberAcquirer, String cardDueDate, String cardHolder, String PinOffset) {
+        int indValidateCardActive = 1;
         try {
-            CardResponse cardResponse = validateCard(cardNumber, ARQC, cardHolder, CVV, cardDueDate);
+            CardResponse cardResponse = validateCard(cardNumber, ARQC, cardHolder, CVV, cardDueDate, indValidateCardActive);
             String maskCardNumber = operationsBD.maskCCNumber(cardNumber);
             TransactionsManagement transactionsManagement = new TransactionsManagement();
             TransactionsManagementHistory transactionsManagementHistory = new TransactionsManagementHistory();
@@ -1074,11 +1081,12 @@ public class APIOperations {
 
         TransactionResponse transactionResponse = new TransactionResponse();
         TransactionsManagement transactionsManagement = new TransactionsManagement();
+        int indValidateCardActive = 1;
         try {
             Float amountCommission = 0.00F;
             TransactionsManagementHistory transactionsManagementHistory = new TransactionsManagementHistory();
-            CardResponse cardResponseOrigin = validateCard(cardNumberOrigin, ARQCOrigin, cardHolderOrigin, CVVOrigin, cardDueDateOrigin);
-            CardResponse cardResponseDestinate = validateCard(cardNumberDestinate, ARQCDestinate, cardHolderDestinate, CVVDestinate, cardDueDateDestinate);
+            CardResponse cardResponseOrigin = validateCard(cardNumberOrigin, ARQCOrigin, cardHolderOrigin, CVVOrigin, cardDueDateOrigin, indValidateCardActive);
+            CardResponse cardResponseDestinate = validateCard(cardNumberDestinate, ARQCDestinate, cardHolderDestinate, CVVDestinate, cardDueDateDestinate, indValidateCardActive);
             Card cardOrigin = getCardByCardNumber(cardNumberOrigin);
             Card cardDestinate = getCardByCardNumber(cardNumberDestinate);
             ValidateLimitsResponse validateLimits = getValidateLimits(cardNumberOrigin, TransactionE.TRANSFERENCIAS_ENTRE_CUENTAS.getId(), channelId, cardOrigin.getProductId().getIssuerId().getCountryId().getCode(), amountTransfer);
@@ -1198,13 +1206,15 @@ public class APIOperations {
     }
 
     public TransactionResponse viewCardMovements(String cardNumber,String CVV,String cardDueDate,String cardHolder,String documentIdentificationNumber,Integer channelId,Integer transactionTypeId,Long messageMiddlewareId,Date transactionDate,
-            Timestamp localTimeTransaction,String acquirerTerminalCodeId,Integer acquirerCountryId,String startDate,String endingDate){
+                               Timestamp localTimeTransaction,String acquirerTerminalCodeId,Integer acquirerCountryId,String startDate,String endingDate){
+        
         Card card = null;
         TransactionsManagement transactionManagement = null;
         TransactionsManagementHistory transactionManagementHistory = null;
         String ARQC = null;
+        int indValidateCardActive = 1;
         try{
-          CardResponse validateCard = validateCard(cardNumber, ARQC, cardHolder, CVV, cardDueDate);
+          CardResponse validateCard = validateCard(cardNumber, ARQC, cardHolder, CVV, cardDueDate, indValidateCardActive);
           if (validateCard.getCodigoRespuesta().equals(ResponseCode.SUCCESS.getCode())) { 
                 //Se le da formato Date a la fecha inicial y fecha final
                 Date date1=new SimpleDateFormat("dd/MM/yyyy").parse(startDate);  
