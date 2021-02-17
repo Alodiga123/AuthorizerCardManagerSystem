@@ -1209,8 +1209,10 @@ public class APIOperations {
                 //Se le da formato Date a la fecha inicial y fecha final
                 Date date1=new SimpleDateFormat("dd/MM/yyyy").parse(startDate);  
                 Date date2=new SimpleDateFormat("dd/MM/yyyy").parse(endingDate);
+                //Colocar asteriscos al cardNumber
+                String cardNumberEncript = operationsBD.transformCardNumber(cardNumber);
                 //Se buscan los movimientos de la tarjeta
-                List<TransactionsManagementHistory> transactionsManagementHistory = operationsBD.getCardMovements(cardNumber, date2, date2, entityManager);
+                List<TransactionsManagementHistory> transactionsManagementHistory = operationsBD.getCardMovements(cardNumber, date1, date2, entityManager);
                 if(transactionsManagementHistory != null){
                     //Se obtiene la tarjeta asociada a la transacción y el saldo actual
                     card = getCardByCardNumber(cardNumber);
@@ -1239,7 +1241,7 @@ public class APIOperations {
                         return new TransactionResponse(ResponseCode.INTERNAL_ERROR.getCode(), "an error occurred while saving the transaction");
                     }
                     
-                    return new TransactionResponse(ResponseCode.SUCCESS.getCode(), "",cardNumber, card.getCardStatusId().getId(), card.getCardStatusId().getDescription(),messageMiddlewareId.longValue(),transactionManagement.getTransactionNumberIssuer(),currentBalance, date1, date2,transactionsManagementHistory.size(),transactionsManagementHistory);
+                    return new TransactionResponse(ResponseCode.SUCCESS.getCode(), "",cardNumberEncript, card.getCardStatusId().getId(), card.getCardStatusId().getDescription(),messageMiddlewareId.longValue(),transactionManagement.getTransactionNumberIssuer(),currentBalance, date1, date2,transactionsManagementHistory.size(),transactionsManagementHistory);
                     
                 } else {
                     //La tarjeta no tiene movientos
