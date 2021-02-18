@@ -99,8 +99,9 @@ public class APIAuthorizerCardManagementSystem {
             @WebParam(name = "ARQC") String ARQC,
             @WebParam(name = "cardHolder") String cardHolder,
             @WebParam(name = "CVV") String CVV,
-            @WebParam(name = "cardDueDate") String cardDueDate) {
-        return operations.validateCard(cardNumber,ARQC,cardHolder,CVV,cardDueDate);
+            @WebParam(name = "cardDueDate") String cardDueDate,
+            @WebParam(name = "indValidateCardActive") int indValidateCardActive ) {
+        return operations.validateCard(cardNumber,ARQC,cardHolder,CVV,cardDueDate,indValidateCardActive);
     }
     
     @WebMethod

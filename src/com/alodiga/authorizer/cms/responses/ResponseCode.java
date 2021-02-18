@@ -50,6 +50,7 @@ public enum ResponseCode {
     DATE_BIRTH_NOT_MATCH("22","The card was not active because the client's date of birth did not match"),
     EMAIL_CUSTOMER_NOT_MATCH("23","The card was not active because the customer's email did not match"),
     PHONE_CUSTOMER_NOT_MATCH("24","The card was not active because the customer's phone did not match"),
+    CARD_ALREADY_ACTIVE("25","The card is already active"),
 
     
     //Validaciones de la tarjeta
