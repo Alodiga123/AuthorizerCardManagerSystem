@@ -490,7 +490,7 @@ public class APIOperations {
                 if (indValidateCardActive == 1) {
                     verifyActiveCard = verifyActiveCard(cardNumber);
                 } else {
-                   verifyActiveCard.setCodigoRespuesta(ResponseCode.SUCCESS.getCode());
+                    verifyActiveCard.setCodigoRespuesta(ResponseCode.SUCCESS.getCode());
                 }                
                 //Se valida que la tarjeta tenga estatus ACTIVA
                 if (verifyActiveCard.getCodigoRespuesta().equals(ResponseCode.SUCCESS.getCode())) {
@@ -1304,6 +1304,14 @@ public class APIOperations {
         } catch (Exception e) {
         }
         return new TransactionResponse(ResponseCode.THE_CARD_HAS_NO_MOVEMENTS.getCode(), ResponseCode.THE_CARD_HAS_NO_MOVEMENTS.getMessage());   
+    }
+    
+    public TransactionResponse rechargeCard(String cardNumber, String cardHolder, String CVV, String cardDueDate, String answerDocumentIdentificationNumber, 
+                                            String answerNumberPhoneCustomer, Date answerDateBirth, String answerEmailCustomer, Long messageMiddlewareId,
+                                            Integer transactionTypeId, Integer channelId, Date transactionDate, Timestamp localTimeTransaction,
+                                            String acquirerTerminalCodeId, String transactionNumberAcquirer, Integer acquirerCountryId) {
+        
+    return new TransactionResponse(ResponseCode.THE_CARD_HAS_NO_MOVEMENTS.getCode(), ResponseCode.THE_CARD_HAS_NO_MOVEMENTS.getMessage());
     }
 
 }
