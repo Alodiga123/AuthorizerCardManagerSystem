@@ -13,6 +13,7 @@ import com.alodiga.authorizer.cms.responses.OperationCardBalanceInquiryResponse;
 import com.alodiga.authorizer.cms.responses.TransactionFeesResponse;
 import com.alodiga.authorizer.cms.responses.TransactionResponse;
 import com.alodiga.authorizer.cms.responses.ValidateLimitsResponse;
+import com.cms.commons.models.AccountCard;
 import java.sql.Timestamp;
 import java.util.Date;
 
@@ -51,7 +52,7 @@ public class APIAuthorizerCardManagementSystem {
     }
 
     @WebMethod
-    public CardResponse getAccountNumberByCard(
+    public AccountCard getAccountNumberByCard(
             @WebParam(name = "cardNumber") String cardNumber) {
         return operations.getAccountNumberByCard(cardNumber);
     }
@@ -210,7 +211,6 @@ public class APIAuthorizerCardManagementSystem {
         @WebParam(name = "CVVOrigin") String CVVOrigin,
         @WebParam(name = "cardDueDateOrigin") String cardDueDateOrigin,
         @WebParam(name = "cardHolderOrigin") String cardHolderOrigin,
-        @WebParam(name = "documentIdentificationNumber") String documentIdentificationNumber,
         @WebParam(name = "ARQCOrigin") String ARQCOrigin,
         @WebParam(name = "CVVDestinate") String CVVDestinate,
         @WebParam(name = "cardDueDateDestinate") String cardDueDateDestinate,
@@ -226,7 +226,7 @@ public class APIAuthorizerCardManagementSystem {
         @WebParam(name = "amountTransfer") Float amountTransfer,
         @WebParam(name = "dateTimeTransmissionTerminal")Timestamp dateTimeTransmissionTerminal,
         @WebParam(name = "localDateTransaction")Date localDateTransaction){
-        return operations.transferBetweenAccount(cardNumberOrigin, cardNumberDestinate, CVVOrigin,cardDueDateOrigin,cardHolderOrigin,documentIdentificationNumber,ARQCOrigin,CVVDestinate,cardDueDateDestinate,cardHolderDestinate,ARQCDestinate,channelId,transactionTypeId,messageMiddlewareId,transactionDate,localTimeTransaction,acquirerTerminalCodeId,acquirerCountryId,amountTransfer,dateTimeTransmissionTerminal,localDateTransaction);
+        return operations.transferBetweenAccount(cardNumberOrigin, cardNumberDestinate, CVVOrigin,cardDueDateOrigin,cardHolderOrigin,ARQCOrigin,CVVDestinate,cardDueDateDestinate,cardHolderDestinate,ARQCDestinate,channelId,transactionTypeId,messageMiddlewareId,transactionDate,localTimeTransaction,acquirerTerminalCodeId,acquirerCountryId,amountTransfer,dateTimeTransmissionTerminal,localDateTransaction);
     }
     
     
