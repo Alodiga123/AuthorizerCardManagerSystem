@@ -1245,9 +1245,10 @@ public class APIOperations {
         TransactionsManagementHistory transactionManagementHistory = null;
         String ARQC = null;
         int indValidateCardActive = 1;
-        try {
-            CardResponse validateCard = validateCard(cardNumber, ARQC, cardHolder, CVV, cardDueDate, indValidateCardActive);
-            if (validateCard.getCodigoRespuesta().equals(ResponseCode.SUCCESS.getCode())) {
+        List<TransactionsManagementHistory> transactionsManagementHistoryList = new ArrayList<TransactionsManagementHistory>();
+        try{
+          CardResponse validateCard = validateCard(cardNumber, ARQC, cardHolder, CVV, cardDueDate, indValidateCardActive);
+          if (validateCard.getCodigoRespuesta().equals(ResponseCode.SUCCESS.getCode())) { 
                 //Se le da formato Date a la fecha inicial y fecha final
                 Date date1 = new SimpleDateFormat("dd/MM/yyyy").parse(startDate);
                 Date date2 = new SimpleDateFormat("dd/MM/yyyy").parse(endingDate);
@@ -1255,7 +1256,19 @@ public class APIOperations {
                 String cardNumberEncript = operationsBD.transformCardNumber(cardNumber);
                 //Se buscan los movimientos de la tarjeta
                 List<TransactionsManagementHistory> transactionsManagementHistory = operationsBD.getCardMovements(cardNumber, date1, date2, entityManager);
-                if (transactionsManagementHistory != null) {
+                if(transactionsManagementHistory != null){
+                    
+                    //Se guarda la lista de respuesta solamente con los campos deseados a mostrar
+                    for(TransactionsManagementHistory th : transactionsManagementHistory){
+                        TransactionsManagementHistory movements = new TransactionsManagementHistory();
+                        movements.setTransactionReference(th.getTransactionReference());
+                        movements.setTransactionTypeId(th.getTransactionTypeId());
+                        movements.setDateTransaction(th.getDateTransaction());
+                        movements.setSettlementTransactionAmount(th.getSettlementTransactionAmount());
+                        movements.setTransactionConcept(th.getTransactionConcept());
+                        transactionsManagementHistoryList.add(movements);
+                    }
+                    
                     //Se obtiene la tarjeta asociada a la transacción y el saldo actual
                     card = getCardByCardNumber(cardNumber);
                     Float currentBalance = getCurrentBalanceCard(card.getId());
@@ -1263,6 +1276,7 @@ public class APIOperations {
                     String pattern = "MMyy";
                     SimpleDateFormat simpleDateFormat = new SimpleDateFormat(pattern);
                     String expirationCardDate = simpleDateFormat.format(card.getExpirationDate());
+                    
                     //Se crea el objeto TransactionManagement y se guarda en BD
                     transactionManagement = operationsBD.createTransactionsManagement(null, null, acquirerTerminalCodeId, acquirerCountryId, null, new Date(), transactionTypeId, channelId,
                             null, localTimeTransaction, null, null, null, null, null, null, null, null, null, null, StatusTransactionManagementE.APPROVED.getId(),
@@ -1282,9 +1296,9 @@ public class APIOperations {
                     } catch (Exception e) {
                         return new TransactionResponse(ResponseCode.INTERNAL_ERROR.getCode(), "an error occurred while saving the transaction");
                     }
-
-                    return new TransactionResponse(ResponseCode.SUCCESS.getCode(), "", cardNumberEncript, card.getCardStatusId().getId(), card.getCardStatusId().getDescription(), messageMiddlewareId.longValue(), transactionManagement.getTransactionNumberIssuer(), currentBalance, date1, date2, transactionsManagementHistory.size(), transactionsManagementHistory);
-
+                    
+                    return new TransactionResponse(ResponseCode.SUCCESS.getCode(), "",cardNumberEncript, card.getCardStatusId().getId(), card.getCardStatusId().getDescription(),messageMiddlewareId.longValue(),transactionManagement.getTransactionNumberIssuer(),currentBalance, date1, date2,transactionsManagementHistory.size(),transactionsManagementHistoryList);
+                    
                 } else {
                     //La tarjeta no tiene movientos
                     String pattern = "MMyy";
@@ -1313,11 +1327,11 @@ public class APIOperations {
                     return new TransactionResponse(ResponseCode.THE_CARD_HAS_NO_MOVEMENTS.getCode(), ResponseCode.THE_CARD_HAS_NO_MOVEMENTS.getMessage());
                 }
             } else {
-                return new TransactionResponse(ResponseCode.INTERNAL_ERROR.getCode(), "The card is not a valid card");
+                return new TransactionResponse(ResponseCode.INTERNAL_ERROR.getCode(), "An unexpected error has occurred");
             }
         } catch (Exception e) {
+            return new TransactionResponse(ResponseCode.INTERNAL_ERROR.getCode(), "The card is not a valid card");
         }
-        return new TransactionResponse(ResponseCode.THE_CARD_HAS_NO_MOVEMENTS.getCode(), ResponseCode.THE_CARD_HAS_NO_MOVEMENTS.getMessage());
     }
     
     public TransactionResponse rechargeCard(String cardNumber, String cardHolder, String CVV, String cardDueDate, String answerDocumentIdentificationNumber, 
