@@ -492,8 +492,8 @@ public class APIOperations {
                 if (indValidateCardActive == 1) {
                     verifyActiveCard = verifyActiveCard(cardNumber);
                 } else {
-                   verifyActiveCard.setCodigoRespuesta(ResponseCode.SUCCESS.getCode());
-                }                
+                    verifyActiveCard.setCodigoRespuesta(ResponseCode.SUCCESS.getCode());
+                }
                 //Se valida que la tarjeta tenga estatus ACTIVA
                 if (verifyActiveCard.getCodigoRespuesta().equals(ResponseCode.SUCCESS.getCode())) {
                     CardResponse validateCardByLUNH = getValidateCardByLUNH(cardNumber);
@@ -573,7 +573,7 @@ public class APIOperations {
                 return new TransactionResponse(ResponseCode.INTERNAL_ERROR.getCode(), "an error occurred while saving the transaction");
             }
             //Se valida la tarjeta
-            CardResponse validateCard = validateCard(cardNumber, ARQC, cardHolder, CVV, cardDueDate,indValidateCardActive);
+            CardResponse validateCard = validateCard(cardNumber, ARQC, cardHolder, CVV, cardDueDate, indValidateCardActive);
             if (validateCard.getCodigoRespuesta().equals(ResponseCode.SUCCESS.getCode())) {
                 //Se obtiene la tarjeta asociada a la transacción
                 card = getCardByCardNumber(cardNumber);
@@ -655,7 +655,6 @@ public class APIOperations {
             return new TransactionResponse(ResponseCode.INTERNAL_ERROR.getCode(), "an unexpected error occurred");
         }
     }
-    
 
     public CardResponse validateDocumentIdentificationCustomer(String cardNumber, String identificationNumber) {
         Card cards = new Card();
@@ -684,7 +683,7 @@ public class APIOperations {
     }
 
     public TransactionResponse changeCardStatus(String cardNumber, String CVV, String cardDueDate, String cardHolder, Long messageMiddlewareId, Long newStatusCardId, Integer statusUpdateReasonId, String observations, Date statusUpdateReasonDate, Long userResponsabibleStatusUpdateId,
-                                                String documentIdentificationNumber, Integer transactionTypeId, Integer channelId, Date transactionDate, Timestamp localTimeTransaction, String acquirerTerminalCodeId, Integer acquirerCountryId) {
+            String documentIdentificationNumber, Integer transactionTypeId, Integer channelId, Date transactionDate, Timestamp localTimeTransaction, String acquirerTerminalCodeId, Integer acquirerCountryId) {
         //Se valida que la tarjeta exista en la BD del CMS
         CardResponse validateCard = getValidateCard(cardNumber);
         if (validateCard.getCodigoRespuesta().equals(ResponseCode.CARD_EXISTS.getCode())) {
@@ -1220,25 +1219,25 @@ public class APIOperations {
 
     }
 
-    public TransactionResponse viewCardMovements(String cardNumber,String CVV,String cardDueDate,String cardHolder,String documentIdentificationNumber,Integer channelId,Integer transactionTypeId,Long messageMiddlewareId,Date transactionDate,
-                               Timestamp localTimeTransaction,String acquirerTerminalCodeId,Integer acquirerCountryId,String startDate,String endingDate){
-        
+    public TransactionResponse viewCardMovements(String cardNumber, String CVV, String cardDueDate, String cardHolder, String documentIdentificationNumber, Integer channelId, Integer transactionTypeId, Long messageMiddlewareId, Date transactionDate,
+            Timestamp localTimeTransaction, String acquirerTerminalCodeId, Integer acquirerCountryId, String startDate, String endingDate) {
+
         Card card = null;
         TransactionsManagement transactionManagement = null;
         TransactionsManagementHistory transactionManagementHistory = null;
         String ARQC = null;
         int indValidateCardActive = 1;
-        try{
-          CardResponse validateCard = validateCard(cardNumber, ARQC, cardHolder, CVV, cardDueDate, indValidateCardActive);
-          if (validateCard.getCodigoRespuesta().equals(ResponseCode.SUCCESS.getCode())) { 
+        try {
+            CardResponse validateCard = validateCard(cardNumber, ARQC, cardHolder, CVV, cardDueDate, indValidateCardActive);
+            if (validateCard.getCodigoRespuesta().equals(ResponseCode.SUCCESS.getCode())) {
                 //Se le da formato Date a la fecha inicial y fecha final
-                Date date1=new SimpleDateFormat("dd/MM/yyyy").parse(startDate);  
-                Date date2=new SimpleDateFormat("dd/MM/yyyy").parse(endingDate);
+                Date date1 = new SimpleDateFormat("dd/MM/yyyy").parse(startDate);
+                Date date2 = new SimpleDateFormat("dd/MM/yyyy").parse(endingDate);
                 //Colocar asteriscos al cardNumber
                 String cardNumberEncript = operationsBD.transformCardNumber(cardNumber);
                 //Se buscan los movimientos de la tarjeta
                 List<TransactionsManagementHistory> transactionsManagementHistory = operationsBD.getCardMovements(cardNumber, date1, date2, entityManager);
-                if(transactionsManagementHistory != null){
+                if (transactionsManagementHistory != null) {
                     //Se obtiene la tarjeta asociada a la transacción y el saldo actual
                     card = getCardByCardNumber(cardNumber);
                     Float currentBalance = getCurrentBalanceCard(card.getId());
@@ -1265,9 +1264,9 @@ public class APIOperations {
                     } catch (Exception e) {
                         return new TransactionResponse(ResponseCode.INTERNAL_ERROR.getCode(), "an error occurred while saving the transaction");
                     }
-                    
-                    return new TransactionResponse(ResponseCode.SUCCESS.getCode(), "",cardNumberEncript, card.getCardStatusId().getId(), card.getCardStatusId().getDescription(),messageMiddlewareId.longValue(),transactionManagement.getTransactionNumberIssuer(),currentBalance, date1, date2,transactionsManagementHistory.size(),transactionsManagementHistory);
-                    
+
+                    return new TransactionResponse(ResponseCode.SUCCESS.getCode(), "", cardNumberEncript, card.getCardStatusId().getId(), card.getCardStatusId().getDescription(), messageMiddlewareId.longValue(), transactionManagement.getTransactionNumberIssuer(), currentBalance, date1, date2, transactionsManagementHistory.size(), transactionsManagementHistory);
+
                 } else {
                     //La tarjeta no tiene movientos
                     String pattern = "MMyy";
@@ -1301,6 +1300,22 @@ public class APIOperations {
         } catch (Exception e) {
         }
         return new TransactionResponse(ResponseCode.THE_CARD_HAS_NO_MOVEMENTS.getCode(), ResponseCode.THE_CARD_HAS_NO_MOVEMENTS.getMessage());
+    }
+
+    public CardResponse validatePinOffset(String cardNumber, String pinOffset) {
+        Card card;
+        CardResponse cardResponse = new CardResponse();
+        try {
+            card = getCardByCardNumber(cardNumber);
+            if (!card.getPinOffset().equals(pinOffset)) {
+                return new CardResponse(ResponseCode.PIN_OFFSET_DIFFERENT.getCode(), ResponseCode.PIN_OFFSET_DIFFERENT.getMessage());
+            }
+
+        } catch (Exception e) {
+            return new CardResponse(ResponseCode.INTERNAL_ERROR.getCode(), "Error loading card");
+        }
+        cardResponse.setCard(card);
+        return new CardResponse(ResponseCode.SUCCESS.getCode(), "The pinOffset exists in the CMS");
     }
 
 }
