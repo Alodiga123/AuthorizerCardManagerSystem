@@ -314,7 +314,7 @@ public class operationsBDImp implements operationsBD {
         Query query = entityManager.createQuery(sqlBuilder.toString());
         query.setParameter("1", startDate);
         query.setParameter("2", endingDate);
-        query.setParameter("3", TransactionE.RECARGA.getId());
+        query.setParameter("3", TransactionE.CARD_RECHARGE.getId());
         query.setParameter("4", TransactionE.RECARGA_INICIAL.getId());
         query.setParameter("5", TransactionE.RETIRO_DOMESTICO.getId());
         query.setParameter("6", TransactionE.RETIRO_INTERNACIONAL.getId());

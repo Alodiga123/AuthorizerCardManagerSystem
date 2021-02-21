@@ -13,8 +13,8 @@ public enum ResponseCode {
     INTERNAL_ERROR("99",""),
     
      //Validacion de Limites
-    TRANSACTION_QUANTITY_LIMIT_DIALY("34","The card exceeded the maximum number of transactions per day"),
-    TRANSACTION_AMOUNT_LIMIT_DIALY("35","The card exceeded the maximum amount per day"),
+    TRANSACTION_QUANTITY_LIMIT_DAILY("34","The card exceeded the maximum number of transactions per day"),
+    TRANSACTION_AMOUNT_LIMIT_DAILY("35","The card exceeded the maximum amount per day"),
     TRANSACTION_QUANTITY_LIMIT_MONTHLY("36","The card exceeded the maximum number of transactions per month"),
     TRANSACTION_AMOUNT_LIMIT_MONTHLY("37","The card exceeded the maximum amount per month"),
     MIN_TRANSACTION_AMOUNT("38","The card exceeded the minimun amount per transaction"),
