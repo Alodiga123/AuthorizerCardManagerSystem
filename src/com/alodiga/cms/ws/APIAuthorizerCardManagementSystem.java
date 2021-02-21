@@ -14,6 +14,7 @@ import com.alodiga.authorizer.cms.responses.TransactionFeesResponse;
 import com.alodiga.authorizer.cms.responses.TransactionResponse;
 import com.alodiga.authorizer.cms.responses.ValidateLimitsResponse;
 import com.cms.commons.models.AccountCard;
+import com.cms.commons.models.Card;
 import java.sql.Timestamp;
 import java.util.Date;
 
@@ -229,5 +230,12 @@ public class APIAuthorizerCardManagementSystem {
         return operations.transferBetweenAccount(cardNumberOrigin, cardNumberDestinate, CVVOrigin,cardDueDateOrigin,cardHolderOrigin,ARQCOrigin,CVVDestinate,cardDueDateDestinate,cardHolderDestinate,ARQCDestinate,channelId,transactionTypeId,messageMiddlewareId,transactionDate,localTimeTransaction,acquirerTerminalCodeId,acquirerCountryId,amountTransfer,dateTimeTransmissionTerminal,localDateTransaction);
     }
     
+    
+    @WebMethod
+    public CardResponse validatePinOffset(
+            @WebParam(name = "cardNumber") String cardNumber,
+            @WebParam(name = "pinOffset") String pinOffset) {
+        return operations.validatePinOffset(cardNumber,pinOffset);
+    }
     
 }
