@@ -386,9 +386,9 @@ public class APIOperations {
                 return new TransactionResponse(ResponseCode.INTERNAL_ERROR.getCode(), "an error occurred while saving the transaction");
             }
         } else {
-            return new TransactionResponse(ResponseCode.SUCCESS.getCode(), "The transaction received did not generate commission to be charged");
+            return new TransactionResponse(ResponseCode.COMMISSION_NOT_APPLY.getCode(), "The transaction received did not generate commission to be charged");
         }
-        return new TransactionResponse(ResponseCode.SUCCESS.getCode(), "The transaction to record the Alodiga commission corresponding to the received transaction was successfully saved in the database.", transactionCommisionAmount, transactionCommisionCMS);
+        return new TransactionResponse(ResponseCode.COMMISSION_YES_APPLY.getCode(), "The transaction to record the Alodiga commission corresponding to the received transaction was successfully saved in the database.", transactionCommisionAmount, transactionCommisionCMS);
     }
 
     public CardResponse verifyActiveCard(String cardNumber) {
@@ -1147,8 +1147,8 @@ public class APIOperations {
                     Float amountCardOrigin = getCurrentBalanceCard(cardOrigin.getId());
                     Float amountCardDestination = getCurrentBalanceCard(cardDestinate.getId());
                     transactionResponse = calculateCommisionCMS(cardNumberOrigin, channelId, transactionTypeId, amountTransfer, "1234");
-                    if (transactionResponse.getTransactionFeesAmount() != null) {
-                        amountCommission = transactionResponse.getTransactionFeesAmount();
+                    if (transactionResponse.getCodigoRespuesta().equals(logger)) {
+                        amountCommission = transactionResponse.getTransactionCommissionAmount();
                     }
                     Float amountTransferTotal = amountTransfer + amountCommission;
                     if (amountCardOrigin == null || amountCardOrigin < amountTransferTotal) {
@@ -1349,6 +1349,11 @@ public class APIOperations {
         int indValidateCardActive = 1;
         Card card = null;
         ValidateLimitsResponse validateLimits = null;
+        Float currentBalance = 0.00F;
+        AccountCard accountCard = null;
+        TransactionResponse commissionCMS = null;
+        Float amountCommission = 0.00F;
+        Float totalAmountRecharge = 0.00F;
         
         try {
             //Se registra la transacción de Recarga de la Tarjeta en la BD
@@ -1384,16 +1389,47 @@ public class APIOperations {
                 
                 //Se validan los límites transaccionales
                 validateLimits = getValidateLimits(cardNumber, transactionTypeId, channelId, acquirerCountryId.toString(), amountRecharge);
-                if (validateLimits.getCodigoRespuesta().equals(ARQC)) {
-                    
+                if (validateLimits.getCodigoRespuesta().equals(ResponseCode.SUCCESS.getCode())) {
+                    //Se revisa si la transacción genera una comisión
+                    commissionCMS = calculateCommisionCMS(card.getCardNumber(), channelId, transactionTypeId, amountRecharge, transactionNumberAcquirer);
+                    if (commissionCMS.getCodigoRespuesta().equals(ResponseCode.COMMISSION_YES_APPLY.getCode())) {
+                        amountCommission = commissionCMS.getTransactionCommissionAmount();
+                    }
+                    if (channelId == ChannelE.WALLET.getId()) {
+                        //Se obtiene el saldo actual de la billetera del cliente
+                        productListResponse = aPIAlodigaWalletProxy.getProductsUsePrepaidCardByUserId(userWalletId);
+                        currentBalance = productListResponse.getProducts(0).getCurrentBalance();
+                    } else {
+                        //Se obtiene el saldo de la cuenta asociada a la tarjeta
+                        accountCard = operationsBD.getAccountCardbyCardId(card.getId(), entityManager);
+                        currentBalance = accountCard.getCurrentBalance();
+                    }
+                    totalAmountRecharge = amountRecharge + amountCommission;
+                    //Verificar si el cliente tiene saldo disponible para realizar la operación
+                    if (currentBalance < totalAmountRecharge) {
+                        //Se actualiza el estatus de la transacción a RECHAZADA, debido a que el cliente no tiene saldo suficiente para hacer la recarga
+                        transactionRechargeCard.setStatusTransactionManagementId(StatusTransactionManagementE.REJECTED.getId());
+                        transactionRechargeCard.setResponseCode(ResponseCode.USER_HAS_NOT_BALANCE.getCode());
+                        try {
+                            transactionRechargeCard = operationsBD.saveTransactionsManagement(transactionRechargeCard, entityManager);
+                        } catch (Exception e) {
+                            return new TransactionResponse(ResponseCode.INTERNAL_ERROR.getCode(), "an error occurred while saving the transaction");
+                        }
+                        return new TransactionResponse(ResponseCode.USER_HAS_NOT_BALANCE.getCode(), ResponseCode.USER_HAS_NOT_BALANCE.getMessage());
+                    } else {
+                        
+                    }
+                } else {
+                    //Se actualiza el estatus de la transacción a RECHAZADA, debido a que excedió los límites transaccionales
+                    transactionRechargeCard.setStatusTransactionManagementId(StatusTransactionManagementE.REJECTED.getId());
+                    transactionRechargeCard.setResponseCode(validateLimits.getCodigoRespuesta());
+                    try {
+                        transactionRechargeCard = operationsBD.saveTransactionsManagement(transactionRechargeCard, entityManager);
+                    } catch (Exception e) {
+                        return new TransactionResponse(ResponseCode.INTERNAL_ERROR.getCode(), "an error occurred while saving the transaction");
+                    }
+                    return new TransactionResponse(validateLimits.getCodigoRespuesta(), validateLimits.getMensajeRespuesta());
                 }
-
-                //Se obtiene el saldo actual de la billetera del cliente
-                if (channelId == ChannelE.WALLET.getId()) {
-                    productListResponse = aPIAlodigaWalletProxy.getProductsUsePrepaidCardByUserId(userWalletId);
-                    Float currentBalanceWallet = productListResponse.getProducts(0).getCurrentBalance();
-                }               
-
             } else {
                 //Se actualiza el estatus de la transacción a RECHAZADA, debido a que falló la validación de la tarjeta
                 transactionRechargeCard.setStatusTransactionManagementId(StatusTransactionManagementE.REJECTED.getId());

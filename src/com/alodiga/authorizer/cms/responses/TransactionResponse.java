@@ -23,7 +23,7 @@ public class TransactionResponse extends Response {
         public String transactionNumberIssuer;
         public Timestamp transactionDateIssuer;
         public TransactionsManagement transactionsManagement;
-        private Float transactionFeesAmount;
+        private Float transactionCommissionAmount;
         private Float currentBalance; 
         private Date startDate;
         private Date endingDate;
@@ -42,9 +42,9 @@ public class TransactionResponse extends Response {
 		super(new Date(), code, message);
 	}   
         
-        public TransactionResponse(String code, String mensaje, Float transactionFeesAmount, TransactionsManagement transactionsManagement) {
+        public TransactionResponse(String code, String mensaje, Float transactionCommissionAmount, TransactionsManagement transactionsManagement) {
             super(new Date(), code, mensaje);
-            this.transactionFeesAmount = transactionFeesAmount;
+            this.transactionCommissionAmount = transactionCommissionAmount;
             this.transactionsManagement = transactionsManagement;
         }
 
@@ -134,12 +134,12 @@ public class TransactionResponse extends Response {
         this.transactionsManagement = transactionsManagement;
     }
 
-    public Float getTransactionFeesAmount() {
-        return transactionFeesAmount;
+    public Float getTransactionCommissionAmount() {
+        return transactionCommissionAmount;
     }
 
-    public void setTransactionFeesAmount(Float transactionFeesAmount) {
-        this.transactionFeesAmount = transactionFeesAmount;
+    public void setTransactionCommissionAmount(Float transactionCommissionAmount) {
+        this.transactionCommissionAmount = transactionCommissionAmount;
     }
      
 }
