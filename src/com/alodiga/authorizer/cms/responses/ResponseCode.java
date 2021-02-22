@@ -13,8 +13,8 @@ public enum ResponseCode {
     INTERNAL_ERROR("99",""),
     
      //Validacion de Limites
-    TRANSACTION_QUANTITY_LIMIT_DIALY("34","The card exceeded the maximum number of transactions per day"),
-    TRANSACTION_AMOUNT_LIMIT_DIALY("35","The card exceeded the maximum amount per day"),
+    TRANSACTION_QUANTITY_LIMIT_DAILY("34","The card exceeded the maximum number of transactions per day"),
+    TRANSACTION_AMOUNT_LIMIT_DAILY("35","The card exceeded the maximum amount per day"),
     TRANSACTION_QUANTITY_LIMIT_MONTHLY("36","The card exceeded the maximum number of transactions per month"),
     TRANSACTION_AMOUNT_LIMIT_MONTHLY("37","The card exceeded the maximum amount per month"),
     MIN_TRANSACTION_AMOUNT("38","The card exceeded the minimun amount per transaction"),
@@ -52,6 +52,10 @@ public enum ResponseCode {
     EMAIL_CUSTOMER_NOT_MATCH("23","The card was not active because the customer's email did not match"),
     PHONE_CUSTOMER_NOT_MATCH("24","The card was not active because the customer's phone did not match"),
     CARD_ALREADY_ACTIVE("25","The card is already active"),
+    
+    //Comisiones CMS
+    COMMISSION_NOT_APPLY("27","The transaction received did not generate commission to be charged"),
+    COMMISSION_YES_APPLY("28","The transaction to record the Alodiga commission corresponding to the received transaction was successfully saved in the database."),
 
     
     //Validaciones de la tarjeta
