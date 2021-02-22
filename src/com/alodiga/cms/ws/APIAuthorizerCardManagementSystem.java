@@ -230,7 +230,7 @@ public class APIAuthorizerCardManagementSystem {
         return operations.transferBetweenAccount(cardNumberOrigin, cardNumberDestinate, CVVOrigin,cardDueDateOrigin,cardHolderOrigin,ARQCOrigin,CVVDestinate,cardDueDateDestinate,cardHolderDestinate,ARQCDestinate,channelId,transactionTypeId,messageMiddlewareId,transactionDate,localTimeTransaction,acquirerTerminalCodeId,acquirerCountryId,amountTransfer,dateTimeTransmissionTerminal,localDateTransaction);
     }
     
-    
+ 
     @WebMethod
     public CardResponse validatePinOffset(
             @WebParam(name = "cardNumber") String cardNumber,
@@ -238,4 +238,22 @@ public class APIAuthorizerCardManagementSystem {
         return operations.validatePinOffset(cardNumber,pinOffset);
     }
     
+    @WebMethod
+    public TransactionResponse cardWithdrawal(
+            @WebParam(name = "cardNumber") String cardNumber,
+            @WebParam(name = "CVV") String CVV,
+            @WebParam(name = "cardDueDate") String cardDueDate,
+            @WebParam(name = "cardHolder") String cardHolder,
+            @WebParam(name = "documentIdentificationNumber") String documentIdentificationNumber,
+            @WebParam(name = "channelId") Integer channelId,
+            @WebParam(name = "transactionTypeId") Integer transactionTypeId,
+            @WebParam(name = "messageMiddlewareId") Long messageMiddlewareId,
+            @WebParam(name = "transactionDate") Date transactionDate,
+            @WebParam(name = "localTimeTransaction") Timestamp localTimeTransaction,
+            @WebParam(name = "acquirerTerminalCodeId") String acquirerTerminalCodeId,
+            @WebParam(name = "acquirerCountryId") Integer acquirerCountryId,
+            @WebParam(name = "localDateTransaction")Date localDateTransaction,
+            @WebParam(name = "withdrawalAmount") Float withdrawalAmount) {
+        return operations.cardWithdrawal(cardNumber,CVV,cardDueDate,cardHolder,documentIdentificationNumber,channelId,transactionTypeId,messageMiddlewareId,transactionDate,localTimeTransaction,acquirerTerminalCodeId,acquirerCountryId,localDateTransaction,withdrawalAmount);
+    }
 }
