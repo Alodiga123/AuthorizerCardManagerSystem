@@ -52,6 +52,8 @@ public interface operationsBD {
     
     public HistoryCardStatusChanges createHistoryCardStatusChanges(Card cardId, CardStatus cardStatusId, User userResponsabileId, StatusUpdateReason statusUpdateReasonId, EntityManager entityManager);
     
+    public BalanceHistoryCard createBalanceHistoryCard(Card cardUserId, TransactionsManagement transactionManagementId, Float previousBalance, Float currentBalance, EntityManager entityManager);
+    
     //Operaciones en BD
     public TransactionsManagement saveTransactionsManagement(TransactionsManagement transactionsManagement, EntityManager entityManager) throws Exception;    
     public TransactionsManagementHistory saveTransactionsManagementHistory(TransactionsManagementHistory transactionsManagementHistory, EntityManager entityManager) throws Exception;

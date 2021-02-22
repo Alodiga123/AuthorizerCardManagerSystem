@@ -1043,7 +1043,7 @@ public class APIOperations {
                                 balanceHistory.setPreviousBalance(previosAmount);
                                 Float currentAmount = previosAmount + programLoyaltyTransaction.getTotalBonificationValue();
                                 balanceHistory.setCurrentBalance(currentAmount);
-                                balanceHistory.setTransactionsManagementId(newTransactionManagement);
+                                balanceHistory.setTransactionsManagementId(newTransactionManagement.getId());
                                 Date balanceDate = new Date();
                                 Timestamp balanceHistoryDate = new Timestamp(balanceDate.getTime());
                                 balanceHistory.setCreateDate(balanceHistoryDate);
@@ -1172,7 +1172,7 @@ public class APIOperations {
                     Float currentBalanceSource = amountCardOrigin - amountTransferTotal;
                     balanceHistoryCardOrigin.setCurrentBalance(currentBalanceSource);
                     balanceHistoryCardOrigin.setPreviousBalance(amountCardOrigin);
-                    balanceHistoryCardOrigin.setTransactionsManagementId(transactionsManagement);
+                    balanceHistoryCardOrigin.setTransactionsManagementId(transactionsManagement.getId());
                     entityManager.persist(balanceHistoryCardOrigin);
 
                     //Actualizar balance History de Destino
@@ -1187,7 +1187,7 @@ public class APIOperations {
                         balanceHistoryCardDestinate.setPreviousBalance(amountCardDestination);
                         balanceHistoryCardDestinate.setCurrentBalance(currentBalanceDestination);
                     }
-                    balanceHistoryCardDestinate.setTransactionsManagementId(transactionsManagement);
+                    balanceHistoryCardDestinate.setTransactionsManagementId(transactionsManagement.getId());
                     entityManager.persist(balanceHistoryCardDestinate);
 
                     //Actualizar currentBalance de la tarjeta origen en la tabla accountCard
@@ -1354,12 +1354,13 @@ public class APIOperations {
         TransactionResponse commissionCMS = null;
         Float amountCommission = 0.00F;
         Float totalAmountRecharge = 0.00F;
+        CalculateBonusCardResponse calculateBonification = null;
         
         try {
             //Se registra la transacción de Recarga de la Tarjeta en la BD
             transactionRechargeCard = operationsBD.createTransactionsManagement(null, null, acquirerTerminalCodeId, acquirerCountryId, transactionNumberAcquirer, transactionDate, 
                                   TransactionE.CARD_RECHARGE.getId(), channelId, null, localTimeTransaction, null, null, null, 
-                                  null, null, null, null, null, null, 
+                                  null, amountRecharge, null, null, null, null, 
                                   null, StatusTransactionManagementE.APPROVED.getId(), cardNumber, cardHolder, CVV, cardDueDate, null, null, null, null, 
                                   null, null, null, ResponseCode.SUCCESS.getCode(), messageMiddlewareId, DocumentTypeE.CARD_RECHARGE.getId(), entityManager);
 
@@ -1371,7 +1372,7 @@ public class APIOperations {
             
             transactionHistoryRechargeCard = operationsBD.createTransactionsManagementHistory(null, null, acquirerTerminalCodeId, acquirerCountryId, transactionNumberAcquirer, transactionDate, 
                                   transactionHistoryRechargeCard.getTransactionSequence(),TransactionE.CARD_RECHARGE.getId(), channelId, null, localTimeTransaction, null, null, null, 
-                                  null, null, null, null, null, null, 
+                                  null, amountRecharge, null, null, null, null, 
                                   null, StatusTransactionManagementE.APPROVED.getId(), cardNumber, cardHolder, CVV, cardDueDate, null, null, null, null, 
                                   null, null, null, ResponseCode.SUCCESS.getCode(), messageMiddlewareId, transactionHistoryRechargeCard.getTransactionNumberIssuer(), entityManager);
 
@@ -1417,7 +1418,12 @@ public class APIOperations {
                         }
                         return new TransactionResponse(ResponseCode.USER_HAS_NOT_BALANCE.getCode(), ResponseCode.USER_HAS_NOT_BALANCE.getMessage());
                     } else {
+                        //Verificar si la transacción genera bonificación
+                        calculateBonification = calculateBonus(card.getCardNumber(), transactionTypeId, channelId, acquirerCountryId.toString(), amountRecharge, transactionRechargeCard.getTransactionNumberIssuer());
                         
+                        //Se actualiza el historial del saldos de la tarjeta
+                        
+                       
                     }
                 } else {
                     //Se actualiza el estatus de la transacción a RECHAZADA, debido a que excedió los límites transaccionales
