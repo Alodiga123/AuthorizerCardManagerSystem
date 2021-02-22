@@ -531,4 +531,10 @@ public class operationsBDImp implements operationsBD {
         return historyCardStatusChanges;
     }
 
+    @Override
+    public BalanceHistoryCard createBalanceHistoryCard(Card cardUserId, TransactionsManagement transactionManagementId, Float previousBalance, Float currentBalance, EntityManager entityManager) {
+        BalanceHistoryCard balanceHistoryCard = new BalanceHistoryCard();
+        return balanceHistoryCard;
+    }
+
 }
