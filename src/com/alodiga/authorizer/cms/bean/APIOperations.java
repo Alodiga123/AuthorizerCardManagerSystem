@@ -1506,8 +1506,8 @@ public class APIOperations {
               if(validateLimits.getCodigoRespuesta().equals(ResponseCode.SUCCESS.getCode())){
                 Float currentBalance = getCurrentBalanceCard(card.getId());
                 transactionResponse = calculateCommisionCMS(cardNumber, channelId, transactionTypeId, withdrawalAmount, "12456");
-                if (transactionResponse.getTransactionFeesAmount() != null) {
-                        amountCommission = transactionResponse.getTransactionFeesAmount();
+                if (transactionResponse.getTransactionCommissionAmount() != null) {
+                        amountCommission = transactionResponse.getTransactionCommissionAmount();
                 }
                 
                 Float amountWithdrawlTotal = withdrawalAmount + amountCommission;
@@ -1522,7 +1522,7 @@ public class APIOperations {
                 Float currentBalanceSource = currentBalance - amountWithdrawlTotal;
                 balanceHistoryCardOrigin.setCurrentBalance(currentBalanceSource);
                 balanceHistoryCardOrigin.setPreviousBalance(currentBalance);
-                balanceHistoryCardOrigin.setTransactionsManagementId(transactionManagement);
+                balanceHistoryCardOrigin.setTransactionsManagementId(transactionManagement.getId());
                 entityManager.persist(balanceHistoryCardOrigin);
 
                 //Actualizar currentBalance de la tarjeta origen en la tabla accountCard
