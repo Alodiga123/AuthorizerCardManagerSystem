@@ -532,8 +532,28 @@ public class operationsBDImp implements operationsBD {
     }
 
     @Override
-    public BalanceHistoryCard createBalanceHistoryCard(Card cardUserId, TransactionsManagement transactionManagementId, Float previousBalance, Float currentBalance, EntityManager entityManager) {
+    public BalanceHistoryCard createBalanceHistoryCard(Card cardUserId, Long transactionManagementId, Float previousBalance, Float currentBalance, EntityManager entityManager) {
         BalanceHistoryCard balanceHistoryCard = new BalanceHistoryCard();
+        balanceHistoryCard.setCardUserId(cardUserId);
+        balanceHistoryCard.setTransactionsManagementId(transactionManagementId);
+        balanceHistoryCard.setPreviousBalance(previousBalance);
+        balanceHistoryCard.setCurrentBalance(currentBalance);
+        balanceHistoryCard.setCreateDate(new Timestamp(new Date().getTime()));
+        return balanceHistoryCard;
+    }
+
+    @Override
+    public BalanceHistoryCard saveBalanceHistoryCard(BalanceHistoryCard balanceHistoryCard, EntityManager entityManager) throws Exception {
+        try {
+            if (balanceHistoryCard.getId() == null) {
+                entityManager.persist(balanceHistoryCard);
+            } else {
+                entityManager.merge(balanceHistoryCard);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new Exception();
+        }
         return balanceHistoryCard;
     }
 
