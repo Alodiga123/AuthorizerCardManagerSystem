@@ -1494,7 +1494,7 @@ public class APIOperations {
         Card card = null;
         TransactionResponse transactionResponse = new TransactionResponse();
         TransactionsManagement transactionManagement = null;
-        TransactionsManagementHistory transactionManagementHistory = null;
+        BalanceHistoryCard balanceHistoryCardOrigin = null;
         String ARQC = null;
         int indValidateCardActive = 1;
         Float amountCommission = 0.00F;
@@ -1512,9 +1512,10 @@ public class APIOperations {
           SimpleDateFormat simpleDateFormat = new SimpleDateFormat(pattern);
           String expirationCardDate = simpleDateFormat.format(card.getExpirationDate());
             //Se crea el objeto TransactionManagement y se guarda en BD
-            transactionManagement = operationsBD.createTransactionsManagement(null, null, acquirerTerminalCodeId, acquirerCountryId, null, transactionDate, transactionTypeId, channelId,
-                    null, localTimeTransaction, localDateTransaction, null, null, null, null, null, withdrawalAmount, null, null, null, StatusTransactionManagementE.APPROVED.getId(),
-                    cardNumber, cardHolder, CVV, expirationCardDate, null, null, null, null, null, null, null, ResponseCode.SUCCESS.getCode(), messageMiddlewareId, DocumentTypeE.CARD_WITHDRAWL.getId(), entityManager);
+            transactionManagement = operationsBD.createTransactionsManagement(null,null,acquirerTerminalCodeId,acquirerCountryId,null,transactionDate,TransactionE.RETIRO_DOMESTICO.getId(),
+            channelId,null,localTimeTransaction,localDateTransaction,null,null,
+            null,withdrawalAmount,null,null,null,null,null,StatusTransactionManagementE.APPROVED.getId(),cardNumber,
+            cardHolder,CVV,expirationCardDate,null,null,null,null,null,null,null,ResponseCode.SUCCESS.getCode(),messageMiddlewareId,DocumentTypeE.CARD_WITHDRAWL.getId(),entityManager);
 
             try {
                 transactionManagement = operationsBD.saveTransactionsManagement(transactionManagement, entityManager);
@@ -1536,8 +1537,8 @@ public class APIOperations {
                   newBalance = currentBalance + amountWithdrawlTotal;
                   //Se verifica que el total del retiro sumado al saldo actual no sea menor al monto mínimo permitido para la cuenta
                   if (newBalance < card.getProductId().getMinimumBalance()) {
-                      //Se rechaza la transacción por el balance minimo
-                      transactionManagement.setStatusTransactionManagementId(StatusTransactionManagementE.REJECTED.getId());
+                        //Se rechaza la transacción por el balance minimo
+                        transactionManagement.setStatusTransactionManagementId(StatusTransactionManagementE.REJECTED.getId());
                         transactionManagement.setResponseCode(ResponseCode.CARD_MINIMUM_BALANCE_EXCEEDED.getCode());
                         try {
                             transactionManagement = operationsBD.saveTransactionsManagement(transactionManagement, entityManager);
@@ -1548,20 +1549,27 @@ public class APIOperations {
                   } else {
                       //sigues
                       if (currentBalance  == null || currentBalance  < amountWithdrawlTotal) {
+                          //Se rechaza la transacción por no tener balance
+                            transactionManagement.setStatusTransactionManagementId(StatusTransactionManagementE.REJECTED.getId());
+                            transactionManagement.setResponseCode(ResponseCode.USER_HAS_NOT_BALANCE.getCode());
+                            try {
+                                transactionManagement = operationsBD.saveTransactionsManagement(transactionManagement, entityManager);
+                            } catch (Exception e) {
+                                return new TransactionResponse(ResponseCode.INTERNAL_ERROR.getCode(), "an error occurred while saving the transaction");
+                            }
                         return new TransactionResponse(ResponseCode.USER_HAS_NOT_BALANCE.getCode(), ResponseCode.USER_HAS_NOT_BALANCE.getMessage());
                       }
                   }
                 
+                Float currentBalanceSource = currentBalance - amountWithdrawlTotal;  
                 //Actualizar Balance History de la tarjeta
-                BalanceHistoryCard balanceHistoryCardOrigin = new BalanceHistoryCard();
-                balanceHistoryCardOrigin.setCardUserId(card);
-                balanceHistoryCardOrigin.setCreateDate(new Timestamp(new Date().getTime()));
-                Float currentBalanceSource = currentBalance - amountWithdrawlTotal;
-                balanceHistoryCardOrigin.setCurrentBalance(currentBalanceSource);
-                balanceHistoryCardOrigin.setPreviousBalance(currentBalance);
-                balanceHistoryCardOrigin.setTransactionsManagementId(transactionManagement.getId());
-                entityManager.persist(balanceHistoryCardOrigin);
-
+                balanceHistoryCardOrigin = operationsBD.createBalanceHistoryCard(card,transactionManagement.getId(),currentBalance, currentBalanceSource, entityManager);
+                 try {
+                    balanceHistoryCardOrigin = operationsBD.saveBalanceHistoryCard(balanceHistoryCardOrigin, entityManager);
+                } catch (Exception e) {
+                return new TransactionResponse(ResponseCode.INTERNAL_ERROR.getCode(), "an error occurred while saving Balance History");
+                }
+                
                 //Actualizar currentBalance de la tarjeta origen en la tabla accountCard
                 AccountCard accountNumber = getAccountNumberByCard(cardNumber);
                 AccountCard accountCard = entityManager.find(AccountCard.class, accountNumber.getId());
