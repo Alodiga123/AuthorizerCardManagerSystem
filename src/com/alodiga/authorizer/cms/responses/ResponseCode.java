@@ -72,7 +72,11 @@ public enum ResponseCode {
     
     
     //Consulta de Saldo
-    INVALID_CARD("70","INVALID CARD");
+    INVALID_CARD("70","INVALID CARD"),
+    
+    //Recarga de la Tarjeta
+    RECHARGE_AMOUNT_EXCEEDED("41","the amount of the recharge exceeded the maximum allowed"),
+    ACCOUNT_BALANCE_EXCEEDED("42","the balance of the account exceeded the maximum allowed");
            
     private final String code;
     private final String message;
