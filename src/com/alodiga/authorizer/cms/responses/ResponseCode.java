@@ -44,6 +44,7 @@ public enum ResponseCode {
     USER_HAS_NOT_BALANCE("155","The user has no balance available to complete the transaction"),
     THE_CARD_HAS_NO_MOVEMENTS("156","The card has no movements"),
     PIN_OFFSET_DIFFERENT("157","The pinOffset is Different"),
+    CARD_MINIMUM_BALANCE_EXCEEDED("158","The card minimum balance has exceeded"),
     
     //Activación de Tarjeta
     ACTIVE_CARD_NO("20","The card cannot be activated. Security responses do not match"),
