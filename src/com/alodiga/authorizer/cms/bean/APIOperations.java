@@ -1339,10 +1339,8 @@ public class APIOperations {
     public TransactionResponse cardRecharge(String cardNumber, String cardHolder, String CVV, String cardDueDate, Long messageMiddlewareId,
                                             Integer transactionTypeId, Integer channelId, Date transactionDate, Timestamp localTimeTransaction,
                                             String acquirerTerminalCodeId, String transactionNumberAcquirer, Integer acquirerCountryId, 
-                                            Long userWalletId, Float amountRecharge, String PinBlock) throws RemoteException {
+                                            Float amountRecharge)   {
     
-        APIAlodigaWalletProxy aPIAlodigaWalletProxy = new APIAlodigaWalletProxy();
-        com.alodiga.wallet.ws.ProductListResponse  productListResponse = null;
         String ARQC = null;
         TransactionsManagement transactionRechargeCard = null;
         TransactionsManagementHistory transactionHistoryRechargeCard = null;
@@ -1371,18 +1369,6 @@ public class APIOperations {
             } catch (Exception e) {
                 return new TransactionResponse(ResponseCode.INTERNAL_ERROR.getCode(), "an error occurred while saving the transaction");
             }
-            
-            transactionHistoryRechargeCard = operationsBD.createTransactionsManagementHistory(null, null, acquirerTerminalCodeId, acquirerCountryId, transactionNumberAcquirer, transactionDate, 
-                                  transactionHistoryRechargeCard.getTransactionSequence(),TransactionE.CARD_RECHARGE.getId(), channelId, null, localTimeTransaction, null, null, null, 
-                                  null, amountRecharge, null, null, null, null, 
-                                  null, StatusTransactionManagementE.APPROVED.getId(), cardNumber, cardHolder, CVV, cardDueDate, null, null, null, null, 
-                                  null, null, null, ResponseCode.SUCCESS.getCode(), messageMiddlewareId, transactionHistoryRechargeCard.getTransactionNumberIssuer(), entityManager);
-
-            try {
-                transactionHistoryRechargeCard = operationsBD.saveTransactionsManagementHistory(transactionHistoryRechargeCard, entityManager);
-            } catch (Exception e) {
-                return new TransactionResponse(ResponseCode.INTERNAL_ERROR.getCode(), "an error occurred while saving the transaction");
-            }
  
             //Se valida la tarjeta
             CardResponse validateCard = validateCard(cardNumber, ARQC, cardHolder, CVV, cardDueDate, indValidateCardActive);
@@ -1405,10 +1391,16 @@ public class APIOperations {
                         }
                         return new TransactionResponse(ResponseCode.RECHARGE_AMOUNT_EXCEEDED.getCode(), ResponseCode.RECHARGE_AMOUNT_EXCEEDED.getMessage());
                     } else {
+                        //Se revisa si la transacción genera una comisión
+                        commissionCMS = calculateCommisionCMS(card.getCardNumber(), channelId, transactionTypeId, amountRecharge, transactionNumberAcquirer);
+                        if (commissionCMS.getCodigoRespuesta().equals(ResponseCode.COMMISSION_YES_APPLY.getCode())) {
+                            amountCommission = commissionCMS.getTransactionCommissionAmount();
+                        }
                         //Se obtiene el saldo de la cuenta asociada a la tarjeta
                         accountCard = operationsBD.getAccountCardbyCardId(card.getId(), entityManager);
                         currentBalance = accountCard.getCurrentBalance();
-                        newBalance = currentBalance + amountRecharge;
+                        totalAmountRecharge = amountRecharge - amountCommission;
+                        newBalance = currentBalance + totalAmountRecharge;
                         //Se verifica que el total de la recarga sumado el saldo actual no supere el monto máximo permitido para la cuenta
                         if (newBalance > card.getProductId().getMaximumBalance()) {
                             //Se actualiza el estatus de la transacción a RECHAZADA, debido a que excedió el monto máximo permitido para la cuenta
@@ -1421,29 +1413,37 @@ public class APIOperations {
                             }
                             return new TransactionResponse(ResponseCode.ACCOUNT_BALANCE_EXCEEDED.getCode(), ResponseCode.ACCOUNT_BALANCE_EXCEEDED.getMessage());
                         } else {
-                            //Se revisa si la transacción genera una comisión
-                            commissionCMS = calculateCommisionCMS(card.getCardNumber(), channelId, transactionTypeId, amountRecharge, transactionNumberAcquirer);
-                            if (commissionCMS.getCodigoRespuesta().equals(ResponseCode.COMMISSION_YES_APPLY.getCode())) {
-                                amountCommission = commissionCMS.getTransactionCommissionAmount();
+                            //Verificar si la transacción genera bonificación
+                            calculateBonification = calculateBonus(card.getCardNumber(), transactionTypeId, channelId, acquirerCountryId.toString(), amountRecharge, transactionRechargeCard.getTransactionNumberIssuer());
+                            
+                            //Se actualiza el historial del saldos de la tarjeta en la BD del CMS
+                            balanceHistoryCard = operationsBD.createBalanceHistoryCard(card, transactionRechargeCard.getId(), currentBalance, newBalance, entityManager);
+                            try {
+                                balanceHistoryCard = operationsBD.saveBalanceHistoryCard(balanceHistoryCard, entityManager);
+                            } catch (Exception e) {
+                                return new TransactionResponse(ResponseCode.INTERNAL_ERROR.getCode(), "an error occurred while saving the transaction");
                             }
+                            
+                            //Se actualiza el saldo de la cuenta en la BD del CMS
+                            accountCard.setCurrentBalance(newBalance);
+                            accountCard.setUpdateDate(new Timestamp(new Date().getTime()));
+                            entityManager.persist(accountCard);
+                            
+                            //Se actualiza la transacción
+                            transactionRechargeCard.setSettlementCurrencyTransactionId(card.getProductId().getDomesticCurrencyId().getId());
+                            transactionRechargeCard.setSettlementTransactionAmount(totalAmountRecharge);
+                            transactionRechargeCard.setResponseCode(ResponseCode.CARD_RECHARGE_SUCCESS.getCode());
+                            transactionRechargeCard.setUpdateDate(new Timestamp(new Date().getTime()));
+                            try {
+                                transactionRechargeCard = operationsBD.saveTransactionsManagement(transactionRechargeCard, entityManager);
+                            } catch (Exception e) {
+                                return new TransactionResponse(ResponseCode.INTERNAL_ERROR.getCode(), "an error occurred while saving the transaction");
+                            }
+                                                        
+                            //Se retorna que la recarga de la tarjeta se realizó satisfactoriamente
+                            return new TransactionResponse(ResponseCode.CARD_RECHARGE_SUCCESS.getCode(), ResponseCode.CARD_RECHARGE_SUCCESS.getMessage());                                     
                         }
-                    }
-                    
-                    
-                    //Se obtiene el saldo de la cuenta asociada a la tarjeta
-                    accountCard = operationsBD.getAccountCardbyCardId(card.getId(), entityManager);
-                    currentBalance = accountCard.getCurrentBalance();
-                    totalAmountRecharge = amountRecharge + amountCommission;
-                    
-                    //Se verifica que el total de la recarga más el saldo actual no supere el monto máximo permitido para la tarjeta
-
-                    //Verificar si la transacción genera bonificación
-                    calculateBonification = calculateBonus(card.getCardNumber(), transactionTypeId, channelId, acquirerCountryId.toString(), amountRecharge, transactionRechargeCard.getTransactionNumberIssuer());
-
-                    //Se actualiza el historial del saldos de la tarjeta
-
-                    balanceHistoryCard = operationsBD.createBalanceHistoryCard(card, transactionRechargeCard.getId(), currentBalance, currentBalance, entityManager);
-
+                    } 
                 } else {
                     //Se actualiza el estatus de la transacción a RECHAZADA, debido a que excedió los límites transaccionales
                     transactionRechargeCard.setStatusTransactionManagementId(StatusTransactionManagementE.REJECTED.getId());
@@ -1470,9 +1470,6 @@ public class APIOperations {
             e.printStackTrace();
             return new TransactionResponse(ResponseCode.INTERNAL_ERROR.getCode(), "INTERNAL_ERROR");
         }    
-        
-    
-        return new TransactionResponse(ResponseCode.THE_CARD_HAS_NO_MOVEMENTS.getCode(), ResponseCode.THE_CARD_HAS_NO_MOVEMENTS.getMessage());
     }
 
     public CardResponse validatePinOffset(String cardNumber, String pinOffset) {

@@ -446,7 +446,7 @@ public class operationsBDImp implements operationsBD {
     @Override
     public Country getCountry(String countryCode, EntityManager entityManager) {
         try {
-            Query query = entityManager.createQuery("SELECT c FROM Country c WHERE c.code = '" + countryCode + "'");
+            Query query = entityManager.createQuery("SELECT c FROM Country c WHERE c.code_iso3 = '" + countryCode + "'");
             query.setMaxResults(1);
             Country result = (Country) query.setHint("toplink.refresh", "true").getSingleResult();
             return result;
