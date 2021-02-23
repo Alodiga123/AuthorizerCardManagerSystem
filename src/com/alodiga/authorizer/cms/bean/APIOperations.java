@@ -1503,10 +1503,14 @@ public class APIOperations {
         Float amountCommission = 0.00F;
         card = getCardByCardNumber(cardNumber);
         String cardNumberEncript = operationsBD.transformCardNumber(cardNumber);
+        Float currentBalance = 0.00F;
+        Float newBalance = 0.00F;
+        Float amountWithdrawlTotal = 0.00F;
+        ValidateLimitsResponse validateLimits = null;
+        
         try{
             
           CardResponse validateCard = validateCard(cardNumber, ARQC, cardHolder, CVV, cardDueDate, indValidateCardActive);
-          ValidateLimitsResponse validateLimits = getValidateLimits(cardNumber,TransactionE.RETIRO_DOMESTICO.getId(), channelId, card.getProductId().getIssuerId().getCountryId().getCode(), withdrawalAmount);
           String pattern = "MMyy";
           SimpleDateFormat simpleDateFormat = new SimpleDateFormat(pattern);
           String expirationCardDate = simpleDateFormat.format(card.getExpirationDate());
@@ -1522,18 +1526,35 @@ public class APIOperations {
             }
 
           if (validateCard.getCodigoRespuesta().equals(ResponseCode.SUCCESS.getCode())) {
-              if(validateLimits.getCodigoRespuesta().equals(ResponseCode.SUCCESS.getCode())){
-                Float currentBalance = getCurrentBalanceCard(card.getId());
-                transactionResponse = calculateCommisionCMS(cardNumber, channelId, transactionTypeId, withdrawalAmount, "12456");
-                if (transactionResponse.getTransactionCommissionAmount() != null) {
+              validateLimits = getValidateLimits(cardNumber,TransactionE.RETIRO_DOMESTICO.getId(), channelId, card.getProductId().getIssuerId().getCountryId().getCode(), withdrawalAmount);
+              if(validateLimits.getCodigoRespuesta().equals(ResponseCode.SUCCESS.getCode())) {
+                  transactionResponse = calculateCommisionCMS(cardNumber, channelId, transactionTypeId, withdrawalAmount, "12456");
+                  if(transactionResponse.getCodigoRespuesta().equals(ResponseCode.COMMISSION_YES_APPLY.getCode())){
+                      if (transactionResponse.getTransactionCommissionAmount() != null) {
                         amountCommission = transactionResponse.getTransactionCommissionAmount();
-                }
+                      }  
+                  }
+                  currentBalance = getCurrentBalanceCard(card.getId());
+                  amountWithdrawlTotal = withdrawalAmount + amountCommission;
+                  newBalance = currentBalance + amountWithdrawlTotal;
+                  //Se verifica que el total del retiro sumado al saldo actual no sea menor al monto mínimo permitido para la cuenta
+                  if (newBalance < card.getProductId().getMinimumBalance()) {
+                      //Se rechaza la transacción por el balance minimo
+                      transactionManagement.setStatusTransactionManagementId(StatusTransactionManagementE.REJECTED.getId());
+                        transactionManagement.setResponseCode(ResponseCode.CARD_MINIMUM_BALANCE_EXCEEDED.getCode());
+                        try {
+                            transactionManagement = operationsBD.saveTransactionsManagement(transactionManagement, entityManager);
+                        } catch (Exception e) {
+                            return new TransactionResponse(ResponseCode.INTERNAL_ERROR.getCode(), "an error occurred while saving the transaction");
+                        }
+                        return new TransactionResponse(ResponseCode.CARD_MINIMUM_BALANCE_EXCEEDED.getCode(), ResponseCode.CARD_MINIMUM_BALANCE_EXCEEDED.getMessage());
+                  } else {
+                      //sigues
+                      if (currentBalance  == null || currentBalance  < amountWithdrawlTotal) {
+                        return new TransactionResponse(ResponseCode.USER_HAS_NOT_BALANCE.getCode(), ResponseCode.USER_HAS_NOT_BALANCE.getMessage());
+                      }
+                  }
                 
-                Float amountWithdrawlTotal = withdrawalAmount + amountCommission;
-                if (currentBalance  == null || currentBalance  < amountWithdrawlTotal) {
-                    return new TransactionResponse(ResponseCode.USER_HAS_NOT_BALANCE.getCode(), ResponseCode.USER_HAS_NOT_BALANCE.getMessage());
-                }
-
                 //Actualizar Balance History de la tarjeta
                 BalanceHistoryCard balanceHistoryCardOrigin = new BalanceHistoryCard();
                 balanceHistoryCardOrigin.setCardUserId(card);
@@ -1550,11 +1571,27 @@ public class APIOperations {
                 accountCard.setUpdateDate(new Timestamp(new Date().getTime()));
                 accountCard.setCurrentBalance(currentBalanceSource);
                 entityManager.merge(accountCard);
-
-                 return new TransactionResponse(ResponseCode.SUCCESS.getCode(), "",cardNumberEncript, card.getCardStatusId().getId(), card.getCardStatusId().getDescription(),messageMiddlewareId.longValue(),transactionManagement.getTransactionNumberIssuer(),currentBalanceSource,amountWithdrawlTotal);
+                
+                //Se verifica si aplica bonificación
+                CalculateBonusCardResponse calculateBonus = calculateBonus(cardNumber,transactionTypeId,channelId,card.getProductId().getIssuerId().getCountryId().getCode(),withdrawalAmount,transactionManagement.getCardNumber());
+                
+                return new TransactionResponse(ResponseCode.SUCCESS.getCode(), "",cardNumberEncript, card.getCardStatusId().getId(), card.getCardStatusId().getDescription(),messageMiddlewareId.longValue(),transactionManagement.getTransactionNumberIssuer(),currentBalanceSource,amountWithdrawlTotal);
+              
               } else {
-                //Fallo validación de los limites
+                //El cliente excedio los límites transaccionales
                 transactionManagement.setStatusTransactionManagementId(StatusTransactionManagementE.REJECTED.getId());
+                transactionManagement.setResponseCode(validateLimits.getCodigoRespuesta());
+                try {
+                    transactionManagement = operationsBD.saveTransactionsManagement(transactionManagement, entityManager);
+                } catch (Exception e) {
+                    return new TransactionResponse(ResponseCode.INTERNAL_ERROR.getCode(), "an error occurred while saving the transaction");
+                }
+                return new TransactionResponse(validateLimits.getCodigoRespuesta(), validateLimits.getMensajeRespuesta());
+                
+              }
+          } else {
+              //Se actualiza el estatus de la transacción a RECHAZADA, debido a que falló la validación de la tarjeta
+              transactionManagement.setStatusTransactionManagementId(StatusTransactionManagementE.REJECTED.getId());
                 transactionManagement.setResponseCode(ResponseCode.CARD_NOT_VALIDATE.getCode());
                 try {
                     transactionManagement = operationsBD.saveTransactionsManagement(transactionManagement, entityManager);
@@ -1563,18 +1600,6 @@ public class APIOperations {
                 }
 
                 return new TransactionResponse(ResponseCode.CARD_NOT_VALIDATE.getCode(), ResponseCode.CARD_NOT_VALIDATE.getMessage());
-              }
-          } else {
-            //Fallo en la validación de la tarjeta
-            transactionManagement.setStatusTransactionManagementId(StatusTransactionManagementE.REJECTED.getId());
-            transactionManagement.setResponseCode(ResponseCode.INVALID_CARD.getCode());
-            try {
-                transactionManagement = operationsBD.saveTransactionsManagement(transactionManagement, entityManager);
-            } catch (Exception e) {
-                return new TransactionResponse(ResponseCode.INTERNAL_ERROR.getCode(), "an error occurred while saving the transaction");
-            }
-
-            return new TransactionResponse(ResponseCode.INVALID_CARD.getCode(), ResponseCode.CARD_NOT_VALIDATE.getMessage());
           }
         } catch (Exception e) {
             return new TransactionResponse(ResponseCode.INTERNAL_ERROR.getCode(), "");
