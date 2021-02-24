@@ -227,7 +227,7 @@ public class operationsBDImp implements operationsBD {
 
     @Override
     public Long getTotalTransactionsByCard(String cardNumber, Integer channelId, Integer transactionTypeId, EntityManager entityManager) {
-        StringBuilder sqlBuilder = new StringBuilder("SELECT COUNT(t.id) FROM transactionsManagementHistory t WHERE t.cardNumber = ?1 AND t.channelId = ?2 AND t.transactionTypeId = ?3 AND t.responseCode = '00'");
+        StringBuilder sqlBuilder = new StringBuilder("SELECT COUNT(t.id) FROM transactionsManagement t WHERE t.cardNumber = ?1 AND t.channelId = ?2 AND t.transactionTypeId = ?3 AND t.responseCode = '00'");
         Query query = entityManager.createNativeQuery(sqlBuilder.toString());
         query.setParameter("1", cardNumber);
         query.setParameter("2", channelId);
@@ -238,7 +238,7 @@ public class operationsBDImp implements operationsBD {
 
     @Override
     public Long getTotalTransactionsByCardByDate(String cardNumber, Date begginingDateTime, Date endingDateTime, Integer channelId, Integer transactionTypeId, EntityManager entityManager) {
-        StringBuilder sqlBuilder = new StringBuilder("SELECT COUNT(t.id) FROM transactionsManagementHistory t WHERE t.createDate between ?1 AND ?2 AND t.cardNumber = ?3 AND t.channelId = ?4 AND t.transactionTypeId = ?5 AND t.responseCode = '00'");
+        StringBuilder sqlBuilder = new StringBuilder("SELECT COUNT(t.id) FROM transactionsManagement t WHERE t.createDate between ?1 AND ?2 AND t.cardNumber = ?3 AND t.channelId = ?4 AND t.transactionTypeId = ?5 AND t.responseCode = '00'");
         Query query = entityManager.createNativeQuery(sqlBuilder.toString());
         query.setParameter("1", begginingDateTime);
         query.setParameter("2", endingDateTime);
@@ -265,7 +265,7 @@ public class operationsBDImp implements operationsBD {
 
     @Override
     public Long getTransactionsByCardByTransactionByProductCurrentDate(String cardNumber, Date begginingDateTime, Date endingDateTime, Integer transactionTypeId, Integer channelId, String code, boolean isTransactionLocal, Integer countryId, EntityManager entityManager) {
-        String sql = "SELECT * FROM transactionsManagementHistory t WHERE t.dateTransaction between ?1 AND ?2 AND t.cardNumber = ?3 AND t.transactionTypeId = ?4 AND t.channelId = ?5 AND t.responseCode =?6";
+        String sql = "SELECT * FROM transactionsManagement t WHERE t.dateTransaction between ?1 AND ?2 AND t.cardNumber = ?3 AND t.transactionTypeId = ?4 AND t.channelId = ?5 AND t.responseCode =?6";
         if (isTransactionLocal) {
             sql += (" AND acquirerCountryId = ?7");
         } else {
@@ -286,7 +286,7 @@ public class operationsBDImp implements operationsBD {
 
     @Override
     public Double getAmountMaxByUserByUserByTransactionByProductCurrentDate(String cardNumber, Date begginingDateTime, Date endingDateTime, Integer transactionTypeId, Integer channelId, String code, boolean isTransactionLocal, Integer countryId, EntityManager entityManager) {
-        String sql = "SELECT SUM(t.settlementTransactionAmount) FROM transactionsManagementHistory t WHERE t.dateTransaction between ?1 AND ?2 AND t.cardNumber = ?3 AND t.transactionTypeId = ?4 AND t.channelId = ?5 AND t.responseCode =?6";
+        String sql = "SELECT SUM(t.settlementTransactionAmount) FROM transactionsManagement t WHERE t.dateTransaction between ?1 AND ?2 AND t.cardNumber = ?3 AND t.transactionTypeId = ?4 AND t.channelId = ?5 AND t.responseCode =?6";
         if (isTransactionLocal) {
             sql += (" AND acquirerCountryId = ?7");
         } else {
@@ -446,7 +446,7 @@ public class operationsBDImp implements operationsBD {
     @Override
     public Country getCountry(String countryCode, EntityManager entityManager) {
         try {
-            Query query = entityManager.createQuery("SELECT c FROM Country c WHERE c.code_iso3 = '" + countryCode + "'");
+            Query query = entityManager.createQuery("SELECT c FROM Country c WHERE c.codeIso3 = '" + countryCode + "'");
             query.setMaxResults(1);
             Country result = (Country) query.setHint("toplink.refresh", "true").getSingleResult();
             return result;

@@ -58,7 +58,6 @@ import com.alodiga.authorizer.cms.responses.ProductListResponse;
 import com.cms.commons.models.AccountProperties;
 import com.cms.commons.models.HistoryCardStatusChanges;
 import java.util.ArrayList;
-import com.alodiga.wallet.ws.APIAlodigaWalletProxy;
 import java.rmi.RemoteException;
 
 @Stateless(name = "FsProcessorCMSAuthorizer", mappedName = "ejb/FsProcessorCMSAuthorizer")
@@ -1505,8 +1504,7 @@ public class APIOperations {
         Float amountWithdrawlTotal = 0.00F;
         ValidateLimitsResponse validateLimits = null;
         
-        try{
-            
+        try{            
           CardResponse validateCard = validateCard(cardNumber, ARQC, cardHolder, CVV, cardDueDate, indValidateCardActive);
           String pattern = "MMyy";
           SimpleDateFormat simpleDateFormat = new SimpleDateFormat(pattern);
