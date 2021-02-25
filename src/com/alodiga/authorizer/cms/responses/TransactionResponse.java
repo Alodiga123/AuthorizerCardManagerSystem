@@ -23,12 +23,13 @@ public class TransactionResponse extends Response {
         public String transactionNumberIssuer;
         public Timestamp transactionDateIssuer;
         public TransactionsManagement transactionsManagement;
-        private Float transactionFeesAmount;
+        private Float transactionCommissionAmount;
         private Float currentBalance; 
         private Date startDate;
         private Date endingDate;
         private Integer totalMovements;
         public List<TransactionsManagementHistory> transactionsManagementHistory;
+        private Float amountWithdrawl;
         
 	public TransactionResponse() {
 		super();
@@ -42,9 +43,9 @@ public class TransactionResponse extends Response {
 		super(new Date(), code, message);
 	}   
         
-        public TransactionResponse(String code, String mensaje, Float transactionFeesAmount, TransactionsManagement transactionsManagement) {
+        public TransactionResponse(String code, String mensaje, Float transactionCommissionAmount, TransactionsManagement transactionsManagement) {
             super(new Date(), code, mensaje);
-            this.transactionFeesAmount = transactionFeesAmount;
+            this.transactionCommissionAmount = transactionCommissionAmount;
             this.transactionsManagement = transactionsManagement;
         }
 
@@ -74,9 +75,19 @@ public class TransactionResponse extends Response {
         this.endingDate = endingDate;
         this.totalMovements = totalMovements;
         this.transactionsManagementHistory = transactionsManagementHistory;
-        
-
-    }    
+    }  
+    
+    public TransactionResponse(String code, String mensaje, String cardNumber, int cardStatusId,
+                                   String descriptionStatusCard, Long messageMiddlewareId, String transactionNumberIssuer,Float currentBalance,Float amountWithdrawl) {
+        super(new Date(), code, mensaje);
+        this.cardNumber = cardNumber;
+        this.cardStatusId = cardStatusId;
+        this.descriptionStatusCard = descriptionStatusCard;
+        this.messageMiddlewareId = messageMiddlewareId;
+        this.transactionNumberIssuer = transactionNumberIssuer;
+        this.currentBalance = currentBalance; 
+        this.amountWithdrawl = amountWithdrawl;
+    }  
 
     public String getCardNumber() {
         return cardNumber;
@@ -134,12 +145,12 @@ public class TransactionResponse extends Response {
         this.transactionsManagement = transactionsManagement;
     }
 
-    public Float getTransactionFeesAmount() {
-        return transactionFeesAmount;
+    public Float getTransactionCommissionAmount() {
+        return transactionCommissionAmount;
     }
 
-    public void setTransactionFeesAmount(Float transactionFeesAmount) {
-        this.transactionFeesAmount = transactionFeesAmount;
+    public void setTransactionCommissionAmount(Float transactionCommissionAmount) {
+        this.transactionCommissionAmount = transactionCommissionAmount;
     }
      
 }

@@ -13,8 +13,8 @@ public enum ResponseCode {
     INTERNAL_ERROR("99",""),
     
      //Validacion de Limites
-    TRANSACTION_QUANTITY_LIMIT_DIALY("34","The card exceeded the maximum number of transactions per day"),
-    TRANSACTION_AMOUNT_LIMIT_DIALY("35","The card exceeded the maximum amount per day"),
+    TRANSACTION_QUANTITY_LIMIT_DAILY("34","The card exceeded the maximum number of transactions per day"),
+    TRANSACTION_AMOUNT_LIMIT_DAILY("35","The card exceeded the maximum amount per day"),
     TRANSACTION_QUANTITY_LIMIT_MONTHLY("36","The card exceeded the maximum number of transactions per month"),
     TRANSACTION_AMOUNT_LIMIT_MONTHLY("37","The card exceeded the maximum amount per month"),
     MIN_TRANSACTION_AMOUNT("38","The card exceeded the minimun amount per transaction"),
@@ -44,6 +44,7 @@ public enum ResponseCode {
     USER_HAS_NOT_BALANCE("155","The user has no balance available to complete the transaction"),
     THE_CARD_HAS_NO_MOVEMENTS("156","The card has no movements"),
     PIN_OFFSET_DIFFERENT("157","The pinOffset is Different"),
+    CARD_MINIMUM_BALANCE_EXCEEDED("158","The card minimum balance has exceeded"),
     DIFFERENT_PIN_OFFSET_LENGTH("158","KEY LENGTH IS DIFFERENT"),
     EXPIRED_KEY("159","EXPIRED KEY"),
     CONSECUTIVE_KEY("160","THE KEY CANNOT HAVE CONSECUTIVE NUMBERS"),
@@ -59,6 +60,10 @@ public enum ResponseCode {
     EMAIL_CUSTOMER_NOT_MATCH("23","The card was not active because the customer's email did not match"),
     PHONE_CUSTOMER_NOT_MATCH("24","The card was not active because the customer's phone did not match"),
     CARD_ALREADY_ACTIVE("25","The card is already active"),
+    
+    //Comisiones CMS
+    COMMISSION_NOT_APPLY("27","The transaction received did not generate commission to be charged"),
+    COMMISSION_YES_APPLY("28","The transaction to record the Alodiga commission corresponding to the received transaction was successfully saved in the database."),
 
     
     //Validaciones de la tarjeta
@@ -74,7 +79,12 @@ public enum ResponseCode {
     
     
     //Consulta de Saldo
-    INVALID_CARD("70","INVALID CARD");
+    INVALID_CARD("70","INVALID CARD"),
+    
+    //Recarga de la Tarjeta
+    RECHARGE_AMOUNT_EXCEEDED("41","The amount of the recharge exceeded the maximum allowed"),
+    ACCOUNT_BALANCE_EXCEEDED("42","The balance of the account exceeded the maximum allowed"),
+    CARD_RECHARGE_SUCCESS("43","The card recharge was successful");
            
     private final String code;
     private final String message;

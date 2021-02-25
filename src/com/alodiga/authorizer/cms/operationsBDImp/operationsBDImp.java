@@ -227,7 +227,7 @@ public class operationsBDImp implements operationsBD {
 
     @Override
     public Long getTotalTransactionsByCard(String cardNumber, Integer channelId, Integer transactionTypeId, EntityManager entityManager) {
-        StringBuilder sqlBuilder = new StringBuilder("SELECT COUNT(t.id) FROM transactionsManagementHistory t WHERE t.cardNumber = ?1 AND t.channelId = ?2 AND t.transactionTypeId = ?3 AND t.responseCode = '00'");
+        StringBuilder sqlBuilder = new StringBuilder("SELECT COUNT(t.id) FROM transactionsManagement t WHERE t.cardNumber = ?1 AND t.channelId = ?2 AND t.transactionTypeId = ?3 AND t.responseCode = '00'");
         Query query = entityManager.createNativeQuery(sqlBuilder.toString());
         query.setParameter("1", cardNumber);
         query.setParameter("2", channelId);
@@ -238,7 +238,7 @@ public class operationsBDImp implements operationsBD {
 
     @Override
     public Long getTotalTransactionsByCardByDate(String cardNumber, Date begginingDateTime, Date endingDateTime, Integer channelId, Integer transactionTypeId, EntityManager entityManager) {
-        StringBuilder sqlBuilder = new StringBuilder("SELECT COUNT(t.id) FROM transactionsManagementHistory t WHERE t.createDate between ?1 AND ?2 AND t.cardNumber = ?3 AND t.channelId = ?4 AND t.transactionTypeId = ?5 AND t.responseCode = '00'");
+        StringBuilder sqlBuilder = new StringBuilder("SELECT COUNT(t.id) FROM transactionsManagement t WHERE t.createDate between ?1 AND ?2 AND t.cardNumber = ?3 AND t.channelId = ?4 AND t.transactionTypeId = ?5 AND t.responseCode = '00'");
         Query query = entityManager.createNativeQuery(sqlBuilder.toString());
         query.setParameter("1", begginingDateTime);
         query.setParameter("2", endingDateTime);
@@ -265,7 +265,7 @@ public class operationsBDImp implements operationsBD {
 
     @Override
     public Long getTransactionsByCardByTransactionByProductCurrentDate(String cardNumber, Date begginingDateTime, Date endingDateTime, Integer transactionTypeId, Integer channelId, String code, boolean isTransactionLocal, Integer countryId, EntityManager entityManager) {
-        String sql = "SELECT * FROM transactionsManagementHistory t WHERE t.dateTransaction between ?1 AND ?2 AND t.cardNumber = ?3 AND t.transactionTypeId = ?4 AND t.channelId = ?5 AND t.responseCode =?6";
+        String sql = "SELECT * FROM transactionsManagement t WHERE t.dateTransaction between ?1 AND ?2 AND t.cardNumber = ?3 AND t.transactionTypeId = ?4 AND t.channelId = ?5 AND t.responseCode =?6";
         if (isTransactionLocal) {
             sql += (" AND acquirerCountryId = ?7");
         } else {
@@ -286,7 +286,7 @@ public class operationsBDImp implements operationsBD {
 
     @Override
     public Double getAmountMaxByUserByUserByTransactionByProductCurrentDate(String cardNumber, Date begginingDateTime, Date endingDateTime, Integer transactionTypeId, Integer channelId, String code, boolean isTransactionLocal, Integer countryId, EntityManager entityManager) {
-        String sql = "SELECT SUM(t.settlementTransactionAmount) FROM transactionsManagementHistory t WHERE t.dateTransaction between ?1 AND ?2 AND t.cardNumber = ?3 AND t.transactionTypeId = ?4 AND t.channelId = ?5 AND t.responseCode =?6";
+        String sql = "SELECT SUM(t.settlementTransactionAmount) FROM transactionsManagement t WHERE t.dateTransaction between ?1 AND ?2 AND t.cardNumber = ?3 AND t.transactionTypeId = ?4 AND t.channelId = ?5 AND t.responseCode =?6";
         if (isTransactionLocal) {
             sql += (" AND acquirerCountryId = ?7");
         } else {
@@ -308,13 +308,12 @@ public class operationsBDImp implements operationsBD {
     @Override
     public List<TransactionsManagementHistory> getCardMovements(String cardNumber, Date startDate, Date endingDate, EntityManager entityManager) {
         List<TransactionsManagementHistory> transactionsManagementHistory = new ArrayList<TransactionsManagementHistory>();
-        String sql = "SELECT t.transactionReference, t.transactionTypeId,t.dateTransaction,t.settlementTransactionAmount,t.transactionConcept  FROM TransactionsManagementHistory t WHERE t.cardNumber = '" + cardNumber + "' AND t.dateTransaction BETWEEN ?1 AND ?2 AND t.transactionTypeId IN(?3,?4,?5,?6,?7,?8,?9,?10,?11)";
-
+        String sql = "SELECT t FROM TransactionsManagementHistory t WHERE t.cardNumber = '" + cardNumber + "' AND t.transactionDateIssuer BETWEEN ?1 AND ?2 AND t.transactionTypeId IN(?3,?4,?5,?6,?7,?8,?9,?10,?11)";
         StringBuilder sqlBuilder = new StringBuilder(sql);
         Query query = entityManager.createQuery(sqlBuilder.toString());
         query.setParameter("1", startDate);
         query.setParameter("2", endingDate);
-        query.setParameter("3", TransactionE.RECARGA.getId());
+        query.setParameter("3", TransactionE.CARD_RECHARGE.getId());
         query.setParameter("4", TransactionE.RECARGA_INICIAL.getId());
         query.setParameter("5", TransactionE.RETIRO_DOMESTICO.getId());
         query.setParameter("6", TransactionE.RETIRO_INTERNACIONAL.getId());
@@ -447,7 +446,7 @@ public class operationsBDImp implements operationsBD {
     @Override
     public Country getCountry(String countryCode, EntityManager entityManager) {
         try {
-            Query query = entityManager.createQuery("SELECT c FROM Country c WHERE c.code = '" + countryCode + "'");
+            Query query = entityManager.createQuery("SELECT c FROM Country c WHERE c.codeIso3 = '" + countryCode + "'");
             query.setMaxResults(1);
             Country result = (Country) query.setHint("toplink.refresh", "true").getSingleResult();
             return result;
@@ -530,6 +529,32 @@ public class operationsBDImp implements operationsBD {
             throw new Exception();
         }
         return historyCardStatusChanges;
+    }
+
+    @Override
+    public BalanceHistoryCard createBalanceHistoryCard(Card cardUserId, Long transactionManagementId, Float previousBalance, Float currentBalance, EntityManager entityManager) {
+        BalanceHistoryCard balanceHistoryCard = new BalanceHistoryCard();
+        balanceHistoryCard.setCardUserId(cardUserId);
+        balanceHistoryCard.setTransactionsManagementId(transactionManagementId);
+        balanceHistoryCard.setPreviousBalance(previousBalance);
+        balanceHistoryCard.setCurrentBalance(currentBalance);
+        balanceHistoryCard.setCreateDate(new Timestamp(new Date().getTime()));
+        return balanceHistoryCard;
+    }
+
+    @Override
+    public BalanceHistoryCard saveBalanceHistoryCard(BalanceHistoryCard balanceHistoryCard, EntityManager entityManager) throws Exception {
+        try {
+            if (balanceHistoryCard.getId() == null) {
+                entityManager.persist(balanceHistoryCard);
+            } else {
+                entityManager.merge(balanceHistoryCard);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new Exception();
+        }
+        return balanceHistoryCard;
     }
 
     public boolean testConsecutive(String pinoffset) {
