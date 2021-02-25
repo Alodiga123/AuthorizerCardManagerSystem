@@ -44,6 +44,13 @@ public enum ResponseCode {
     USER_HAS_NOT_BALANCE("155","The user has no balance available to complete the transaction"),
     THE_CARD_HAS_NO_MOVEMENTS("156","The card has no movements"),
     PIN_OFFSET_DIFFERENT("157","The pinOffset is Different"),
+    DIFFERENT_PIN_OFFSET_LENGTH("158","KEY LENGTH IS DIFFERENT"),
+    EXPIRED_KEY("159","EXPIRED KEY"),
+    CONSECUTIVE_KEY("160","THE KEY CANNOT HAVE CONSECUTIVE NUMBERS"),
+    NO_NUMBER("161","it is not a number"),
+    DIFFERENT_KEY("162","the password must not coincide with the last ones registered"),
+    CONTINUOUS_KEY("163","THE KEY CANNOT HAVE CONTINUOUS NUMBERS"),
+    HAS_NO_PROPERTIES("164","has no associated properties"),
     
     //Activación de Tarjeta
     ACTIVE_CARD_NO("20","The card cannot be activated. Security responses do not match"),

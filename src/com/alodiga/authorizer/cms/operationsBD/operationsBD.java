@@ -82,4 +82,7 @@ public interface operationsBD {
     //Métodos reutilizados por la API
     public String transformCardNumber(String cardNumber);
     public String maskCCNumber(String ccnum);
+    public boolean testConsecutive(String pinoffset);
+    public boolean testContinuous(String pinOffset);
+    public boolean isNumeric(String pinOffset);
 }
