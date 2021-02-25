@@ -274,4 +274,37 @@ public class APIAuthorizerCardManagementSystem {
             @WebParam(name = "amountRecharge") Float amountRecharge) {
         return operations.cardRecharge(cardNumber,cardHolder,CVV,cardDueDate,messageMiddlewareId,transactionTypeId,channelId,transactionDate,localTimeTransaction,acquirerTerminalCodeId,transactionNumberAcquirer,acquirerCountryId,amountRecharge);
     }
+    
+    @WebMethod    
+    public TransactionResponse keyChange(
+        @WebParam(name = "cardNumberO") String cardNumber,
+        @WebParam(name = "CVV") String CVV,
+        @WebParam(name = "cardDueDate") String cardDueDate,
+        @WebParam(name = "cardHolde") String cardHolder,
+        @WebParam(name = "ARQC") String ARQC,
+        @WebParam(name = "channelId") Integer channelId,
+        @WebParam(name = "transactionTypeId") Integer transactionTypeId,
+        @WebParam(name = "messageMiddlewareId") Long messageMiddlewareId,
+        @WebParam(name = "transactionDate") Date transactionDate,
+        @WebParam(name = "localTimeTransaction") Timestamp localTimeTransaction,
+        @WebParam(name = "acquirerTerminalCodeId") String acquirerTerminalCodeId,
+        @WebParam(name = "acquirerCountryId") Integer acquirerCountryId,
+        @WebParam(name = "newpinOffset") String newPinOffset,
+        @WebParam(name = "currentPinBlock") String currentPinBlock,
+        @WebParam(name = "newPinBlock") String newPinBlock,
+        @WebParam(name = "terminalId") Long terminalId){
+        return operations.keyChange(cardNumber, CVV,cardDueDate,cardHolder,ARQC,channelId,transactionTypeId,messageMiddlewareId,transactionDate,localTimeTransaction,acquirerTerminalCodeId,acquirerCountryId,newPinOffset, currentPinBlock, newPinBlock,terminalId);
+    }
+   
+    
+    @WebMethod
+    public TransactionResponse validatePropertiesKey(
+            @WebParam(name = "cardNumber") String cardNumber,
+            @WebParam(name = "pinOffset") String pinOffset,
+            @WebParam(name = "channelId") Integer channelId) {
+        return operations.validatePropertiesKey(cardNumber,pinOffset,channelId);
+    }
+    
+    
+    
 }
