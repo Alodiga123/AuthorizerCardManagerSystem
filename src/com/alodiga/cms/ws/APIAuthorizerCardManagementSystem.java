@@ -11,6 +11,7 @@ import com.alodiga.authorizer.cms.responses.CountryListResponse;
 import com.alodiga.authorizer.cms.responses.CardResponse;
 import com.alodiga.authorizer.cms.responses.OperationCardBalanceInquiryResponse;
 import com.alodiga.authorizer.cms.responses.TransactionFeesResponse;
+import com.alodiga.authorizer.cms.responses.TransactionPurchageResponse;
 import com.alodiga.authorizer.cms.responses.TransactionResponse;
 import com.alodiga.authorizer.cms.responses.ValidateLimitsResponse;
 import com.cms.commons.models.AccountCard;
@@ -305,6 +306,26 @@ public class APIAuthorizerCardManagementSystem {
         return operations.validatePropertiesKey(cardNumber,pinOffset,channelId);
     }
     
-    
+     @WebMethod
+    public TransactionPurchageResponse cardPurchage(
+            @WebParam(name = "cardNumber") String cardNumber,
+            @WebParam(name = "cardHolder") String cardHolder,
+            @WebParam(name = "CVV") String CVV,
+            @WebParam(name = "cardDueDate") String cardDueDate,
+            @WebParam(name = "messageMiddlewareId") Long messageMiddlewareId,
+            @WebParam(name = "transactionTypeId") Integer transactionTypeId,
+            @WebParam(name = "channelId") Integer channelId,                      
+            @WebParam(name = "transactionDate") Date transactionDate,
+            @WebParam(name = "localTimeTransaction") Timestamp localTimeTransaction,
+            @WebParam(name = "acquirerTerminalCodeId") String acquirerTerminalCodeId,
+            @WebParam(name = "transactionNumberAcquirer") String transactionNumberAcquirer,
+            @WebParam(name = "acquirerCountryId") Integer acquirerCountryId,
+            @WebParam(name = "purchaseAmount") Float purchaseAmount,
+            @WebParam(name = "documentNumber") String documentNumber,
+            @WebParam(name = "pinBlock") String pinBlock,
+            @WebParam(name = "ARQC") String ARQC,
+            @WebParam(name = "terminalId") String terminalId){
+        return operations.cardPurchage(cardNumber,cardHolder,CVV,cardDueDate,messageMiddlewareId,transactionTypeId,channelId,transactionDate,localTimeTransaction,acquirerTerminalCodeId,transactionNumberAcquirer,acquirerCountryId,purchaseAmount,pinBlock, ARQC, terminalId);
+    }
     
 }
