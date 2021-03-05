@@ -1765,7 +1765,8 @@ public class APIOperations {
     public TransactionPurchageResponse cardPurchage(String cardNumber, String cardHolder, String CVV, String cardDueDate, Long messageMiddlewareId,
                                             Integer transactionTypeId, Integer channelId, Date transactionDate, Timestamp localTimeTransaction,
                                             String acquirerTerminalCodeId, String transactionNumberAcquirer, Integer acquirerCountryId, 
-                                            Float amountPurchage,String pinBlock,String ARQC, String terminalId)   {
+                                            Float amountPurchage,String pinBlock,String ARQC, String terminalId, String oPMode, String schemeEMV,
+                                            String seqNumber, String atc, String unpredictableNumber, String transactionData)   {
     
         TransactionsManagement transactionPurchageCard = null;
         TransactionsManagementHistory transactionHistoryRechargeCard = null;
@@ -1811,7 +1812,7 @@ public class APIOperations {
                 if(response.getResponseCode().equals(ResponseCode.SUCCESS.getCode())){
                     //validar ARQC
                     metod = lp.getProperties("prop.validateQRQC");
-                    params = request.getARPCRequest("0001", "1", "Mchip", "6281555895200000001", "001", "0034", "29374F74", "66666666", ARQC);
+                    params = request.getARPCRequest(terminalId,oPMode, schemeEMV, card.getCardNumber(), seqNumber, atc, unpredictableNumber, transactionData, ARQC);
                     ARPCResponse arpcResponse = (ARPCResponse) getResponse(metod, params, ARPCResponse.class);
                     if(response.getResponseCode().equals(ResponseCode.SUCCESS.getCode())){
                         //obtenemos el arpc

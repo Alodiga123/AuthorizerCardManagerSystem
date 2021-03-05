@@ -324,8 +324,15 @@ public class APIAuthorizerCardManagementSystem {
             @WebParam(name = "documentNumber") String documentNumber,
             @WebParam(name = "pinBlock") String pinBlock,
             @WebParam(name = "ARQC") String ARQC,
-            @WebParam(name = "terminalId") String terminalId){
-        return operations.cardPurchage(cardNumber,cardHolder,CVV,cardDueDate,messageMiddlewareId,transactionTypeId,channelId,transactionDate,localTimeTransaction,acquirerTerminalCodeId,transactionNumberAcquirer,acquirerCountryId,purchaseAmount,pinBlock, ARQC, terminalId);
+            @WebParam(name = "terminalId") String terminalId,
+            @WebParam(name = "oPMode") String oPMode,
+            @WebParam(name = "schemeEMV") String schemeEMV,
+            @WebParam(name = "seqNumber") String seqNumber,
+            @WebParam(name = "atc") String atc,
+            @WebParam(name = "unpredictableNumber") String unpredictableNumber,
+            @WebParam(name = "transactionData") String transactionData){
+        return operations.cardPurchage(cardNumber,cardHolder,CVV,cardDueDate,messageMiddlewareId,transactionTypeId,channelId,transactionDate,localTimeTransaction,acquirerTerminalCodeId,transactionNumberAcquirer,acquirerCountryId,purchaseAmount,pinBlock, ARQC, terminalId,
+                oPMode,schemeEMV,seqNumber,atc,unpredictableNumber,transactionData);
     }
     
 }
