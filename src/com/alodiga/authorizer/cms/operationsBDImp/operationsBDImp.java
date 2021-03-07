@@ -557,4 +557,53 @@ public class operationsBDImp implements operationsBD {
         return balanceHistoryCard;
     }
 
+    public boolean testConsecutive(String pinoffset) {
+        if (pinoffset.length() == 1) {
+            return true;
+        } else if (pinoffset.isEmpty()) {
+            return false;
+        }
+
+        for (int i = 0; i < pinoffset.length() - 1; i++) {
+            int valor1 = (int) pinoffset.charAt(i);
+            int valor2 = (int) pinoffset.charAt(i + 1);
+
+            if (valor1 == valor2) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public boolean testContinuous(String pinOffset) {
+        if (pinOffset.length() == 1) {
+            return true;
+        } else if (pinOffset.isEmpty()) {
+            return false;
+        }
+
+        for (int i = 0; i < pinOffset.length() - 1; i++) {
+            int valor1 = (int) pinOffset.charAt(i);
+            int valor2 = (int) pinOffset.charAt(i + 1);
+
+            if (valor1 + 1 != valor2) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    public boolean isNumeric(String pinOffset) {
+
+        boolean resultado;
+
+        try {
+            Integer.parseInt(pinOffset);
+            resultado = true;
+        } catch (NumberFormatException excepcion) {
+            resultado = false;
+        }
+
+        return resultado;
+    }
 }
