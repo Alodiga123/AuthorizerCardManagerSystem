@@ -1998,7 +1998,42 @@ public class APIOperations {
             return new TransactionResponse(ResponseCode.INTERNAL_ERROR.getCode(), "INTERNAL_ERROR");
         }
 
+    }
+    
+    public TransactionResponse reverseCardRecharge(String cardNumber, String cardHolder, String CVV, String cardDueDate, Long messageMiddlewareId,
+                                            Integer transactionTypeId, Integer channelId, Date transactionDate, Timestamp localTimeTransaction,
+                                            String acquirerTerminalCodeId, String transactionNumberAcquirer, Integer acquirerCountryId, 
+                                            Float amountReverseRecharge, String sequenceTransactionCardRecharge)   {
+    
+        String ARQC = null;
+        TransactionsManagement transactionReverseRechargeCard = null;
+        int indValidateCardActive = 1;
+        Card card = null;
+        ValidateLimitsResponse validateLimits = null;
+        Float currentBalance = 0.00F;
+        AccountCard accountCard = null;
+        BalanceHistoryCard balanceHistoryCard = null;
+        Float newBalance = 0.00F;
 
+        try {
+            //Se registra la transacción de Recarga de la Tarjeta en la BD
+            transactionReverseRechargeCard = operationsBD.createTransactionsManagement(null, null, acquirerTerminalCodeId, acquirerCountryId, transactionNumberAcquirer, transactionDate, 
+                                  TransactionE.REVERSE_CARD_RECHARGE.getId(), channelId, null, localTimeTransaction, null, null, null, 
+                                  null, amountReverseRecharge, null, null, null, null, 
+                                  null, StatusTransactionManagementE.APPROVED.getId(), cardNumber, cardHolder, CVV, cardDueDate, null, null, null, null, 
+                                  null, null, null, ResponseCode.SUCCESS.getCode(), messageMiddlewareId, DocumentTypeE.REVERSE_CARD_RECHARGE.getId(), entityManager);
+
+            try {
+                transactionReverseRechargeCard = operationsBD.saveTransactionsManagement(transactionReverseRechargeCard, entityManager);
+            } catch (Exception e) {
+                return new TransactionResponse(ResponseCode.INTERNAL_ERROR.getCode(), "an error occurred while saving the transaction");
+            }
+            
+        } catch (Exception e) {
+            e.printStackTrace();
+            return new TransactionResponse(ResponseCode.INTERNAL_ERROR.getCode(), "INTERNAL_ERROR");
+        }
+        return new TransactionResponse(ResponseCode.INTERNAL_ERROR.getCode(), "INTERNAL_ERROR");
     }
     
 
