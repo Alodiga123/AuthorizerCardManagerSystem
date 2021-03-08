@@ -87,10 +87,13 @@ public enum ResponseCode {
     //Recarga de la Tarjeta
     RECHARGE_AMOUNT_EXCEEDED("41","The amount of the recharge exceeded the maximum allowed"),
     ACCOUNT_BALANCE_EXCEEDED("42","The balance of the account exceeded the maximum allowed"),
-    CARD_RECHARGE_SUCCESS("43","The card recharge was successful");
+    CARD_RECHARGE_SUCCESS("43","The card recharge was successful"),
+    
+    //Compra con Tarjeta
+    CARD_PURCHAGE_SUCCESS("44","The card purchage was successful"),
+    BALANCE_NOT_AVAILABLE("45","The card has no unavailable balance");
     
     
-           
     private final String code;
     private final String message;
         
