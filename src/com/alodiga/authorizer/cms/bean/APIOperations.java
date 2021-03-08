@@ -1717,8 +1717,6 @@ public class APIOperations {
                             return new TransactionResponse(ResponseCode.CONTINUOUS_KEY.getCode(), ResponseCode.CONTINUOUS_KEY.getMessage());
                         }
                     }
-                    
-                    ;
                     if (operationsBD.testConsecutive(pinOffset)) {
                         if (!keyProperties.getIndConsecutiveEqualCharacters()) {
                             return new TransactionResponse(ResponseCode.CONSECUTIVE_KEY.getCode(), ResponseCode.CONSECUTIVE_KEY.getMessage());
