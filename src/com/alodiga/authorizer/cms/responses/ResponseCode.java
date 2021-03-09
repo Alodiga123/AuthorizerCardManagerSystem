@@ -11,6 +11,7 @@ public enum ResponseCode {
     COUNTRY_NOT_FOUND("07","The country not found"),
     CHANNEL_NOT_FOUND("07","The channel not found"),
     INTERNAL_ERROR("99",""),
+    CANCEL("105","The transaction was canceled"),
     
      //Validacion de Limites
     TRANSACTION_QUANTITY_LIMIT_DAILY("34","The card exceeded the maximum number of transactions per day"),
@@ -77,6 +78,8 @@ public enum ResponseCode {
     
     //Algoritmo LUNH
     
+    //Transaccion de reverso
+    REVERSE_TRANSACTION_NOT_FOUND("158","The transaction to make the reverse was not found"),
     
     //Consulta de Saldo
     INVALID_CARD("70","INVALID CARD"),
@@ -84,8 +87,13 @@ public enum ResponseCode {
     //Recarga de la Tarjeta
     RECHARGE_AMOUNT_EXCEEDED("41","The amount of the recharge exceeded the maximum allowed"),
     ACCOUNT_BALANCE_EXCEEDED("42","The balance of the account exceeded the maximum allowed"),
-    CARD_RECHARGE_SUCCESS("43","The card recharge was successful");
-           
+    CARD_RECHARGE_SUCCESS("43","The card recharge was successful"),
+    
+    //Compra con Tarjeta
+    CARD_PURCHAGE_SUCCESS("44","The card purchage was successful"),
+    BALANCE_NOT_AVAILABLE("45","The card has no unavailable balance");
+    
+    
     private final String code;
     private final String message;
         

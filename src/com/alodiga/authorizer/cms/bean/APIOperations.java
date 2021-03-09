@@ -50,18 +50,19 @@ import com.cms.commons.models.TransactionPoint;
 import com.cms.commons.models.StatusUpdateReason;
 import com.cms.commons.models.TransactionsManagement;
 import com.cms.commons.models.User;
-import com.cms.commons.models.Transaction;
 import com.cms.commons.util.EjbUtils;
-import java.util.Calendar;
 import com.alodiga.authorizer.cms.operationsBDImp.operationsBDImp;
-import com.alodiga.authorizer.cms.responses.ProductListResponse;
 import com.alodiga.authorizer.cms.responses.CardKeyHistoryListResponse;
-import com.cms.commons.models.AccountProperties;
+import com.alodiga.authorizer.cms.responses.TransactionPurchageResponse;
+import static com.alodiga.hsm.client.connection.HSMClient.getResponse;
+import com.alodiga.hsm.client.request.ParameterRequest;
+import com.alodiga.hsm.client.response.ARPCResponse;
+import com.alodiga.hsm.client.response.VerifyPinUsingIBMMethodResponse;
+import com.alodiga.hsm.client.utils.LoadProperties;
 import com.cms.commons.models.CardKeyHistory;
 import com.cms.commons.models.HistoryCardStatusChanges;
 import com.cms.commons.models.KeyProperties;
 import java.util.ArrayList;
-import java.rmi.RemoteException;
 
 @Stateless(name = "FsProcessorCMSAuthorizer", mappedName = "ejb/FsProcessorCMSAuthorizer")
 @TransactionManagement(TransactionManagementType.CONTAINER)
@@ -1716,8 +1717,6 @@ public class APIOperations {
                             return new TransactionResponse(ResponseCode.CONTINUOUS_KEY.getCode(), ResponseCode.CONTINUOUS_KEY.getMessage());
                         }
                     }
-                    
-                    ;
                     if (operationsBD.testConsecutive(pinOffset)) {
                         if (!keyProperties.getIndConsecutiveEqualCharacters()) {
                             return new TransactionResponse(ResponseCode.CONSECUTIVE_KEY.getCode(), ResponseCode.CONSECUTIVE_KEY.getMessage());
@@ -1761,6 +1760,281 @@ public class APIOperations {
         return new CardKeyHistoryListResponse(ResponseCode.SUCCESS, "", cardKeyHistorys);
     }
 
+    public TransactionPurchageResponse cardPurchage(String cardNumber, String cardHolder, String CVV, String cardDueDate, Long messageMiddlewareId,
+                                            Integer transactionTypeId, Integer channelId, Date transactionDate, Timestamp localTimeTransaction,
+                                            String acquirerTerminalCodeId, String transactionNumberAcquirer, Integer acquirerCountryId, 
+                                            Float amountPurchage,String pinBlock,String ARQC, String terminalId, String oPMode, String schemeEMV,
+                                            String seqNumber, String atc, String unpredictableNumber, String transactionData)   {
+    
+        TransactionsManagement transactionPurchageCard = null;
+        TransactionsManagementHistory transactionHistoryRechargeCard = null;
+        int indValidateCardActive = 1;
+        Card card = null;
+        ValidateLimitsResponse validateLimits = null;
+        Float currentBalance = 0.00F;
+        AccountCard accountCard = null;
+        TransactionResponse commissionCMS = null;
+        Float amountCommission = 0.00F;
+        Float totalAmountPurchage = 0.00F;
+        CalculateBonusCardResponse calculateBonification = null;
+        BalanceHistoryCard balanceHistoryCard = null;
+        Float newBalance = 0.00F;
+        String arpc;
+        
+        try {
+            //Se registra la transacción de Compra con Tarjeta en la BD
+            transactionPurchageCard = operationsBD.createTransactionsManagement(null, null, acquirerTerminalCodeId, acquirerCountryId, transactionNumberAcquirer, transactionDate, 
+                                  TransactionE.COMPRA_DOMESTICA_PIN.getId(), channelId, null, localTimeTransaction, null, null, null, 
+                                  null, amountPurchage, null, null, null, null, 
+                                  null, StatusTransactionManagementE.APPROVED.getId(), cardNumber, cardHolder, CVV, cardDueDate, null, null, null, null, 
+                                  null, null, null, ResponseCode.SUCCESS.getCode(), messageMiddlewareId, DocumentTypeE.CARD_PURCHAGE.getId(), entityManager);
+
+            try {
+                transactionPurchageCard = operationsBD.saveTransactionsManagement(transactionPurchageCard, entityManager);
+            } catch (Exception e) {
+                return new TransactionPurchageResponse(ResponseCode.INTERNAL_ERROR.getCode(), "an error occurred while saving the transaction");
+            }
+ 
+            //Se valida la tarjeta
+            CardResponse validateCard = validateCard(cardNumber, ARQC, cardHolder, CVV, cardDueDate, indValidateCardActive);
+            if (validateCard.getCodigoRespuesta().equals(ResponseCode.SUCCESS.getCode())) {
+                //Se obtiene la tarjeta asociada a la transacción
+                card = getCardByCardNumber(cardNumber);
+                
+                //Se realizan las validaciones del HSM
+                ParameterRequest  request = new ParameterRequest();
+                LoadProperties lp= LoadProperties.getIntance();
+                String  metod = lp.getProperties("prop.verifyPINUsingIBMMethod");
+                String params = request.getVerifyPinUsingIBMMethodRequest(terminalId, pinBlock, card.getCardNumber(),card.getPinOffset());
+                VerifyPinUsingIBMMethodResponse response = (VerifyPinUsingIBMMethodResponse) getResponse(metod, params, VerifyPinUsingIBMMethodResponse.class);
+                if(response.getResponseCode().equals(ResponseCode.SUCCESS.getCode())){
+                    //validar ARQC
+                    metod = lp.getProperties("prop.validateQRQC");
+                    params = request.getARPCRequest(terminalId,oPMode, schemeEMV, card.getCardNumber(), seqNumber, atc, unpredictableNumber, transactionData, ARQC);
+                    ARPCResponse arpcResponse = (ARPCResponse) getResponse(metod, params, ARPCResponse.class);
+                    if(response.getResponseCode().equals(ResponseCode.SUCCESS.getCode())){
+                        //obtenemos el arpc
+                        arpc = arpcResponse.getArpc();
+                        //Se validan los límites transaccionales
+                        validateLimits = getValidateLimits(cardNumber, transactionTypeId, channelId, acquirerCountryId.toString(), amountPurchage);
+                        if (validateLimits.getCodigoRespuesta().equals(ResponseCode.SUCCESS.getCode())) {
+                            //Se revisa si la transacción genera una comisión
+                            commissionCMS = calculateCommisionCMS(card.getCardNumber(), channelId, transactionTypeId, amountPurchage, transactionNumberAcquirer);
+                            if (commissionCMS.getCodigoRespuesta().equals(ResponseCode.COMMISSION_YES_APPLY.getCode())) {
+                                amountCommission = commissionCMS.getTransactionCommissionAmount();
+                            }
+                            //Se obtiene el saldo de la cuenta asociada a la tarjeta
+                            accountCard = operationsBD.getAccountCardbyCardId(card.getId(), entityManager);
+                            currentBalance = accountCard.getCurrentBalance();
+                            totalAmountPurchage = amountPurchage + amountCommission;
+                            newBalance = currentBalance - totalAmountPurchage;
+                            //Se verifica que el total de la compra no supere el saldo actual
+                            if (newBalance < 0) {
+                                //Se actualiza el estatus de la transacción a RECHAZADA, debido a que la compra excedió el limite dispnible
+                                transactionPurchageCard.setStatusTransactionManagementId(StatusTransactionManagementE.REJECTED.getId());
+                                transactionPurchageCard.setResponseCode(ResponseCode.BALANCE_NOT_AVAILABLE.getCode());
+                                try {
+                                    transactionPurchageCard = operationsBD.saveTransactionsManagement(transactionPurchageCard, entityManager);
+                                } catch (Exception e) {
+                                    return new TransactionPurchageResponse(ResponseCode.INTERNAL_ERROR.getCode(), "an error occurred while saving the transaction");
+                                }
+                                return new TransactionPurchageResponse(ResponseCode.BALANCE_NOT_AVAILABLE.getCode(), ResponseCode.ACCOUNT_BALANCE_EXCEEDED.getMessage());
+                            } else {
+                                //Verificar si la transacción genera bonificación
+                                calculateBonification = calculateBonus(card.getCardNumber(), transactionTypeId, channelId, acquirerCountryId.toString(), amountPurchage, transactionPurchageCard.getTransactionNumberIssuer());
+
+                                //Se actualiza el historial del saldos de la tarjeta en la BD del CMS
+                                balanceHistoryCard = operationsBD.createBalanceHistoryCard(card, transactionPurchageCard.getId(), currentBalance, newBalance, entityManager);
+                                try {
+                                    balanceHistoryCard = operationsBD.saveBalanceHistoryCard(balanceHistoryCard, entityManager);
+                                } catch (Exception e) {
+                                    return new TransactionPurchageResponse(ResponseCode.INTERNAL_ERROR.getCode(), "an error occurred while saving the transaction");
+                                }
+
+                                //Se actualiza el saldo de la cuenta en la BD del CMS
+                                accountCard.setCurrentBalance(newBalance);
+                                accountCard.setUpdateDate(new Timestamp(new Date().getTime()));
+                                entityManager.persist(accountCard);
+
+                                //Se actualiza la transacción
+                                transactionPurchageCard.setSettlementCurrencyTransactionId(card.getProductId().getDomesticCurrencyId().getId());
+                                transactionPurchageCard.setSettlementTransactionAmount(totalAmountPurchage);
+                                transactionPurchageCard.setResponseCode(ResponseCode.CARD_PURCHAGE_SUCCESS.getCode());
+                                transactionPurchageCard.setUpdateDate(new Timestamp(new Date().getTime()));
+                                try {
+                                    transactionPurchageCard = operationsBD.saveTransactionsManagement(transactionPurchageCard, entityManager);
+                                } catch (Exception e) {
+                                    return new TransactionPurchageResponse(ResponseCode.INTERNAL_ERROR.getCode(), "an error occurred while saving the transaction");
+                                }
+
+                                //Se retorna que la compra de la tarjeta se realizó satisfactoriamente
+                                return new TransactionPurchageResponse(ResponseCode.CARD_PURCHAGE_SUCCESS.getCode(), ResponseCode.CARD_RECHARGE_SUCCESS.getMessage(),arpc);                                     
+                            }
+                        }else
+                           return new TransactionPurchageResponse(ResponseCode.INTERNAL_ERROR.getCode(), "an error occurred while saving the transaction");  
+                    }else
+                        return new TransactionPurchageResponse(ResponseCode.INTERNAL_ERROR.getCode(), "an error occurred while saving the transaction");
+                } else {
+                    //Se actualiza el estatus de la transacción a RECHAZADA, debido a que excedió los límites transaccionales
+                    transactionPurchageCard.setStatusTransactionManagementId(StatusTransactionManagementE.REJECTED.getId());
+                    transactionPurchageCard.setResponseCode(validateLimits.getCodigoRespuesta());
+                    try {
+                        transactionPurchageCard = operationsBD.saveTransactionsManagement(transactionPurchageCard, entityManager);
+                    } catch (Exception e) {
+                        return new TransactionPurchageResponse(ResponseCode.INTERNAL_ERROR.getCode(), "an error occurred while saving the transaction");
+                    }
+                    return new TransactionPurchageResponse(validateLimits.getCodigoRespuesta(), validateLimits.getMensajeRespuesta());
+                }
+            } else {
+                //Se actualiza el estatus de la transacción a RECHAZADA, debido a que falló la validación de la tarjeta
+                transactionPurchageCard.setStatusTransactionManagementId(StatusTransactionManagementE.REJECTED.getId());
+                transactionPurchageCard.setResponseCode(validateCard.getCodigoRespuesta());
+                try {
+                    transactionPurchageCard = operationsBD.saveTransactionsManagement(transactionPurchageCard, entityManager);
+                } catch (Exception e) {
+                    return new TransactionPurchageResponse(ResponseCode.INTERNAL_ERROR.getCode(), "an error occurred while saving the transaction");
+                }
+                return new TransactionPurchageResponse(validateCard.getCodigoRespuesta(), validateCard.getMensajeRespuesta());
+            }  
+        } catch (Exception e) {
+            e.printStackTrace();
+            return new TransactionPurchageResponse(ResponseCode.INTERNAL_ERROR.getCode(), "INTERNAL_ERROR");
+        }    
+    }
+    
+    public TransactionResponse reverseWalletWithdrawal(String cardNumber,String CVV,String cardDueDate,String cardHolder, String ARQC,Integer channelId,Integer transactionTypeId,Long messageMiddlewareId,Date transactionDate, 
+            Timestamp localTimeTransaction, String acquirerTerminalCodeId, Integer acquirerCountryId,String transactionNumber,String transactionSequence) {
+        Card card = null;
+        TransactionsManagement transactionsManagementWithdrawal = null;
+        TransactionsManagement transactionsManagement = null;
+        int indValidateCardActive = 1;
+        Float currentBalance = 0.00F;
+        Float newBalance = 0.00F;
+        BalanceHistoryCard balanceHistoryCard = null;
+        try {
+            //Se crea la transaction
+            transactionsManagement = (TransactionsManagement) operationsBD.createTransactionsManagement(null, null, acquirerTerminalCodeId, acquirerCountryId, null, transactionDate,
+            TransactionE.REVERSE_WITHDRAWAL.getId(), channelId, null, localTimeTransaction, null, null, null,
+            null, null, null, null, null, null,
+            null, null, cardNumber, cardHolder, CVV, cardDueDate, null, null, null, null,
+            null, null, null, null, messageMiddlewareId, DocumentTypeE.REVERSE_WITHDRAWAL.getId(), entityManager);
+            try {
+                transactionsManagement = operationsBD.saveTransactionsManagement(transactionsManagement, entityManager);
+            } catch (Exception e) {
+                return new TransactionResponse(ResponseCode.INTERNAL_ERROR.getCode(), "an error occurred while saving the transaction");
+            }
+            
+            CardResponse cardResponse = validateCard(cardNumber, ARQC, cardHolder, CVV, cardDueDate, indValidateCardActive);
+            if (cardResponse.getCodigoRespuesta().equals(ResponseCode.SUCCESS.getCode())) {
+                card = getCardByCardNumber(cardNumber);
+                
+                //Se busca la transacción para hacer el reverso
+                transactionsManagementWithdrawal = operationsBD.getTransactionsWithdrawalByNumberAndSequence(transactionNumber, transactionSequence, entityManager);
+                if(transactionsManagementWithdrawal != null){
+                    //Se cancela la transaction original
+                    transactionsManagementWithdrawal.setStatusTransactionManagementId(StatusTransactionManagementE.CANCELLED.getId());
+                    transactionsManagementWithdrawal.setResponseCode(ResponseCode.CANCEL.getCode());
+                    transactionsManagementWithdrawal.setUpdateDate(new Timestamp(new Date().getTime()));
+                    try {
+                    transactionsManagementWithdrawal = operationsBD.saveTransactionsManagement(transactionsManagementWithdrawal, entityManager);
+                    } catch (Exception e) {
+                        return new TransactionResponse(ResponseCode.INTERNAL_ERROR.getCode(), "an error occurred while saving the transaction");
+                    }
+                    
+                    //Se ejecuta la transaction del reverso
+                    transactionsManagement.setStatusTransactionManagementId(StatusTransactionManagementE.APPROVED.getId());
+                    transactionsManagement.setResponseCode(ResponseCode.SUCCESS.getCode());
+                    transactionsManagement.setSettlementTransactionAmount(transactionsManagementWithdrawal.getSettlementTransactionAmount());
+                    try {
+                        transactionsManagement = operationsBD.saveTransactionsManagement(transactionsManagement, entityManager);
+                    } catch (Exception e) {
+                        return new TransactionResponse(ResponseCode.INTERNAL_ERROR.getCode(), "an error occurred while saving the transaction");
+                    }
+                    
+                    //Se obtiene el balance actual del usuario y se le suma el reverso de la operación
+                    currentBalance = getCurrentBalanceCard(card.getId());
+                    newBalance = currentBalance + transactionsManagementWithdrawal.getSettlementTransactionAmount();
+                    
+                    //Se actualiza el balance history y saldo de la cuenta
+                    balanceHistoryCard = operationsBD.createBalanceHistoryCard(card,transactionsManagement.getId(),currentBalance, newBalance, entityManager);
+                    try {
+                        balanceHistoryCard = operationsBD.saveBalanceHistoryCard(balanceHistoryCard, entityManager);
+                    } catch (Exception e) {
+                    return new TransactionResponse(ResponseCode.INTERNAL_ERROR.getCode(), "an error occurred while saving Balance History");
+                    }
+                    
+                    AccountCard accountNumber = getAccountNumberByCard(cardNumber);
+                    AccountCard accountCard = entityManager.find(AccountCard.class, accountNumber.getId());
+                    accountCard.setUpdateDate(new Timestamp(new Date().getTime()));
+                    accountCard.setCurrentBalance(newBalance);
+                    entityManager.merge(accountCard);
+
+                    return new TransactionResponse(ResponseCode.SUCCESS.getCode(), "SUCCESS");
+                    
+                } else {
+                    //No se encontro ninguna transacción para hacer el reverso
+                    transactionsManagement.setStatusTransactionManagementId(StatusTransactionManagementE.REJECTED.getId());
+                    transactionsManagement.setResponseCode(ResponseCode.REVERSE_TRANSACTION_NOT_FOUND.getCode());
+                    try {
+                        transactionsManagement = operationsBD.saveTransactionsManagement(transactionsManagement, entityManager);
+                    } catch (Exception e) {
+                        return new TransactionResponse(ResponseCode.INTERNAL_ERROR.getCode(), "an error occurred while saving the transaction");
+                    }
+                    return new TransactionResponse(ResponseCode.REVERSE_TRANSACTION_NOT_FOUND.getCode(), ResponseCode.REVERSE_TRANSACTION_NOT_FOUND.getMessage());
+                }
+            } else {
+                //La tarjeta no es valida
+                transactionsManagement.setStatusTransactionManagementId(StatusTransactionManagementE.REJECTED.getId());
+                transactionsManagement.setResponseCode(ResponseCode.INVALID_CARD.getCode());
+                try {
+                    transactionsManagement = operationsBD.saveTransactionsManagement(transactionsManagement, entityManager);
+                } catch (Exception e) {
+                    return new TransactionResponse(ResponseCode.INTERNAL_ERROR.getCode(), "an error occurred while saving the transaction");
+                }
+                return new TransactionResponse(ResponseCode.INVALID_CARD.getCode(), ResponseCode.INVALID_CARD.getMessage());
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            return new TransactionResponse(ResponseCode.INTERNAL_ERROR.getCode(), "INTERNAL_ERROR");
+        }
+
+    }
+    
+    public TransactionResponse reverseCardRecharge(String cardNumber, String cardHolder, String CVV, String cardDueDate, Long messageMiddlewareId,
+                                            Integer transactionTypeId, Integer channelId, Date transactionDate, Timestamp localTimeTransaction,
+                                            String acquirerTerminalCodeId, String transactionNumberAcquirer, Integer acquirerCountryId, 
+                                            Float amountReverseRecharge, String sequenceTransactionCardRecharge)   {
+    
+        String ARQC = null;
+        TransactionsManagement transactionReverseRechargeCard = null;
+        int indValidateCardActive = 1;
+        Card card = null;
+        ValidateLimitsResponse validateLimits = null;
+        Float currentBalance = 0.00F;
+        AccountCard accountCard = null;
+        BalanceHistoryCard balanceHistoryCard = null;
+        Float newBalance = 0.00F;
+
+        try {
+            //Se registra la transacción de Recarga de la Tarjeta en la BD
+            transactionReverseRechargeCard = operationsBD.createTransactionsManagement(null, null, acquirerTerminalCodeId, acquirerCountryId, transactionNumberAcquirer, transactionDate, 
+                                  TransactionE.REVERSE_CARD_RECHARGE.getId(), channelId, null, localTimeTransaction, null, null, null, 
+                                  null, amountReverseRecharge, null, null, null, null, 
+                                  null, StatusTransactionManagementE.APPROVED.getId(), cardNumber, cardHolder, CVV, cardDueDate, null, null, null, null, 
+                                  null, null, null, ResponseCode.SUCCESS.getCode(), messageMiddlewareId, DocumentTypeE.REVERSE_CARD_RECHARGE.getId(), entityManager);
+
+            try {
+                transactionReverseRechargeCard = operationsBD.saveTransactionsManagement(transactionReverseRechargeCard, entityManager);
+            } catch (Exception e) {
+                return new TransactionResponse(ResponseCode.INTERNAL_ERROR.getCode(), "an error occurred while saving the transaction");
+            }
+            
+        } catch (Exception e) {
+            e.printStackTrace();
+            return new TransactionResponse(ResponseCode.INTERNAL_ERROR.getCode(), "INTERNAL_ERROR");
+        }
+        return new TransactionResponse(ResponseCode.INTERNAL_ERROR.getCode(), "INTERNAL_ERROR");
+    }
     
 
 }

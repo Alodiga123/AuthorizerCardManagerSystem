@@ -606,4 +606,21 @@ public class operationsBDImp implements operationsBD {
 
         return resultado;
     }
+    
+    @Override
+    public TransactionsManagement getTransactionsWithdrawalByNumberAndSequence(String transactionNumber, String transactionSequence, EntityManager entityManager) {
+        String sql = "SELECT t FROM TransactionsManagement t WHERE t.transactionNumberIssuer = ?1 AND t.transactionSequence = ?2 AND t.transactionTypeId= ?3 OR t.transactionTypeId= ?4";
+        StringBuilder sqlBuilder = new StringBuilder(sql);
+        Query query = entityManager.createQuery(sqlBuilder.toString());
+        query.setParameter("1", transactionNumber);
+        query.setParameter("2", transactionSequence);
+        query.setParameter("3", TransactionE.RETIRO_DOMESTICO.getId());
+        query.setParameter("4", TransactionE.RETIRO_INTERNACIONAL.getId());
+        try {
+            TransactionsManagement result = (TransactionsManagement) query.setHint("toplink.refresh", "true").getSingleResult();
+            return result;
+        } catch (NoResultException e) {
+            return null;
+        }
+    }
 }
