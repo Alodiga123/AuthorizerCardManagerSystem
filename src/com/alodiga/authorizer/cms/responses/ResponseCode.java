@@ -53,6 +53,8 @@ public enum ResponseCode {
     DIFFERENT_KEY("162","the password must not coincide with the last ones registered"),
     CONTINUOUS_KEY("163","THE KEY CANNOT HAVE CONTINUOUS NUMBERS"),
     HAS_NO_PROPERTIES("164","has no associated properties"),
+    INVALID_PROPERTIES("165","Invalid Properties"),
+    INVALID_PIN("166","Invalid PIN"),
     
     //Activación de Tarjeta
     ACTIVE_CARD_NO("20","The card cannot be activated. Security responses do not match"),

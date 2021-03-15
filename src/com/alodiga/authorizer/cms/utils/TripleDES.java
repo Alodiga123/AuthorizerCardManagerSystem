@@ -1,13 +1,8 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package com.alodiga.authorizer.cms.utils;
 
 import javax.crypto.Cipher;
 import javax.crypto.spec.SecretKeySpec;
-import com.cms.commons.util.Constants;
+
 
 /**
  *
@@ -23,12 +18,13 @@ public class TripleDES {
     private static final String TRANSFORMATION = ALGORITHM+"/"+MODE+"/"+PADDING;
      
     private final String key;
-    private int pinLength;
- 
+    private int pinLength;    
+    
     TripleDES(String key, int pinLength) {
         this.key = key;
         this.pinLength = pinLength;
     }
+    
  
     public String generatePinBlock(String pan, String pinClear) throws Exception {
        
