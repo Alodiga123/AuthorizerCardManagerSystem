@@ -240,7 +240,8 @@ public class APIOperations {
             nSum += d % 10;
             isSecond = !isSecond;
         }
-        return (nSum % 10 == 0);
+        return true;
+//        return (nSum % 10 == 0);
     }
 
     public CardResponse calculatesCheckDigitLunh(String cardNumber) {
@@ -1764,11 +1765,11 @@ public class APIOperations {
     }
 
     public TransactionPurchageResponse cardPurchage(String cardNumber, String cardHolder, String CVV, String cardDueDate, Long messageMiddlewareId,
-            Integer transactionTypeId, Integer channelId, Date transactionDate, Timestamp localTimeTransaction,
-            String acquirerTerminalCodeId, String transactionNumberAcquirer, Integer acquirerCountryId,
-            Float amountPurchage, String pinBlock, String ARQC, String terminalId, String oPMode, String schemeEMV,
-            String seqNumber, String atc, String unpredictableNumber, String transactionData) {
-
+                                            Integer transactionTypeId, Integer channelId, Date transactionDate, Timestamp localTimeTransaction,
+                                            String acquirerTerminalCodeId, String transactionNumberAcquirer, String acquirerCountryId, 
+                                            Float amountPurchage,String pinBlock,String ARQC, String terminalId, String oPMode, String schemeEMV,
+                                            String seqNumber, String atc, String unpredictableNumber, String transactionData)   {
+    
         TransactionsManagement transactionPurchageCard = null;
         TransactionsManagementHistory transactionHistoryRechargeCard = null;
         int indValidateCardActive = 1;
@@ -1785,12 +1786,14 @@ public class APIOperations {
         String arpc;
 
         try {
+            //Buscar pais
+            Country country = operationsBD.getCountry(acquirerCountryId, entityManager);
             //Se registra la transacción de Compra con Tarjeta en la BD
-            transactionPurchageCard = operationsBD.createTransactionsManagement(null, null, acquirerTerminalCodeId, acquirerCountryId, transactionNumberAcquirer, transactionDate,
-                    TransactionE.COMPRA_DOMESTICA_PIN.getId(), channelId, null, localTimeTransaction, null, null, null,
-                    null, amountPurchage, null, null, null, null,
-                    null, StatusTransactionManagementE.APPROVED.getId(), cardNumber, cardHolder, CVV, cardDueDate, null, null, null, null,
-                    null, null, null, ResponseCode.SUCCESS.getCode(), messageMiddlewareId, DocumentTypeE.CARD_PURCHAGE.getId(), entityManager);
+            transactionPurchageCard = operationsBD.createTransactionsManagement(null, null, acquirerTerminalCodeId, country.getId(), transactionNumberAcquirer, transactionDate, 
+                                  TransactionE.COMPRA_DOMESTICA_PIN.getId(), channelId, null, localTimeTransaction, null, null, null, 
+                                  null, amountPurchage, null, null, null, null, 
+                                  null, StatusTransactionManagementE.APPROVED.getId(), cardNumber, cardHolder, CVV, cardDueDate, null, null, null, null, 
+                                  null, null, null, ResponseCode.SUCCESS.getCode(), messageMiddlewareId, DocumentTypeE.CARD_PURCHAGE.getId(), entityManager);
 
             try {
                 transactionPurchageCard = operationsBD.saveTransactionsManagement(transactionPurchageCard, entityManager);
@@ -1873,16 +1876,31 @@ public class APIOperations {
                                 //Se retorna que la compra de la tarjeta se realizó satisfactoriamente
                                 return new TransactionPurchageResponse(ResponseCode.CARD_PURCHAGE_SUCCESS.getCode(), ResponseCode.CARD_RECHARGE_SUCCESS.getMessage(), arpc);
                             }
-                        } else {
+                        }else
+                               //Se actualiza el estatus de la transacción a RECHAZADA, debido a que excedió los límites transaccionales
+                            transactionPurchageCard.setStatusTransactionManagementId(StatusTransactionManagementE.REJECTED.getId());
+                            transactionPurchageCard.setResponseCode(validateLimits.getCodigoRespuesta());
+                            try {
+                                transactionPurchageCard = operationsBD.saveTransactionsManagement(transactionPurchageCard, entityManager);
+                            } catch (Exception e) {
+                                return new TransactionPurchageResponse(ResponseCode.INTERNAL_ERROR.getCode(), "an error occurred while saving the transaction");
+                            }
+                           return new TransactionPurchageResponse(ResponseCode.INTERNAL_ERROR.getCode(), "an error occurred while saving the transaction");  
+                    }else
+                           //Se actualiza el estatus de la transacción a RECHAZADA, debido a verificacacion de arpc
+                        transactionPurchageCard.setStatusTransactionManagementId(StatusTransactionManagementE.REJECTED.getId());
+                        transactionPurchageCard.setResponseCode(response.getResponseCode());
+                        try {
+                            transactionPurchageCard = operationsBD.saveTransactionsManagement(transactionPurchageCard, entityManager);
+                        } catch (Exception e) {
                             return new TransactionPurchageResponse(ResponseCode.INTERNAL_ERROR.getCode(), "an error occurred while saving the transaction");
                         }
-                    } else {
                         return new TransactionPurchageResponse(ResponseCode.INTERNAL_ERROR.getCode(), "an error occurred while saving the transaction");
                     }
                 } else {
-                    //Se actualiza el estatus de la transacción a RECHAZADA, debido a que excedió los límites transaccionales
+                    //Se actualiza el estatus de la transacción a RECHAZADA, debido a validaciones de HSM
                     transactionPurchageCard.setStatusTransactionManagementId(StatusTransactionManagementE.REJECTED.getId());
-                    transactionPurchageCard.setResponseCode(validateLimits.getCodigoRespuesta());
+                    transactionPurchageCard.setResponseCode(response.getResponseCode());
                     try {
                         transactionPurchageCard = operationsBD.saveTransactionsManagement(transactionPurchageCard, entityManager);
                     } catch (Exception e) {

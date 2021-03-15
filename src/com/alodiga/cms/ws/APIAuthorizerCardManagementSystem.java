@@ -319,7 +319,7 @@ public class APIAuthorizerCardManagementSystem {
             @WebParam(name = "localTimeTransaction") Timestamp localTimeTransaction,
             @WebParam(name = "acquirerTerminalCodeId") String acquirerTerminalCodeId,
             @WebParam(name = "transactionNumberAcquirer") String transactionNumberAcquirer,
-            @WebParam(name = "acquirerCountryId") Integer acquirerCountryId,
+            @WebParam(name = "acquirerCountryId") String acquirerCountryId,
             @WebParam(name = "purchaseAmount") Float purchaseAmount,
             @WebParam(name = "documentNumber") String documentNumber,
             @WebParam(name = "pinBlock") String pinBlock,
