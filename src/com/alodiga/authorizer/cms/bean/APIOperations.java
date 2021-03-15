@@ -1876,7 +1876,7 @@ public class APIOperations {
                                 //Se retorna que la compra de la tarjeta se realizó satisfactoriamente
                                 return new TransactionPurchageResponse(ResponseCode.CARD_PURCHAGE_SUCCESS.getCode(), ResponseCode.CARD_RECHARGE_SUCCESS.getMessage(), arpc);
                             }
-                        }else
+                        }else{ 
                                //Se actualiza el estatus de la transacción a RECHAZADA, debido a que excedió los límites transaccionales
                             transactionPurchageCard.setStatusTransactionManagementId(StatusTransactionManagementE.REJECTED.getId());
                             transactionPurchageCard.setResponseCode(validateLimits.getCodigoRespuesta());
@@ -1886,7 +1886,8 @@ public class APIOperations {
                                 return new TransactionPurchageResponse(ResponseCode.INTERNAL_ERROR.getCode(), "an error occurred while saving the transaction");
                             }
                            return new TransactionPurchageResponse(ResponseCode.INTERNAL_ERROR.getCode(), "an error occurred while saving the transaction");  
-                    }else
+                    }
+                      }  else{
                            //Se actualiza el estatus de la transacción a RECHAZADA, debido a verificacacion de arpc
                         transactionPurchageCard.setStatusTransactionManagementId(StatusTransactionManagementE.REJECTED.getId());
                         transactionPurchageCard.setResponseCode(response.getResponseCode());
@@ -1924,6 +1925,7 @@ public class APIOperations {
             return new TransactionPurchageResponse(ResponseCode.INTERNAL_ERROR.getCode(), "INTERNAL_ERROR");
         }
     }
+
 
     public TransactionResponse reverseWalletWithdrawal(String cardNumber, String CVV, String cardDueDate, String cardHolder, String ARQC, Integer channelId, Integer transactionTypeId, Long messageMiddlewareId, Date transactionDate,
             Timestamp localTimeTransaction, String acquirerTerminalCodeId, Integer acquirerCountryId, String transactionNumber, String transactionSequence) {
