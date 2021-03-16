@@ -529,7 +529,7 @@ public class APIOperations {
 
     public TransactionResponse activateCard(String cardNumber, String cardHolder, String CVV, String cardDueDate, String answerDocumentIdentificationNumber,
             String answerNumberPhoneCustomer, Date answerDateBirth, String answerEmailCustomer, Long messageMiddlewareId,
-            Integer transactionTypeId, Integer channelId, Date transactionDate, Timestamp localTimeTransaction,
+            Integer transactionTypeId, Integer channelId, Date transactionDate, String localTimeTransaction,
             String acquirerTerminalCodeId, String transactionNumberAcquirer, Integer acquirerCountryId) {
 
         String ARQC = null;
@@ -700,7 +700,7 @@ public class APIOperations {
     }
 
     public TransactionResponse changeCardStatus(String cardNumber, String CVV, String cardDueDate, String cardHolder, Long messageMiddlewareId, Long newStatusCardId, Integer statusUpdateReasonId, String observations, Date statusUpdateReasonDate, Long userResponsabibleStatusUpdateId,
-            String documentIdentificationNumber, Integer transactionTypeId, Integer channelId, Date transactionDate, Timestamp localTimeTransaction, String acquirerTerminalCodeId, Integer acquirerCountryId) {
+            String documentIdentificationNumber, Integer transactionTypeId, Integer channelId, Date transactionDate, String localTimeTransaction, String acquirerTerminalCodeId, Integer acquirerCountryId) {
         //Se valida que la tarjeta exista en la BD del CMS
         CardResponse validateCard = getValidateCard(cardNumber);
         if (validateCard.getCodigoRespuesta().equals(ResponseCode.CARD_EXISTS.getCode())) {
@@ -759,7 +759,7 @@ public class APIOperations {
                     cards.setUpdateDate(new Timestamp(new Date().getTime()));
                     entityManager.persist(cards);
 
-                    return new TransactionResponse(ResponseCode.SUCCESS.getCode(), "", cardNumberEncript, cardStatus.getId().intValue(), observations, messageMiddlewareId, transactionManagement.getTransactionNumberIssuer(), localTimeTransaction);
+                    return new TransactionResponse(ResponseCode.SUCCESS.getCode(), "", cardNumberEncript, cardStatus.getId().intValue(), observations, messageMiddlewareId, transactionManagement.getTransactionNumberIssuer(), transactionManagement.getTransactionDateIssuer());
 
                 }
             } else if (statusUpdateReasonId == reasonCloning || statusUpdateReasonId == reasonNoInterested) {
@@ -793,7 +793,7 @@ public class APIOperations {
                     cards.setUpdateDate(new Timestamp(new Date().getTime()));
                     entityManager.persist(cards);
 
-                    return new TransactionResponse(ResponseCode.SUCCESS.getCode(), "", cardNumberEncript, cardStatus.getId().intValue(), observations, messageMiddlewareId, transactionManagement.getTransactionNumberIssuer(), localTimeTransaction);
+                    return new TransactionResponse(ResponseCode.SUCCESS.getCode(), "", cardNumberEncript, cardStatus.getId().intValue(), observations, messageMiddlewareId, transactionManagement.getTransactionNumberIssuer(), transactionManagement.getTransactionDateIssuer());
 
                 }
             } else if (statusUpdateReasonId == reasonFound) {
@@ -836,7 +836,7 @@ public class APIOperations {
                         cards.setUpdateDate(new Timestamp(new Date().getTime()));
                         entityManager.persist(cards);
 
-                        return new TransactionResponse(ResponseCode.SUCCESS.getCode(), "", cardNumberEncript, cardStatus.getId().intValue(), observations, messageMiddlewareId, transactionManagement.getTransactionNumberIssuer(), localTimeTransaction);
+                        return new TransactionResponse(ResponseCode.SUCCESS.getCode(), "", cardNumberEncript, cardStatus.getId().intValue(), observations, messageMiddlewareId, transactionManagement.getTransactionNumberIssuer(), transactionManagement.getTransactionDateIssuer());
 
                     } else {
                         return new TransactionResponse(ResponseCode.INTERNAL_ERROR.getCode(), "The maximum time to change status has been exceeded");
@@ -871,7 +871,8 @@ public class APIOperations {
 
     }
 
-    public OperationCardBalanceInquiryResponse cardBalanceInquiry(String cardNumber, String CVV, String ARQC, String documentIdentificationNumber, Integer transactionTypeId, Integer channelId, Date transactionDate, Timestamp localTimeTransaction, String acquirerTerminalCodeId, Integer acquirerCountryId, Long messageMiddlewareId, String transactionNumberAcquirer, String cardDueDate, String cardHolder, String PinOffset) {
+    public OperationCardBalanceInquiryResponse cardBalanceInquiry(String cardNumber, String CVV, String ARQC, String documentIdentificationNumber, Integer transactionTypeId, Integer channelId, Date transactionDate, String localTimeTransaction, 
+                                               String acquirerTerminalCodeId, Integer acquirerCountryId, Long messageMiddlewareId, String transactionNumberAcquirer, String cardDueDate, String cardHolder, String PinOffset) {
         int indValidateCardActive = 1;
         try {
             CardResponse cardResponse = validateCard(cardNumber, ARQC, cardHolder, CVV, cardDueDate, indValidateCardActive);
@@ -1101,7 +1102,7 @@ public class APIOperations {
     }
 
     public TransactionResponse transferBetweenAccount(String cardNumberOrigin, String cardNumberDestinate, String CVVOrigin, String cardDueDateOrigin, String cardHolderOrigin, String ARQCOrigin, String CVVDestinate, String cardDueDateDestinate, String cardHolderDestinate, String ARQCDestinate, Integer channelId, Integer transactionTypeId,
-            Long messageMiddlewareId, Date transactionDate, Timestamp localTimeTransaction, String acquirerTerminalCodeId, Integer acquirerCountryId, Float amountTransfer, Timestamp dateTimeTransmissionTerminal, Date localDateTransaction) {
+            Long messageMiddlewareId, Date transactionDate, String localTimeTransaction, String acquirerTerminalCodeId, Integer acquirerCountryId, Float amountTransfer, String dateTimeTransmissionTerminal, Date localDateTransaction) {
 
         TransactionResponse transactionResponse = new TransactionResponse();
         TransactionsManagement transactionsManagement = new TransactionsManagement();
@@ -1237,7 +1238,7 @@ public class APIOperations {
     }
 
     public TransactionResponse viewCardMovements(String cardNumber, String CVV, String cardDueDate, String cardHolder, String documentIdentificationNumber, Integer channelId, Integer transactionTypeId, Long messageMiddlewareId, Date transactionDate,
-            Timestamp localTimeTransaction, String acquirerTerminalCodeId, Integer acquirerCountryId, String startDate, String endingDate) {
+            String localTimeTransaction, String acquirerTerminalCodeId, Integer acquirerCountryId, String startDate, String endingDate) {
 
         Card card = null;
         TransactionsManagement transactionManagement = null;
@@ -1334,10 +1335,10 @@ public class APIOperations {
     }
 
     public TransactionResponse cardRecharge(String cardNumber, String cardHolder, String CVV, String cardDueDate, Long messageMiddlewareId,
-            Integer transactionTypeId, Integer channelId, Date transactionDate, Timestamp localTimeTransaction,
-            String acquirerTerminalCodeId, String transactionNumberAcquirer, Integer acquirerCountryId,
-            Float amountRecharge) {
-
+                                            Integer transactionTypeId, Integer channelId, Date transactionDate, String localTimeTransaction,
+                                            String acquirerTerminalCodeId, String transactionNumberAcquirer, Integer acquirerCountryId, 
+                                            Float amountRecharge)   {
+    
         String ARQC = null;
         TransactionsManagement transactionRechargeCard = null;
         TransactionsManagementHistory transactionHistoryRechargeCard = null;
@@ -1486,8 +1487,8 @@ public class APIOperations {
     }
 
     public TransactionResponse cardWithdrawal(String cardNumber, String CVV, String cardDueDate, String cardHolder, String documentIdentificationNumber, Integer channelId, Integer transactionTypeId, Long messageMiddlewareId, Date transactionDate,
-            Timestamp localTimeTransaction, String acquirerTerminalCodeId, Integer acquirerCountryId, Date localDateTransaction, Float withdrawalAmount) {
-
+            String localTimeTransaction, String acquirerTerminalCodeId, Integer acquirerCountryId,Date localDateTransaction,Float withdrawalAmount){
+        
         Card card = null;
         TransactionResponse transactionResponse = new TransactionResponse();
         TransactionsManagement transactionManagement = null;
@@ -1609,7 +1610,7 @@ public class APIOperations {
     }
 
     public TransactionResponse keyChange(String cardNumber, String CVV, String cardDueDate, String cardHolder, String ARQC, Integer channelId, Integer transactionTypeId,
-            Long messageMiddlewareId, Date transactionDate, Timestamp localTimeTransaction, String acquirerTerminalCodeId, Integer acquirerCountryId, String newPinOffset, String currentPinBlock, String newPinBlock, Long terminalId) {
+            Long messageMiddlewareId, Date transactionDate, String localTimeTransaction, String acquirerTerminalCodeId, Integer acquirerCountryId, String newPinOffset, String currentPinBlock, String newPinBlock, Long terminalId) {
 
         TransactionsManagement transactionsManagement = new TransactionsManagement();
         TransactionsManagementHistory transactionsManagementHistory = new TransactionsManagementHistory();
@@ -1765,8 +1766,8 @@ public class APIOperations {
     }
 
     public TransactionPurchageResponse cardPurchage(String cardNumber, String cardHolder, String CVV, String cardDueDate, Long messageMiddlewareId,
-                                            Integer transactionTypeId, Integer channelId, Date transactionDate, Timestamp localTimeTransaction,
-                                            String acquirerTerminalCodeId, String transactionNumberAcquirer, String acquirerCountryId, 
+                                            Integer transactionTypeId, Integer channelId, Date transactionDate, String localTimeTransaction,
+                                            String acquirerTerminalCodeId, String transactionNumberAcquirer, Integer acquirerCountryId, 
                                             Float amountPurchage,String pinBlock,String ARQC, String terminalId, String oPMode, String schemeEMV,
                                             String seqNumber, String atc, String unpredictableNumber, String transactionData)   {
     
@@ -1925,10 +1926,9 @@ public class APIOperations {
             return new TransactionPurchageResponse(ResponseCode.INTERNAL_ERROR.getCode(), "INTERNAL_ERROR");
         }
     }
-
-
-    public TransactionResponse reverseWalletWithdrawal(String cardNumber, String CVV, String cardDueDate, String cardHolder, String ARQC, Integer channelId, Integer transactionTypeId, Long messageMiddlewareId, Date transactionDate,
-            Timestamp localTimeTransaction, String acquirerTerminalCodeId, Integer acquirerCountryId, String transactionNumber, String transactionSequence) {
+    
+    public TransactionResponse reverseWalletWithdrawal(String cardNumber,String CVV,String cardDueDate,String cardHolder, String ARQC,Integer channelId,Integer transactionTypeId,Long messageMiddlewareId,Date transactionDate, 
+            String localTimeTransaction, String acquirerTerminalCodeId, Integer acquirerCountryId,String transactionNumber,String transactionSequence) {
         Card card = null;
         TransactionsManagement transactionsManagementWithdrawal = null;
         TransactionsManagement transactionsManagement = null;
@@ -2026,12 +2026,13 @@ public class APIOperations {
     }
 
     public TransactionResponse reverseCardRecharge(String cardNumber, String cardHolder, String CVV, String cardDueDate, Long messageMiddlewareId,
-            Integer transactionTypeId, Integer channelId, Date transactionDate, Timestamp localTimeTransaction,
-            String acquirerTerminalCodeId, String transactionNumberAcquirer, Integer acquirerCountryId,
-            Float amountReverseRecharge, String sequenceTransactionCardRecharge) {
-
+                                            Integer transactionTypeId, Integer channelId, Date transactionDate, String localTimeTransaction,
+                                            String acquirerTerminalCodeId, String transactionNumberAcquirer, Integer acquirerCountryId, 
+                                            Float amountReverseRecharge, String transactionNumberCardRecharge, String sequenceTransactionCardRecharge)   {
+    
         String ARQC = null;
         TransactionsManagement transactionReverseRechargeCard = null;
+        TransactionsManagement transactionRechargeCardOriginal = null;
         int indValidateCardActive = 1;
         Card card = null;
         ValidateLimitsResponse validateLimits = null;
@@ -2041,19 +2042,23 @@ public class APIOperations {
         Float newBalance = 0.00F;
 
         try {
-            //Se registra la transacción de Recarga de la Tarjeta en la BD
-            transactionReverseRechargeCard = operationsBD.createTransactionsManagement(null, null, acquirerTerminalCodeId, acquirerCountryId, transactionNumberAcquirer, transactionDate,
-                    TransactionE.REVERSE_CARD_RECHARGE.getId(), channelId, null, localTimeTransaction, null, null, null,
-                    null, amountReverseRecharge, null, null, null, null,
-                    null, StatusTransactionManagementE.APPROVED.getId(), cardNumber, cardHolder, CVV, cardDueDate, null, null, null, null,
-                    null, null, null, ResponseCode.SUCCESS.getCode(), messageMiddlewareId, DocumentTypeE.REVERSE_CARD_RECHARGE.getId(), entityManager);
+            //Se registra la transacción de Reverso de Recarga de la Tarjeta en la BD
+            transactionReverseRechargeCard = operationsBD.createTransactionsManagement(null, null, acquirerTerminalCodeId, acquirerCountryId, transactionNumberAcquirer, transactionDate, 
+                                  TransactionE.REVERSE_CARD_RECHARGE.getId(), channelId, null, localTimeTransaction, null, null, null, 
+                                  null, amountReverseRecharge, null, null, null, null, 
+                                  null, StatusTransactionManagementE.APPROVED.getId(), cardNumber, cardHolder, CVV, cardDueDate, null, null, null, null, 
+                                  null, null, null, ResponseCode.SUCCESS.getCode(), messageMiddlewareId, DocumentTypeE.REVERSE_CARD_RECHARGE.getId(), entityManager);
 
             try {
                 transactionReverseRechargeCard = operationsBD.saveTransactionsManagement(transactionReverseRechargeCard, entityManager);
             } catch (Exception e) {
                 return new TransactionResponse(ResponseCode.INTERNAL_ERROR.getCode(), "an error occurred while saving the transaction");
             }
-
+            
+            //Se obtiene la transacción que originó la reversa de recarga
+            transactionRechargeCardOriginal = operationsBD.getTransactionsWithdrawalByNumberAndSequence(transactionNumberCardRecharge, sequenceTransactionCardRecharge, entityManager);
+            
+            
         } catch (Exception e) {
             e.printStackTrace();
             return new TransactionResponse(ResponseCode.INTERNAL_ERROR.getCode(), "INTERNAL_ERROR");
