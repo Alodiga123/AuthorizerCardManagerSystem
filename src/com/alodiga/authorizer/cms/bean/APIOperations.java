@@ -1767,7 +1767,7 @@ public class APIOperations {
 
     public TransactionPurchageResponse cardPurchage(String cardNumber, String cardHolder, String CVV, String cardDueDate, Long messageMiddlewareId,
                                             Integer transactionTypeId, Integer channelId, Date transactionDate, String localTimeTransaction,
-                                            String acquirerTerminalCodeId, String transactionNumberAcquirer, Integer acquirerCountryId, 
+                                            String acquirerTerminalCodeId, String transactionNumberAcquirer, String acquirerCountryId, 
                                             Float amountPurchage,String pinBlock,String ARQC, String terminalId, String oPMode, String schemeEMV,
                                             String seqNumber, String atc, String unpredictableNumber, String transactionData)   {
     
@@ -2066,7 +2066,7 @@ public class APIOperations {
         return new TransactionResponse(ResponseCode.INTERNAL_ERROR.getCode(), "INTERNAL_ERROR");
     }
 
-    public TransactionResponse saveRegisterPin(String cardNumber, String CVV, String ARQC, Integer transactionTypeId, Integer channelId, Date transactionDate, Timestamp localTimeTransaction, String acquirerTerminalCodeId, Integer acquirerCountryId, Long messageMiddlewareId, String cardDueDate, String cardHolder, String pinClear, String terminalId) {
+    public TransactionResponse saveRegisterPin(String cardNumber, String CVV, String ARQC, Integer transactionTypeId, Integer channelId, Date transactionDate, String localTimeTransaction, String acquirerTerminalCodeId, Integer acquirerCountryId, Long messageMiddlewareId, String cardDueDate, String cardHolder, String pinClear, String terminalId) {
         Card card = null;
         Utils utils = new Utils();
         TransactionResponse transactionResponse = null;
