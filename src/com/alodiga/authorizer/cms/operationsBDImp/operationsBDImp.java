@@ -74,7 +74,7 @@ public class operationsBDImp implements operationsBD {
 
     @Override
     public TransactionsManagement createTransactionsManagement(TransactionsManagement management, Integer acquirerId, String acquirerTerminalCode, Integer acquirerCountryId, String transactionNumberAcquirer, Date dateTransaction,
-            Integer transactionTypeId, Integer channelId, Timestamp dateTimeTransmissionTerminal, Timestamp localTimeTransmission, Date localDateTransaction, Integer localCurrencyTransactionId, Float localCurrencyTransactionAmount,
+            Integer transactionTypeId, Integer channelId, String dateTimeTransmissionTerminal, String localTimeTransmission, Date localDateTransaction, Integer localCurrencyTransactionId, Float localCurrencyTransactionAmount,
             Integer settlementCurrencyTransactionId, Float settlementTransactionAmount, Float rateConvertionSettlement, Float acquirerCommisionAmount, Float acquirerSettlementCommisionAmount, Float transactionRateAmount,
             Integer transactionCityId, Integer statusTransactionManagementId, String cardNumber, String cardHolder, String CVV, String expirationCardDate, Integer pinLenght, String transferDestinationCardNumber, Integer issuerId,
             String mccCodeTrade, String tradeName, String systemTraceAuditNumber, Integer numberMovementsCheckBalance, String responseCode, Long messageMiddlewareId, Integer DocumentTypeId, EntityManager entityManager) {
@@ -125,7 +125,7 @@ public class operationsBDImp implements operationsBD {
 
     @Override
     public TransactionsManagementHistory createTransactionsManagementHistory(TransactionsManagement transactionManagement, Integer acquirerId, String acquirerTerminalCode, Integer acquirerCountryId, String transactionNumberAcquirer, Date dateTransaction,
-            String transactionSequence, Integer transactionTypeId, Integer channelId, Timestamp dateTimeTransmissionTerminal, Timestamp localTimeTransmission, Date localDateTransaction,
+            String transactionSequence, Integer transactionTypeId, Integer channelId, String dateTimeTransmissionTerminal, String localTimeTransmission, Date localDateTransaction,
             Integer localCurrencyTransactionId, Float localCurrencyTransactionAmount, Integer settlementCurrencyTransactionId, Float settlementTransactionAmount, Float rateConvertionSettlement,
             Float acquirerCommisionAmount, Float acquirerSettlementCommisionAmount, Float transactionRateAmount, Integer transactionCityId, Integer statusTransactionManagementId, String cardNumber,
             String cardHolder, String CVV, String expirationCardDate, Integer pinLenght, String transferDestinationCardNumber, Integer issuerId, String mccCodeTrade, String tradeName, String systemTraceAuditNumber,

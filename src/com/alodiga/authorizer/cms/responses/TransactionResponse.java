@@ -21,7 +21,7 @@ public class TransactionResponse extends Response {
         public String descriptionStatusCard;
         public Long messageMiddlewareId;
         public String transactionNumberIssuer;
-        public Timestamp transactionDateIssuer;
+        public Date transactionDateIssuer;
         public TransactionsManagement transactionsManagement;
         private Float transactionCommissionAmount;
         private Float currentBalance; 
@@ -51,7 +51,7 @@ public class TransactionResponse extends Response {
 
         public TransactionResponse(String code, String mensaje, String cardNumber, int cardStatusId,
                                    String descriptionStatusCard, Long messageMiddlewareId, String transactionNumberIssuer,
-                                   Timestamp transactionDateIssuer) {
+                                   Date transactionDateIssuer) {
         super(new Date(), code, mensaje);
         this.cardNumber = cardNumber;
         this.cardStatusId = cardStatusId;
@@ -129,11 +129,11 @@ public class TransactionResponse extends Response {
         this.transactionNumberIssuer = transactionNumberIssuer;
     }
 
-    public Timestamp getTransactionDateIssuer() {
+    public Date getTransactionDateIssuer() {
         return transactionDateIssuer;
     }
 
-    public void setTransactionDateIssuer(Timestamp transactionDateIssuer) {
+    public void setTransactionDateIssuer(Date transactionDateIssuer) {
         this.transactionDateIssuer = transactionDateIssuer;
     }
 
