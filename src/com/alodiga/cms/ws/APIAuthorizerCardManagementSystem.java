@@ -319,7 +319,7 @@ public class APIAuthorizerCardManagementSystem {
             @WebParam(name = "localTimeTransaction") String localTimeTransaction,
             @WebParam(name = "acquirerTerminalCodeId") String acquirerTerminalCodeId,
             @WebParam(name = "transactionNumberAcquirer") String transactionNumberAcquirer,
-            @WebParam(name = "acquirerCountryId") Integer acquirerCountryId,
+            @WebParam(name = "acquirerCountryId") String acquirerCountryId,
             @WebParam(name = "purchaseAmount") Float purchaseAmount,
             @WebParam(name = "documentNumber") String documentNumber,
             @WebParam(name = "pinBlock") String pinBlock,
@@ -351,6 +351,25 @@ public class APIAuthorizerCardManagementSystem {
         @WebParam(name = "transactionNumber") String transactionNumber,
         @WebParam(name = "transactionSequence") String transactionSequence){
         return operations.reverseWalletWithdrawal(cardNumber, CVV,cardDueDate,cardHolder,ARQC,channelId,transactionTypeId,messageMiddlewareId,transactionDate,localTimeTransaction,acquirerTerminalCodeId,acquirerCountryId,transactionNumber,transactionSequence);
+    }
+    
+    @WebMethod
+    public TransactionResponse saveRegisterPin(
+            @WebParam(name = "cardNumber") String cardNumber,
+            @WebParam(name = "CVV") String CVV,
+            @WebParam(name = "ARQC") String ARQC,
+            @WebParam(name = "transactionTypeId") Integer transactionTypeId,
+            @WebParam(name = "channelId") Integer channelId,
+            @WebParam(name = "transactionDate") Date transactionDate,
+            @WebParam(name = "localTimeTransaction") Timestamp localTimeTransaction,
+            @WebParam(name = "acquirerTerminalCodeId") String acquirerTerminalCodeId,
+            @WebParam(name = "acquirerCountryId") Integer acquirerCountryId,
+            @WebParam(name = "messageMiddlewareId") Long messageMiddlewareId,
+            @WebParam(name = "cardDueDate") String cardDueDate,
+            @WebParam(name = "cardHolder") String cardHolder,
+            @WebParam(name = "pinClear") String pinClear,
+            @WebParam(name = "terminalId") String terminalId){
+        return operations.saveRegisterPin(cardNumber, CVV, ARQC,transactionTypeId, channelId, transactionDate, localTimeTransaction, acquirerTerminalCodeId, acquirerCountryId, messageMiddlewareId, cardDueDate, cardHolder, pinClear, terminalId);
     }
     
 }

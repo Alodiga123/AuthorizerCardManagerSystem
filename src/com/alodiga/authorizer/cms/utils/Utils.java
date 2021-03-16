@@ -8,6 +8,8 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Properties;
 import java.util.Random;
+import javax.crypto.Cipher;
+import javax.crypto.spec.SecretKeySpec;
 import org.apache.log4j.Logger;
 
 public class Utils {
@@ -15,6 +17,17 @@ public class Utils {
     private static Properties messages;
     private static Properties validationMessages;
     private static String ALODIGA_WALLET_ADDRESS = "alodigawallet@alodiga.com";
+    private static String key = com.cms.commons.util.Constants.KEY;
+    private static int pinLength = com.cms.commons.util.Constants.PIN_LENGTH;
+
+    private static final String ALGORITHM = "TripleDES";
+    private static final String MODE = "ECB";
+    private static final String PADDING = "NoPadding";
+
+    /**
+     * algorithm/mode/padding
+     */
+    private static final String TRANSFORMATION = ALGORITHM + "/" + MODE + "/" + PADDING;
 
     private static final Logger logger = Logger.getLogger(Utils.class);
 
@@ -35,10 +48,6 @@ public class Utils {
         return "256344" + Utils.generarCodigoRandom(10);
 
     }
-
-
-
-
 
     public static String obtienePropiedad(String key) {
         try {
@@ -67,30 +76,28 @@ public class Utils {
             return "(El sistema no puede encontrar el archivo .properties)";
         }
     }
-    
+
     public static Timestamp[] DateTransaction() {
-        Timestamp[ ] dates = new Timestamp[2];
+        Timestamp[] dates = new Timestamp[2];
         Calendar calTodayBeggining = Calendar.getInstance();
-        calTodayBeggining.set(Calendar.HOUR_OF_DAY,0);
-        calTodayBeggining.set(Calendar.MINUTE,0);            
-        calTodayBeggining.set(Calendar.SECOND,0);            
-        calTodayBeggining.set(Calendar.MILLISECOND,0);
+        calTodayBeggining.set(Calendar.HOUR_OF_DAY, 0);
+        calTodayBeggining.set(Calendar.MINUTE, 0);
+        calTodayBeggining.set(Calendar.SECOND, 0);
+        calTodayBeggining.set(Calendar.MILLISECOND, 0);
         Timestamp begginingDateTime = new Timestamp(calTodayBeggining.getTimeInMillis());
         dates[0] = begginingDateTime;
         Calendar calTodayEnding = (Calendar) calTodayBeggining.clone();
-        calTodayEnding.set(Calendar.HOUR,23);
-        calTodayEnding.set(Calendar.MINUTE,59);            
-        calTodayEnding.set(Calendar.SECOND,59);            
-        calTodayEnding.set(Calendar.MILLISECOND,999);
+        calTodayEnding.set(Calendar.HOUR, 23);
+        calTodayEnding.set(Calendar.MINUTE, 59);
+        calTodayEnding.set(Calendar.SECOND, 59);
+        calTodayEnding.set(Calendar.MILLISECOND, 999);
         Timestamp endingDateTime = new Timestamp(calTodayEnding.getTimeInMillis());
         dates[1] = endingDateTime;
-        return dates;   
+        return dates;
     }
-    
-    
-            
-        //PAGO A COMERCIO 
-        public static Mail sendMailUserPaymentCommerce(String idioma, Float amountPayment,  String conceptTransaction, String userDestinationName, String emailUser)  {
+
+    //PAGO A COMERCIO 
+    public static Mail sendMailUserPaymentCommerce(String idioma, Float amountPayment, String conceptTransaction, String userDestinationName, String emailUser) {
         String hello = "Hola";
         String subject = "Alodiga Wallet: Pago a Comercio";
         String text1 = "Alodiga Wallet: Pago a Comercio";
@@ -137,7 +144,7 @@ public class Utils {
                 + "<table width='728' border='0'>"
                 + "<tr><th width='728'>"
                 + "<p align='left' class='Estilo11'><br/><br/>&iexcl;"
-                + hello + " "  + "&nbsp;"
+                + hello + " " + "&nbsp;"
                 + "!<br/><br/>"
                 + text1 + "<br><br></p>"
                 + "</th>"
@@ -150,23 +157,15 @@ public class Utils {
                 + "<tr>"
                 + "<th>"
                 + "<div><table width='728' border='0' cellpadding='2' cellspancing='0' style='border:inherit'>"
-                
                 + "<tr height='30px'><td " + style2 + " width='305'><div align='left'>"
-                + amount_Payment + "" + amountPayment +"</div></td>"
+                + amount_Payment + "" + amountPayment + "</div></td>"
                 + "</tr>"
-                
                 + "<tr height='30px'><td " + style2 + " width='305'><div align='left' >"
-                + concept_Transaction + "" + conceptTransaction +"</div></td>"
-
-                       
+                + concept_Transaction + "" + conceptTransaction + "</div></td>"
                 + "<tr height='30px'><td " + style2 + " width='305'><div align='left'>"
                 + usuario_Destination + "" + userDestinationName + "</div></td>"
-                
                 + "<tr height='30px'><td " + style2 + " width='305'><div align='left'>"
                 + date + new Timestamp(new java.util.Date().getTime()) + "</div></td>"
-                
-               
-                
                 + "<tr height='3px'><th width='728' bgcolor='#232323'></th></tr>"
                 + "<tr height='40px'>"
                 + "<th height='40px'><div class='Estilo11' align='left'>"
@@ -182,7 +181,6 @@ public class Utils {
                 + " <p align='center' style='font: 10px/1.8em Arial,Helvetica,sans-serif,lighter ; color: #666; display: table;  margin: 0; padding:0;'>"
                 + messageFooter1
                 + "</p>"
-
                 + "</div>"
                 + "</th>"
                 + "</tr>"
@@ -190,7 +188,7 @@ public class Utils {
                 + "<div align='center'>"
                 + "<p align='center' style='font: 10px/1.8em Arial,Helvetica,sans-serif,lighter ; color: #666; display: table;  margin: 0; padding:0;'>&copy; Copyright 2013 - Alodiga, C.A. " + allRights + "<br> </div></th></tr></table></div></body></html>";
 
-        Mail mail = new Mail(subject,body);
+        Mail mail = new Mail(subject, body);
         mail.setSubject(subject);
         mail.setFrom(ALODIGA_WALLET_ADDRESS);
         mail.setBody(body);
@@ -199,9 +197,9 @@ public class Utils {
         mail.setTo(recipients);
         return mail;
     }
-    
-        //COMPRA DE SALDO
-        public static Mail SendMailUserRecharge(String idioma, String referenceNumberOperation, Float amountRecharge, String conceptTransaction,String userSource ,String emailUser)  {
+
+    //COMPRA DE SALDO
+    public static Mail SendMailUserRecharge(String idioma, String referenceNumberOperation, Float amountRecharge, String conceptTransaction, String userSource, String emailUser) {
         String hello = "Hola";
         String subject = "Alodiga Wallet: Recarga de saldo.";
         String text1 = "Alodiga Wallet: Recarga de saldo.";
@@ -248,7 +246,7 @@ public class Utils {
                 + "<table width='728' border='0'>"
                 + "<tr><th width='728'>"
                 + "<p align='left' class='Estilo11'><br/><br/>&iexcl;"
-                + hello + " "+ userSource + "&nbsp;"
+                + hello + " " + userSource + "&nbsp;"
                 + "!<br/><br/>"
                 + text1 + "<br><br></p>"
                 + "</th>"
@@ -261,20 +259,15 @@ public class Utils {
                 + "<tr>"
                 + "<th>"
                 + "<div><table width='728' border='0' cellpadding='2' cellspancing='0' style='border:inherit'>"
-                
                 + "<tr height='30px'><td " + style2 + " width='305'><div align='left'>"
-                + referenceNumber + "" + referenceNumberOperation +"</div></td>"
+                + referenceNumber + "" + referenceNumberOperation + "</div></td>"
                 + "</tr>"
-                
                 + "<tr height='30px'><td " + style2 + " width='305'><div align='left' >"
-                + amount_Recharge + "" + amountRecharge +"</div></td>"
-            
+                + amount_Recharge + "" + amountRecharge + "</div></td>"
                 + "<tr height='30px'><td " + style2 + " width='305'><div align='left'>"
                 + concept_Transaction + "" + conceptTransaction + "</div></td>"
-                
                 + "<tr height='30px'><td " + style2 + " width='305'><div align='left'>"
                 + date + new Timestamp(new java.util.Date().getTime()) + "</div></td>"
-                              
                 + "<tr height='3px'><th width='728' bgcolor='#232323'></th></tr>"
                 + "<tr height='40px'>"
                 + "<th height='40px'><div class='Estilo11' align='left'>"
@@ -290,7 +283,6 @@ public class Utils {
                 + " <p align='center' style='font: 10px/1.8em Arial,Helvetica,sans-serif,lighter ; color: #666; display: table;  margin: 0; padding:0;'>"
                 + messageFooter1
                 + "</p>"
-
                 + "</div>"
                 + "</th>"
                 + "</tr>"
@@ -298,7 +290,7 @@ public class Utils {
                 + "<div align='center'>"
                 + "<p align='center' style='font: 10px/1.8em Arial,Helvetica,sans-serif,lighter ; color: #666; display: table;  margin: 0; padding:0;'>&copy; Copyright 2013 - Alodiga, C.A. " + allRights + "<br> </div></th></tr></table></div></body></html>";
 
-        Mail mail = new Mail(subject,body);
+        Mail mail = new Mail(subject, body);
         mail.setSubject(subject);
         mail.setFrom(ALODIGA_WALLET_ADDRESS);
         mail.setBody(body);
@@ -307,10 +299,9 @@ public class Utils {
         mail.setTo(recipients);
         return mail;
     }
-        
-        
-        //CAMBIO DE CONTRASEÑA
-        public static Mail SendMailUserChangePassword(String idioma, Usuario usuario) {
+
+    //CAMBIO DE CONTRASEÑA
+    public static Mail SendMailUserChangePassword(String idioma, Usuario usuario) {
 
         String hello = "Hola";
         String subject = "Alodiga Wallet: Cambio de clave.";
@@ -320,7 +311,7 @@ public class Utils {
         String Name = "Nombre: ";
         String pass = "Nueva Clave: ";
         String date = "Fecha: ";
-        String Email= "Email: ";
+        String Email = "Email: ";
         String moreInfo = "Para acceder al sistema visite:";
         String thanks = "Gracias por preferirnos, Alodiga Mejora tu vida";
         String messageFooter1 = "Este mensaje ha sido enviado desde una cuenta de correo electr&oacute;nico exclusivamente de notificaciones que no admite mensajes. No responda esta comunicaci&oacute;n.";
@@ -371,14 +362,13 @@ public class Utils {
                 + "<th>"
                 + "<div><table width='728' border='0' cellpadding='2' cellspancing='0' style='border:inherit'>"
                 + "<tr height='30px'><td " + style2 + " width='305'><div align='left'>"
-                + Name + "" + usuario.getNombre()+ "</div></td>"
-                
+                + Name + "" + usuario.getNombre() + "</div></td>"
                 + "<tr height='30px'><td " + style2 + " width='305'><div align='left'>"
-                + Email + "" + usuario.getEmail()+" </div></td>"
+                + Email + "" + usuario.getEmail() + " </div></td>"
                 + "</tr>"
                 + "<tr height='30px'><td " + style2 + " width='305'><div align='left'>"
                 + date + new Timestamp(new java.util.Date().getTime()) + "</div></td>"
-//              + "<tr height='3px'><th width='728' bgcolor='#232323'></th></tr>"
+                //              + "<tr height='3px'><th width='728' bgcolor='#232323'></th></tr>"
                 + "<tr height='40px'>"
                 + "<th height='40px'><div class='Estilo11' align='left'>"
                 + moreInfo
@@ -393,7 +383,6 @@ public class Utils {
                 + " <p align='center' style='font: 10px/1.8em Arial,Helvetica,sans-serif,lighter ; color: #666; display: table;  margin: 0; padding:0;'>"
                 + messageFooter1
                 + "</p>"
-
                 + "</div>"
                 + "</th>"
                 + "</tr>"
@@ -401,8 +390,7 @@ public class Utils {
                 + "<div align='center'>"
                 + "<p align='center' style='font: 10px/1.8em Arial,Helvetica,sans-serif,lighter ; color: #666; display: table;  margin: 0; padding:0;'>&copy; Copyright 2013 - Alodiga, C.A. " + allRights + "<br> </div></th></tr></table></div></body></html>";
 
-
-        Mail mail = new Mail(subject,body);
+        Mail mail = new Mail(subject, body);
         mail.setSubject(subject);
         mail.setFrom(ALODIGA_WALLET_ADDRESS);
         mail.setBody(body);
@@ -411,11 +399,9 @@ public class Utils {
         mail.setTo(recipients);
         return mail;
     }
-        
-        
-        
-        //RETIRO
-        public static Mail SendMailUserWithdrawal(String idioma, String accountBank, Float amountWithdrawal, String conceptTransaction,String userSource ,String emailUser)  {
+
+    //RETIRO
+    public static Mail SendMailUserWithdrawal(String idioma, String accountBank, Float amountWithdrawal, String conceptTransaction, String userSource, String emailUser) {
         String hello = "Hola";
         String subject = "Alodiga Wallet: Retiro de la billetera";
         String text1 = "Alodiga Wallet: Retiro de la billetera.";
@@ -435,11 +421,11 @@ public class Utils {
             subject = "Alodiga Wallet: Withdrawal of the wallet";
             text1 = "Alodiga Wallet: Withdrawal of the wallet";
             text2 = "Data of your Withdrawal: ";
-            user_Source ="Name:";
+            user_Source = "Name:";
             account_Bank = "Account Bank: ";
             amount_Withdrawal = "Amount Withdrawal: ";
             date = "Date:";
-            concept_Transaction="Concept Transaction: ";
+            concept_Transaction = "Concept Transaction: ";
             moreInfo = "Form more info visit";
             mailInvite = "We invite you to continue enjoying the benefits and attractive products and services offered by Alodiga.";
             thanks = "Thank you for choosing Alodiga, Alodiga Mejora tu vida";
@@ -477,21 +463,15 @@ public class Utils {
                 + "<tr>"
                 + "<th>"
                 + "<div><table width='728' border='0' cellpadding='2' cellspancing='0' style='border:inherit'>"
-                
                 + "<tr height='30px'><td " + style2 + " width='305'><div align='left'>"
-                + account_Bank + "" + accountBank +"</div></td>"
+                + account_Bank + "" + accountBank + "</div></td>"
                 + "</tr>"
-                
                 + "<tr height='30px'><td " + style2 + " width='305'><div align='left' >"
-                + amount_Withdrawal + "" + amountWithdrawal +"</div></td>"
-                
+                + amount_Withdrawal + "" + amountWithdrawal + "</div></td>"
                 + "<tr height='30px'><td " + style2 + " width='305'><div align='left'>"
                 + concept_Transaction + "" + conceptTransaction + "</div></td>"
-
                 + "<tr height='30px'><td " + style2 + " width='305'><div align='left'>"
                 + date + new Timestamp(new java.util.Date().getTime()) + "</div></td>"
-                
-                    
                 + "<tr height='3px'><th width='728' bgcolor='#232323'></th></tr>"
                 + "<tr height='40px'>"
                 + "<th height='40px'><div class='Estilo11' align='left'>"
@@ -507,7 +487,6 @@ public class Utils {
                 + " <p align='center' style='font: 10px/1.8em Arial,Helvetica,sans-serif,lighter ; color: #666; display: table;  margin: 0; padding:0;'>"
                 + messageFooter1
                 + "</p>"
-
                 + "</div>"
                 + "</th>"
                 + "</tr>"
@@ -515,7 +494,7 @@ public class Utils {
                 + "<div align='center'>"
                 + "<p align='center' style='font: 10px/1.8em Arial,Helvetica,sans-serif,lighter ; color: #666; display: table;  margin: 0; padding:0;'>&copy; Copyright 2013 - Alodiga, C.A. " + allRights + "<br> </div></th></tr></table></div></body></html>";
 
-        Mail mail = new Mail(subject,body);
+        Mail mail = new Mail(subject, body);
         mail.setSubject(subject);
         mail.setFrom(ALODIGA_WALLET_ADDRESS);
         mail.setBody(body);
@@ -524,5 +503,94 @@ public class Utils {
         mail.setTo(recipients);
         return mail;
     }
-   
+
+    public String generatePinBlock(String pan, String pinClear) throws Exception {
+
+        if (pinClear.length() != pinLength) {
+            System.out.println("Incorrect PIN length given. Please fix! pinClear.size() " + "!= " + " pinLength : " + pinClear.length() + " !=" + pinLength);
+        }
+
+        String pinEncoded = encodePinBlockAsHex(pan, pinClear);
+        byte[] tmp = h2b(com.cms.commons.util.Constants.KEY);
+        byte[] key = new byte[24];
+        System.arraycopy(tmp, 0, key, 0, 16);
+        System.arraycopy(tmp, 0, key, 16, 8);
+        Cipher cipher = Cipher.getInstance(TRANSFORMATION);
+        cipher.init(Cipher.ENCRYPT_MODE, new SecretKeySpec(key, ALGORITHM));
+        byte[] plaintext = cipher.doFinal(h2b(pinEncoded));
+        return b2h(plaintext);
+    }
+
+    public String getPinCard(String pan, String encryptedPin) throws Exception {
+        byte[] tmp = h2b(com.cms.commons.util.Constants.KEY);
+        byte[] key = new byte[24];
+        System.arraycopy(tmp, 0, key, 0, 16);
+        System.arraycopy(tmp, 0, key, 16, 8);
+        Cipher cipher = Cipher.getInstance(TRANSFORMATION);
+        cipher.init(Cipher.DECRYPT_MODE, new SecretKeySpec(key, ALGORITHM));
+        byte[] plaintext = cipher.doFinal(h2b(encryptedPin));
+        String pinEncoded = b2h(plaintext);
+        return decodePinBlock(pan, pinEncoded);
+    }
+
+    public String decodePinBlock(String pan, String pinEncoded) throws Exception {
+        pan = pan.substring(pan.length() - 12 - 1, pan.length() - 1);
+        String paddingPAN = "0000".concat(pan);
+        byte[] pinBlock = xorBytes(h2b(paddingPAN), h2b(pinEncoded));
+        return b2h(pinBlock).substring(2, pinLength + 2);
+    }
+
+    public String encodePinBlockAsHex(String pan, String pin) throws Exception {
+        pan = pan.substring(pan.length() - 12 - 1, pan.length() - 1);
+        String paddingPAN = "0000".concat(pan);
+
+        String Fs = "FFFFFFFFFFFFFFFF";
+        String paddingPIN = "0" + pin.length() + pin + Fs.substring(2 + pin.length(), Fs.length());
+
+        byte[] pinBlock = xorBytes(h2b(paddingPAN), h2b(paddingPIN));
+
+        return b2h(pinBlock);
+    }
+
+    private static byte[] xorBytes(byte[] a, byte[] b) throws Exception {
+        if (a.length != b.length) {
+            throw new Exception();
+        }
+        byte[] result = new byte[a.length];
+        for (int i = 0; i < a.length; i++) {
+            int r = 0;
+            r = a[i] ^ b[i];
+            r &= 0xFF;
+            result[i] = (byte) r;
+        }
+        return result;
+    }
+
+    private static byte[] h2b(String hex) {
+        if ((hex.length() & 0x01) == 0x01) {
+            throw new IllegalArgumentException();
+        }
+        byte[] bytes = new byte[hex.length() / 2];
+        for (int idx = 0; idx < bytes.length; ++idx) {
+            int hi = Character.digit((int) hex.charAt(idx * 2), 16);
+            int lo = Character.digit((int) hex.charAt(idx * 2 + 1), 16);
+            if ((hi < 0) || (lo < 0)) {
+                throw new IllegalArgumentException();
+            }
+            bytes[idx] = (byte) ((hi << 4) | lo);
+        }
+        return bytes;
+    }
+
+    private static String b2h(byte[] bytes) {
+        char[] hex = new char[bytes.length * 2];
+        for (int idx = 0; idx < bytes.length; ++idx) {
+            int hi = (bytes[idx] & 0xF0) >>> 4;
+            int lo = (bytes[idx] & 0x0F);
+            hex[idx * 2] = (char) (hi < 10 ? '0' + hi : 'A' - 10 + hi);
+            hex[idx * 2 + 1] = (char) (lo < 10 ? '0' + lo : 'A' - 10 + lo);
+        }
+        return new String(hex);
+    }
+
 }
