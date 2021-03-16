@@ -130,7 +130,7 @@ public class APIAuthorizerCardManagementSystem {
             @WebParam(name = "transactionTypeId") Integer transactionTypeId,
             @WebParam(name = "channelId") Integer channelId,
             @WebParam(name = "transactionDate") Date transactionDate,
-            @WebParam(name = "localTimeTransaction") Timestamp localTimeTransaction,
+            @WebParam(name = "localTimeTransaction") String localTimeTransaction,
             @WebParam(name = "acquirerTerminalCodeId") String acquirerTerminalCodeId,
             @WebParam(name = "acquirerCountryId") Integer acquirerCountryId) {
         return operations.changeCardStatus(cardNumber,CVV,cardDueDate,cardHolder,messageMiddlewareId,newStatusCardId,statusUpdateReasonId,observations,statusUpdateReasonDate,userResponsabibleStatusUpdateId,documentIdentificationNumber,transactionTypeId,channelId,transactionDate,localTimeTransaction,acquirerTerminalCodeId,acquirerCountryId);
@@ -145,7 +145,7 @@ public class APIAuthorizerCardManagementSystem {
             @WebParam(name = "transactionTypeId") Integer transactionTypeId,
             @WebParam(name = "channelId") Integer channelId,
             @WebParam(name = "transactionDate") Date transactionDate,
-            @WebParam(name = "localTimeTransaction") Timestamp localTimeTransaction,
+            @WebParam(name = "localTimeTransaction") String localTimeTransaction,
             @WebParam(name = "acquirerTerminalCodeId") String acquirerTerminalCodeId,
             @WebParam(name = "acquirerCountryId") Integer acquirerCountryId,
             @WebParam(name = "messageMiddlewareId") Long messageMiddlewareId,
@@ -178,7 +178,7 @@ public class APIAuthorizerCardManagementSystem {
             @WebParam(name = "transactionTypeId") Integer transactionTypeId,
             @WebParam(name = "messageMiddlewareId") Long messageMiddlewareId,
             @WebParam(name = "transactionDate") Date transactionDate,
-            @WebParam(name = "localTimeTransaction") Timestamp localTimeTransaction,
+            @WebParam(name = "localTimeTransaction") String localTimeTransaction,
             @WebParam(name = "acquirerTerminalCodeId") String acquirerTerminalCodeId,
             @WebParam(name = "acquirerCountryId") Integer acquirerCountryId,
             @WebParam(name = "startDate") String startDate,
@@ -200,7 +200,7 @@ public class APIAuthorizerCardManagementSystem {
             @WebParam(name = "transactionTypeId") Integer transactionTypeId,
             @WebParam(name = "channelId") Integer channelId,
             @WebParam(name = "transactionDate") Date transactionDate,
-            @WebParam(name = "localTimeTransaction") Timestamp localTimeTransaction,       
+            @WebParam(name = "localTimeTransaction") String localTimeTransaction,       
             @WebParam(name = "acquirerTerminalCodeId") String acquirerTerminalCodeId,
             @WebParam(name = "transactionNumberAcquirer") String transactionNumberAcquirer,
             @WebParam(name = "acquirerCountryId") Integer acquirerCountryId) {
@@ -222,11 +222,11 @@ public class APIAuthorizerCardManagementSystem {
         @WebParam(name = "transactionTypeId") Integer transactionTypeId,
         @WebParam(name = "messageMiddlewareId") Long messageMiddlewareId,
         @WebParam(name = "transactionDate") Date transactionDate,
-        @WebParam(name = "localTimeTransaction") Timestamp localTimeTransaction,
+        @WebParam(name = "localTimeTransaction") String localTimeTransaction,
         @WebParam(name = "acquirerTerminalCodeId") String acquirerTerminalCodeId,
         @WebParam(name = "acquirerCountryId") Integer acquirerCountryId,
         @WebParam(name = "amountTransfer") Float amountTransfer,
-        @WebParam(name = "dateTimeTransmissionTerminal")Timestamp dateTimeTransmissionTerminal,
+        @WebParam(name = "dateTimeTransmissionTerminal")String dateTimeTransmissionTerminal,
         @WebParam(name = "localDateTransaction")Date localDateTransaction){
         return operations.transferBetweenAccount(cardNumberOrigin, cardNumberDestinate, CVVOrigin,cardDueDateOrigin,cardHolderOrigin,ARQCOrigin,CVVDestinate,cardDueDateDestinate,cardHolderDestinate,ARQCDestinate,channelId,transactionTypeId,messageMiddlewareId,transactionDate,localTimeTransaction,acquirerTerminalCodeId,acquirerCountryId,amountTransfer,dateTimeTransmissionTerminal,localDateTransaction);
     }
@@ -250,7 +250,7 @@ public class APIAuthorizerCardManagementSystem {
             @WebParam(name = "transactionTypeId") Integer transactionTypeId,
             @WebParam(name = "messageMiddlewareId") Long messageMiddlewareId,
             @WebParam(name = "transactionDate") Date transactionDate,
-            @WebParam(name = "localTimeTransaction") Timestamp localTimeTransaction,
+            @WebParam(name = "localTimeTransaction") String localTimeTransaction,
             @WebParam(name = "acquirerTerminalCodeId") String acquirerTerminalCodeId,
             @WebParam(name = "acquirerCountryId") Integer acquirerCountryId,
             @WebParam(name = "localDateTransaction")Date localDateTransaction,
@@ -268,7 +268,7 @@ public class APIAuthorizerCardManagementSystem {
             @WebParam(name = "transactionTypeId") Integer transactionTypeId,
             @WebParam(name = "channelId") Integer channelId,                      
             @WebParam(name = "transactionDate") Date transactionDate,
-            @WebParam(name = "localTimeTransaction") Timestamp localTimeTransaction,
+            @WebParam(name = "localTimeTransaction") String localTimeTransaction,
             @WebParam(name = "acquirerTerminalCodeId") String acquirerTerminalCodeId,
             @WebParam(name = "transactionNumberAcquirer") String transactionNumberAcquirer,
             @WebParam(name = "acquirerCountryId") Integer acquirerCountryId,
@@ -287,7 +287,7 @@ public class APIAuthorizerCardManagementSystem {
         @WebParam(name = "transactionTypeId") Integer transactionTypeId,
         @WebParam(name = "messageMiddlewareId") Long messageMiddlewareId,
         @WebParam(name = "transactionDate") Date transactionDate,
-        @WebParam(name = "localTimeTransaction") Timestamp localTimeTransaction,
+        @WebParam(name = "localTimeTransaction") String localTimeTransaction,
         @WebParam(name = "acquirerTerminalCodeId") String acquirerTerminalCodeId,
         @WebParam(name = "acquirerCountryId") Integer acquirerCountryId,
         @WebParam(name = "newpinOffset") String newPinOffset,
@@ -316,10 +316,10 @@ public class APIAuthorizerCardManagementSystem {
             @WebParam(name = "transactionTypeId") Integer transactionTypeId,
             @WebParam(name = "channelId") Integer channelId,                      
             @WebParam(name = "transactionDate") Date transactionDate,
-            @WebParam(name = "localTimeTransaction") Timestamp localTimeTransaction,
+            @WebParam(name = "localTimeTransaction") String localTimeTransaction,
             @WebParam(name = "acquirerTerminalCodeId") String acquirerTerminalCodeId,
             @WebParam(name = "transactionNumberAcquirer") String transactionNumberAcquirer,
-            @WebParam(name = "acquirerCountryId") Integer acquirerCountryId,
+            @WebParam(name = "acquirerCountryId") String acquirerCountryId,
             @WebParam(name = "purchaseAmount") Float purchaseAmount,
             @WebParam(name = "documentNumber") String documentNumber,
             @WebParam(name = "pinBlock") String pinBlock,
@@ -345,12 +345,31 @@ public class APIAuthorizerCardManagementSystem {
         @WebParam(name = "transactionTypeId") Integer transactionTypeId,
         @WebParam(name = "messageMiddlewareId") Long messageMiddlewareId,
         @WebParam(name = "transactionDate") Date transactionDate,
-        @WebParam(name = "localTimeTransaction") Timestamp localTimeTransaction,
+        @WebParam(name = "localTimeTransaction") String localTimeTransaction,
         @WebParam(name = "acquirerTerminalCodeId") String acquirerTerminalCodeId,
         @WebParam(name = "acquirerCountryId") Integer acquirerCountryId,
         @WebParam(name = "transactionNumber") String transactionNumber,
         @WebParam(name = "transactionSequence") String transactionSequence){
         return operations.reverseWalletWithdrawal(cardNumber, CVV,cardDueDate,cardHolder,ARQC,channelId,transactionTypeId,messageMiddlewareId,transactionDate,localTimeTransaction,acquirerTerminalCodeId,acquirerCountryId,transactionNumber,transactionSequence);
+    }
+    
+    @WebMethod
+    public TransactionResponse saveRegisterPin(
+            @WebParam(name = "cardNumber") String cardNumber,
+            @WebParam(name = "CVV") String CVV,
+            @WebParam(name = "ARQC") String ARQC,
+            @WebParam(name = "transactionTypeId") Integer transactionTypeId,
+            @WebParam(name = "channelId") Integer channelId,
+            @WebParam(name = "transactionDate") Date transactionDate,
+            @WebParam(name = "localTimeTransaction") String localTimeTransaction,
+            @WebParam(name = "acquirerTerminalCodeId") String acquirerTerminalCodeId,
+            @WebParam(name = "acquirerCountryId") Integer acquirerCountryId,
+            @WebParam(name = "messageMiddlewareId") Long messageMiddlewareId,
+            @WebParam(name = "cardDueDate") String cardDueDate,
+            @WebParam(name = "cardHolder") String cardHolder,
+            @WebParam(name = "pinClear") String pinClear,
+            @WebParam(name = "terminalId") String terminalId){
+        return operations.saveRegisterPin(cardNumber, CVV, ARQC,transactionTypeId, channelId, transactionDate, localTimeTransaction, acquirerTerminalCodeId, acquirerCountryId, messageMiddlewareId, cardDueDate, cardHolder, pinClear, terminalId);
     }
     
 }
