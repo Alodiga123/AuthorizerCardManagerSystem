@@ -80,7 +80,7 @@ public class operationsBDImp implements operationsBD {
             String mccCodeTrade, String tradeName, String systemTraceAuditNumber, Integer numberMovementsCheckBalance, String responseCode, Long messageMiddlewareId, Integer DocumentTypeId, EntityManager entityManager) {
 
         TransactionsManagement transactionsManagement = new TransactionsManagement();
-        Sequences sequence = getSequencesByDocumentTypeByOriginApplication(DocumentTypeId, Constants.ORIGIN_APPLICATION_CMS_ID, entityManager);
+        Sequences sequence = getSequencesByDocumentTypeByOriginApplication(DocumentTypeId, Constants.ORIGIN_APPLICATION_CMS_AUTHORIZE, entityManager);
         String transactionNumberIssuer = generateNumberSequence(sequence, entityManager);
         Calendar cal = Calendar.getInstance();
         int year = cal.get(Calendar.YEAR);
