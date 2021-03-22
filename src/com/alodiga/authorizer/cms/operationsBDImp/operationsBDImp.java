@@ -35,6 +35,7 @@ import com.cms.commons.models.ProgramLoyaltyTransaction;
 import com.cms.commons.models.RateByCard;
 import com.cms.commons.models.RateByProduct;
 import com.cms.commons.models.StatusUpdateReason;
+import com.cms.commons.models.TransactionPoint;
 import com.cms.commons.models.User;
 import java.util.ArrayList;
 import java.util.List;
@@ -618,6 +619,34 @@ public class operationsBDImp implements operationsBD {
         query.setParameter("4", TransactionE.RETIRO_INTERNACIONAL.getId());
         try {
             TransactionsManagement result = (TransactionsManagement) query.setHint("toplink.refresh", "true").getSingleResult();
+            return result;
+        } catch (NoResultException e) {
+            return null;
+        }
+    }
+    
+    @Override
+    public TransactionsManagement getTransactionsManagementByTransactionReference(String transactionNumber, EntityManager entityManager) {
+        String sql = "SELECT t FROM TransactionsManagement t WHERE t.transactionReference = ?1";
+        StringBuilder sqlBuilder = new StringBuilder(sql);
+        Query query = entityManager.createQuery(sqlBuilder.toString());
+        query.setParameter("1", transactionNumber);
+        try {
+            TransactionsManagement result = (TransactionsManagement) query.setHint("toplink.refresh", "true").getSingleResult();
+            return result;
+        } catch (NoResultException e) {
+            return null;
+        }
+    }
+    
+    @Override
+    public TransactionPoint getTransactionPointByTransactionReference(String transactionNumber, EntityManager entityManager) {
+        String sql = "SELECT t FROM TransactionPoint t WHERE t.transactionReference = ?1";
+        StringBuilder sqlBuilder = new StringBuilder(sql);
+        Query query = entityManager.createQuery(sqlBuilder.toString());
+        query.setParameter("1", transactionNumber);
+        try {
+            TransactionPoint result = (TransactionPoint) query.setHint("toplink.refresh", "true").getSingleResult();
             return result;
         } catch (NoResultException e) {
             return null;
