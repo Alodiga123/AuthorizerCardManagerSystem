@@ -39,61 +39,15 @@ public class APIAuthorizerCardManagementSystem {
     }
 
     @WebMethod
-    public CardResponse validateCardByCardHolder(
-            @WebParam(name = "cardNumber") String cardNumber,
-            @WebParam(name = "cardHolder") String cardHolder) {
-        return operations.validateCardByCardHolder(cardNumber, cardHolder);
-    }
-
-    @WebMethod
-    public CardResponse getValidateCVVAndDueDateCard(
-            @WebParam(name = "cardNumber") String cardNumber,
-            @WebParam(name = "cvv") String cvv,
-            @WebParam(name = "cardDate") String cardDate) {
-        return operations.getValidateCVVAndDueDateCard(cardNumber, cvv, cardDate);
-    }
-
-    @WebMethod
     public AccountCard getAccountNumberByCard(
             @WebParam(name = "cardNumber") String cardNumber) {
         return operations.getAccountNumberByCard(cardNumber);
     }
-
-    @WebMethod
-    public CardResponse getValidateCardByLUNH(
-            @WebParam(name = "cardNumber") String cardNumber) {
-        return operations.getValidateCardByLUNH(cardNumber);
-    }
     
-    @WebMethod
-    public TransactionResponse calculateCommisionCMS(
-        @WebParam(name = "cardNumber") String cardNumber,
-        @WebParam(name = "channelId") Integer channelId,
-        @WebParam(name = "transactionTypeId") Integer transactionTypeId,
-        @WebParam(name = "settlementTransactionAmount") Float settlementTransactionAmount,
-        @WebParam(name = "transactionNumberAcquirer") String transactionNumberAcquirer) {
-        return operations.calculateCommisionCMS(cardNumber,channelId,transactionTypeId,settlementTransactionAmount,transactionNumberAcquirer);
-    }
     @WebMethod
     public CardResponse calculatesCheckDigitLunh(
             @WebParam(name = "cardNumber") String cardNumber) {
         return operations.calculatesCheckDigitLunh(cardNumber);
-    }
-    
-    @WebMethod
-    public CardResponse verifyActiveCard(
-        @WebParam(name = "cardNumber") String cardNumber) {
-        return operations.verifyActiveCard(cardNumber);
-    }
-    
-    @WebMethod    
-    public ValidateLimitsResponse getValidateLimitsTransaccionals(
-        @WebParam(name = "cardNumber") String cardNumber,
-        @WebParam(name = "transactionTypeId") Integer transactionTypeId,
-        @WebParam(name = "channelId") Integer channelId,
-        @WebParam(name = "countryCode") String countryCode,
-        @WebParam(name = "amountTransaction") Float amountTransaction)   {
-        return operations.getValidateLimits(cardNumber, transactionTypeId, channelId,countryCode,amountTransaction);
     }
        
     @WebMethod
@@ -105,13 +59,6 @@ public class APIAuthorizerCardManagementSystem {
             @WebParam(name = "cardDueDate") String cardDueDate,
             @WebParam(name = "indValidateCardActive") int indValidateCardActive ) {
         return operations.validateCard(cardNumber,ARQC,cardHolder,CVV,cardDueDate,indValidateCardActive);
-    }
-    
-    @WebMethod
-    public CardResponse validateDocumentIdentificationCustomer(
-            @WebParam(name = "cardNumber") String cardNumber,
-            @WebParam(name = "identificationNumber") String identificationNumber) {
-        return operations.validateDocumentIdentificationCustomer(cardNumber,identificationNumber);
     }
     
     @WebMethod
@@ -370,6 +317,24 @@ public class APIAuthorizerCardManagementSystem {
             @WebParam(name = "pinClear") String pinClear,
             @WebParam(name = "terminalId") String terminalId){
         return operations.saveRegisterPin(cardNumber, CVV, ARQC,transactionTypeId, channelId, transactionDate, localTimeTransaction, acquirerTerminalCodeId, acquirerCountryId, messageMiddlewareId, cardDueDate, cardHolder, pinClear, terminalId);
+    }
+    
+   @WebMethod    
+    public TransactionResponse reverseCardPurchase(
+        @WebParam(name = "cardNumber") String cardNumber,
+        @WebParam(name = "CVV") String CVV,
+        @WebParam(name = "cardDueDate") String cardDueDate,
+        @WebParam(name = "cardHolde") String cardHolder,
+        @WebParam(name = "ARQC") String ARQC,
+        @WebParam(name = "channelId") Integer channelId,
+        @WebParam(name = "transactionTypeId") Integer transactionTypeId,
+        @WebParam(name = "messageMiddlewareId") Long messageMiddlewareId,
+        @WebParam(name = "transactionDate") Date transactionDate,
+        @WebParam(name = "localTimeTransaction") String localTimeTransaction,
+        @WebParam(name = "acquirerTerminalCodeId") String acquirerTerminalCodeId,
+        @WebParam(name = "acquirerCountryId") Integer acquirerCountryId,
+        @WebParam(name = "transactionNumber") String transactionNumber){
+        return operations.reverseCardPurchage(cardNumber, CVV,cardDueDate,cardHolder,ARQC,channelId,transactionTypeId,messageMiddlewareId,transactionDate,localTimeTransaction,acquirerTerminalCodeId,acquirerCountryId,transactionNumber);
     }
     
 }

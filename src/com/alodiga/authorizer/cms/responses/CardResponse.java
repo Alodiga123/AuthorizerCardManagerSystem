@@ -1,7 +1,6 @@
 package com.alodiga.authorizer.cms.responses;
 import com.cms.commons.models.Card;
 import java.util.Date;
-
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlRootElement;
@@ -39,6 +38,11 @@ public class CardResponse extends Response {
         super(new Date(), code.getCode(), mensaje);
         this.checkDigitLunh = checkDigitLunh;
     }
+    
+    public CardResponse(String code, String mensaje, Card card) {
+        super(new Date(), code, mensaje);
+        this.card = card;
+    }
 
     public Card getCard() {
         return card;
@@ -62,10 +66,6 @@ public class CardResponse extends Response {
 
     public void setCheckDigitLunh(Long checkDigitLunh) {
         this.checkDigitLunh = checkDigitLunh;
-    }
-    
-    
-
-	
+    } 
         
 }
