@@ -319,4 +319,22 @@ public class APIAuthorizerCardManagementSystem {
         return operations.saveRegisterPin(cardNumber, CVV, ARQC,transactionTypeId, channelId, transactionDate, localTimeTransaction, acquirerTerminalCodeId, acquirerCountryId, messageMiddlewareId, cardDueDate, cardHolder, pinClear, terminalId);
     }
     
+   @WebMethod    
+    public TransactionResponse reverseCardPurchase(
+        @WebParam(name = "cardNumber") String cardNumber,
+        @WebParam(name = "CVV") String CVV,
+        @WebParam(name = "cardDueDate") String cardDueDate,
+        @WebParam(name = "cardHolde") String cardHolder,
+        @WebParam(name = "ARQC") String ARQC,
+        @WebParam(name = "channelId") Integer channelId,
+        @WebParam(name = "transactionTypeId") Integer transactionTypeId,
+        @WebParam(name = "messageMiddlewareId") Long messageMiddlewareId,
+        @WebParam(name = "transactionDate") Date transactionDate,
+        @WebParam(name = "localTimeTransaction") String localTimeTransaction,
+        @WebParam(name = "acquirerTerminalCodeId") String acquirerTerminalCodeId,
+        @WebParam(name = "acquirerCountryId") Integer acquirerCountryId,
+        @WebParam(name = "transactionNumber") String transactionNumber){
+        return operations.reverseCardPurchage(cardNumber, CVV,cardDueDate,cardHolder,ARQC,channelId,transactionTypeId,messageMiddlewareId,transactionDate,localTimeTransaction,acquirerTerminalCodeId,acquirerCountryId,transactionNumber);
+    }
+    
 }

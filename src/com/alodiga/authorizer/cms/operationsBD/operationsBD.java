@@ -22,6 +22,7 @@ import com.cms.commons.models.RateByCard;
 import com.cms.commons.models.RateByProduct;
 import com.cms.commons.models.Sequences;
 import com.cms.commons.models.StatusUpdateReason;
+import com.cms.commons.models.TransactionPoint;
 import com.cms.commons.models.TransactionsManagement;
 import com.cms.commons.models.TransactionsManagementHistory;
 import com.cms.commons.models.User;
@@ -81,6 +82,8 @@ public interface operationsBD {
     public Country getCountry(String countryCode, EntityManager entityManager);
     public CardStatus getStatusCard(int cardStatusId, EntityManager entityManager);
     public TransactionsManagement getTransactionByNumberAndSequence(String transactionNumber, String transactionSequence, EntityManager entityManager);
+    public TransactionsManagement getTransactionsManagementByTransactionReference(String transactionNumber, EntityManager entityManager);
+    public TransactionPoint getTransactionPointByTransactionReference(String transactionNumber, EntityManager entityManager);
     
     //Métodos reutilizados por la API
     public String transformCardNumber(String cardNumber);
