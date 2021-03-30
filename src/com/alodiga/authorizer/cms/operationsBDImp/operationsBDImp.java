@@ -624,11 +624,12 @@ public class operationsBDImp implements operationsBD {
     }
     
     @Override
-    public TransactionsManagement getTransactionsManagementByTransactionReference(String transactionNumber, EntityManager entityManager) {
-        String sql = "SELECT t FROM TransactionsManagement t WHERE t.transactionReference = ?1";
+    public TransactionsManagement getTransactionsManagementByTransactionReference(String transactionNumber, Integer transactionTypeId, EntityManager entityManager) {
+        String sql = "SELECT t FROM TransactionsManagement t WHERE t.transactionReference = ?1 AND t.transactionTypeId = ?2";
         StringBuilder sqlBuilder = new StringBuilder(sql);
         Query query = entityManager.createQuery(sqlBuilder.toString());
         query.setParameter("1", transactionNumber);
+        query.setParameter("2", transactionTypeId);
         try {
             TransactionsManagement result = (TransactionsManagement) query.setHint("toplink.refresh", "true").getSingleResult();
             return result;
