@@ -2003,9 +2003,9 @@ public class APIOperations {
         TransactionsManagement transactionReverseRechargeCard = null;
         TransactionsManagement transactionRechargeCardOriginal = null;
         TransactionsManagement transactionReverseComissionRechargeCard = null;
+        TransactionsManagement transactionsReverseManagementBonification = null;
         int indValidateCardActive = 1;
         Card card = null;
-        ValidateLimitsResponse validateLimits = null;
         Float currentBalance = 0.00F;
         AccountCard accountCard = null;
         BalanceHistoryCard balanceHistoryCard = null;
@@ -2063,10 +2063,30 @@ public class APIOperations {
                     entityManager.merge(accountCard); 
                     
                     //Se revisa si la transacción de recarga generó comisión
-                    if (transactionRechargeCardOriginal.getTransactionCommissionAmount() > 0) {
-                        //Se obtiene la transacción de cobro de comisión por la operación recarga
+                    if (transactionRechargeCardOriginal.getTransactionCommissionAmount() > 0) {                        
+                        //Se registra la transacción de reverso de la comission
+                        transactionReverseComissionRechargeCard = (TransactionsManagement) operationsBD.createTransactionsManagement(null, null, acquirerTerminalCodeId, acquirerCountryId, null, transactionDate,
+                        TransactionE.REVERSE_COMISSION.getId(), channelId, null, localTimeTransaction, null, null, null,
+                        null, null, null, null, null, null,
+                        null, null, cardNumber, cardHolder, CVV, cardDueDate, null, null, null, null,
+                        null, null, null, null, messageMiddlewareId, DocumentTypeE.REVERSE_COMISSION.getId(), entityManager);
                         
+                        //Se realiza el reverso de la comisión generada por le recarga
+                        TransactionResponse transactionResponse = reverseComission(transactionNumberCardRecharge,transactionReverseComissionRechargeCard,card);
+                        if (!transactionResponse.getCodigoRespuesta().equals(ResponseCode.SUCCESS.getCode())) {
+                            return transactionResponse;
+                        }
                     }
+                    
+                    //Se revisa si la transacción de recarga generó una bonificación
+                    transactionsReverseManagementBonification = operationsBD.getTransactionsManagementByTransactionReference(transactionNumberCardRecharge, TransactionE.BONIFICATION_CMS.getId(), entityManager);
+                    if (transactionsReverseManagementBonification != null) {
+                        TransactionResponse transactionResponse = reverseBonification(transactionNumberCardRecharge,transactionsReverseManagementBonification,card);
+                        if (!transactionResponse.getCodigoRespuesta().equals(ResponseCode.SUCCESS.getCode())) {
+                            return transactionResponse;
+                        }
+                    }
+                    return new TransactionResponse(ResponseCode.SUCCESS.getCode(), ResponseCode.SUCCESS.getMessage());
                 } else {
                     //Se generó un error inesperado, no se encontró la transacción de recarga a reversar
                     transactionReverseRechargeCard.setStatusTransactionManagementId(StatusTransactionManagementE.REJECTED.getId());
@@ -2093,7 +2113,6 @@ public class APIOperations {
             e.printStackTrace();
             return new TransactionResponse(ResponseCode.INTERNAL_ERROR.getCode(), "INTERNAL_ERROR");
         }
-        return new TransactionResponse(ResponseCode.INTERNAL_ERROR.getCode(), "INTERNAL_ERROR");
     }
 
     public TransactionResponse saveRegisterPin(String cardNumber, String CVV, String ARQC, Integer transactionTypeId, Integer channelId, Date transactionDate, String localTimeTransaction, String acquirerTerminalCodeId, Integer acquirerCountryId, Long messageMiddlewareId, String cardDueDate, String cardHolder, String pinClear, String terminalId) {
@@ -2309,7 +2328,7 @@ public class APIOperations {
          } catch (Exception e) {
              return new TransactionResponse(ResponseCode.INTERNAL_ERROR.getCode(), "an error occurred while saving the transaction");
          }
-         TransactionsManagement transactionsManagementCommission = operationsBD.getTransactionsManagementByTransactionReference(transactionNumber, entityManager);
+         TransactionsManagement transactionsManagementCommission = operationsBD.getTransactionsManagementByTransactionReference(transactionNumber, TransactionE.COMISION_CMS.getId(), entityManager);
          if (transactionsManagementCommission != null) {
              //Se cancela la transaction de comision
              transactionsManagementCommission.setStatusTransactionManagementId(StatusTransactionManagementE.CANCELLED.getId());
@@ -2396,7 +2415,7 @@ public class APIOperations {
         } else {
 
                 //Buscar bonificacion por saldo
-                TransactionsManagement transactionsManagementBonification = operationsBD.getTransactionsManagementByTransactionReference(transactionNumber, entityManager);
+                TransactionsManagement transactionsManagementBonification = operationsBD.getTransactionsManagementByTransactionReference(transactionNumber, TransactionE.BONIFICATION_CMS.getId(), entityManager);
                 if (transactionsManagementBonification != null) {
                     try {
                        transactionsManagementReverseBonification = operationsBD.saveTransactionsManagement(transactionsManagementReverseBonification, entityManager);
@@ -2425,7 +2444,7 @@ public class APIOperations {
 
                     //Se obtiene el balance actual del usuario y se le suma el reverso de la operación
                     currentBalance = getCurrentBalanceCard(card.getId());
-                    newBalance = currentBalance - transactionsManagementReverseBonification.getCommisionsReceived().getAmountCommision();
+                    newBalance = currentBalance - transactionsManagementReverseBonification.getTransactionCommissionAmount();
 
                     //Se actualiza el balance history y saldo de la cuenta
                     balanceHistoryCard = operationsBD.createBalanceHistoryCard(card, transactionsManagementReverseBonification.getId(), currentBalance, newBalance, entityManager);
