@@ -1139,9 +1139,11 @@ public class APIOperations {
                 Date date2 = new SimpleDateFormat("dd/MM/yyyy").parse(endingDate);
                 //Colocar asteriscos al cardNumber
                 String cardNumberEncript = operationsBD.transformCardNumber(cardNumber);
+                //Se obtiene la tarjeta asociada
+                card = getCardByCardNumber(cardNumber);
                 //Se buscan los movimientos de la tarjeta
                 List<TransactionsManagementHistory> transactionsManagementHistory = operationsBD.getCardMovements(cardNumber, date1, date2, entityManager);
-                if (transactionsManagementHistory != null) {
+                if (!transactionsManagementHistory.isEmpty() || transactionsManagementHistory.size() != 0) {
 
                     //Se guarda la lista de respuesta solamente con los campos deseados a mostrar
                     for (TransactionsManagementHistory th : transactionsManagementHistory) {
