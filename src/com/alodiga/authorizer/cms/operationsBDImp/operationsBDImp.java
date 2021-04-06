@@ -78,7 +78,7 @@ public class operationsBDImp implements operationsBD {
             Integer transactionTypeId, Integer channelId, String dateTimeTransmissionTerminal, String localTimeTransmission, Date localDateTransaction, Integer localCurrencyTransactionId, Float localCurrencyTransactionAmount,
             Integer settlementCurrencyTransactionId, Float settlementTransactionAmount, Float rateConvertionSettlement, Float acquirerCommisionAmount, Float acquirerSettlementCommisionAmount, Float transactionRateAmount,
             Integer transactionCityId, Integer statusTransactionManagementId, String cardNumber, String cardHolder, String CVV, String expirationCardDate, Integer pinLenght, String transferDestinationCardNumber, Integer issuerId,
-            String mccCodeTrade, String tradeName, String systemTraceAuditNumber, Integer numberMovementsCheckBalance, String responseCode, Long messageMiddlewareId, Integer DocumentTypeId, EntityManager entityManager) {
+            String mccCodeTrade, String tradeName, String systemTraceAuditNumber, Integer numberMovementsCheckBalance, String responseCode, Long messageMiddlewareId, Integer DocumentTypeId, String transactionConcept, EntityManager entityManager) {
 
         TransactionsManagement transactionsManagement = new TransactionsManagement();
         Sequences sequence = getSequencesByDocumentTypeByOriginApplication(DocumentTypeId, Constants.ORIGIN_APPLICATION_CMS_AUTHORIZE, entityManager);
