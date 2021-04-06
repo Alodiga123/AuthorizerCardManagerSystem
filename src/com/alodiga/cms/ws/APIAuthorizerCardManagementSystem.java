@@ -174,8 +174,9 @@ public class APIAuthorizerCardManagementSystem {
         @WebParam(name = "acquirerCountryId") Integer acquirerCountryId,
         @WebParam(name = "amountTransfer") Float amountTransfer,
         @WebParam(name = "dateTimeTransmissionTerminal")String dateTimeTransmissionTerminal,
-        @WebParam(name = "localDateTransaction")Date localDateTransaction){
-        return operations.transferBetweenAccount(cardNumberOrigin, cardNumberDestinate, CVVOrigin,cardDueDateOrigin,cardHolderOrigin,ARQCOrigin,CVVDestinate,cardDueDateDestinate,cardHolderDestinate,ARQCDestinate,channelId,transactionTypeId,messageMiddlewareId,transactionDate,localTimeTransaction,acquirerTerminalCodeId,acquirerCountryId,amountTransfer,dateTimeTransmissionTerminal,localDateTransaction);
+        @WebParam(name = "localDateTransaction")Date localDateTransaction,
+        @WebParam(name = "conceptTransaction")String conceptTransaction){
+        return operations.transferBetweenAccount(cardNumberOrigin, cardNumberDestinate, CVVOrigin,cardDueDateOrigin,cardHolderOrigin,ARQCOrigin,CVVDestinate,cardDueDateDestinate,cardHolderDestinate,ARQCDestinate,channelId,transactionTypeId,messageMiddlewareId,transactionDate,localTimeTransaction,acquirerTerminalCodeId,acquirerCountryId,amountTransfer,dateTimeTransmissionTerminal,localDateTransaction,conceptTransaction);
     }
     
  
@@ -201,8 +202,9 @@ public class APIAuthorizerCardManagementSystem {
             @WebParam(name = "acquirerTerminalCodeId") String acquirerTerminalCodeId,
             @WebParam(name = "acquirerCountryId") Integer acquirerCountryId,
             @WebParam(name = "localDateTransaction")Date localDateTransaction,
-            @WebParam(name = "withdrawalAmount") Float withdrawalAmount) {
-        return operations.cardWithdrawal(cardNumber,CVV,cardDueDate,cardHolder,documentIdentificationNumber,channelId,transactionTypeId,messageMiddlewareId,transactionDate,localTimeTransaction,acquirerTerminalCodeId,acquirerCountryId,localDateTransaction,withdrawalAmount);
+            @WebParam(name = "withdrawalAmount") Float withdrawalAmount,
+            @WebParam(name = "conceptTransaction") String conceptTransaction) {
+        return operations.cardWithdrawal(cardNumber,CVV,cardDueDate,cardHolder,documentIdentificationNumber,channelId,transactionTypeId,messageMiddlewareId,transactionDate,localTimeTransaction,acquirerTerminalCodeId,acquirerCountryId,localDateTransaction,withdrawalAmount,conceptTransaction);
     }
     
     @WebMethod
@@ -219,8 +221,9 @@ public class APIAuthorizerCardManagementSystem {
             @WebParam(name = "acquirerTerminalCodeId") String acquirerTerminalCodeId,
             @WebParam(name = "transactionNumberAcquirer") String transactionNumberAcquirer,
             @WebParam(name = "acquirerCountryId") Integer acquirerCountryId,
-            @WebParam(name = "amountRecharge") Float amountRecharge) {
-        return operations.cardRecharge(cardNumber,cardHolder,CVV,cardDueDate,messageMiddlewareId,transactionTypeId,channelId,transactionDate,localTimeTransaction,acquirerTerminalCodeId,transactionNumberAcquirer,acquirerCountryId,amountRecharge);
+            @WebParam(name = "amountRecharge") Float amountRecharge,
+            @WebParam(name = "conceptTransaction") String conceptTransaction) {
+        return operations.cardRecharge(cardNumber,cardHolder,CVV,cardDueDate,messageMiddlewareId,transactionTypeId,channelId,transactionDate,localTimeTransaction,acquirerTerminalCodeId,transactionNumberAcquirer,acquirerCountryId,amountRecharge,conceptTransaction);
     }
     
     @WebMethod    
@@ -276,9 +279,10 @@ public class APIAuthorizerCardManagementSystem {
             @WebParam(name = "seqNumber") String seqNumber,
             @WebParam(name = "atc") String atc,
             @WebParam(name = "unpredictableNumber") String unpredictableNumber,
-            @WebParam(name = "transactionData") String transactionData){
+            @WebParam(name = "transactionData") String transactionData,
+            @WebParam(name = "tradeName") String tradeName){
         return operations.cardPurchage(cardNumber,cardHolder,CVV,cardDueDate,messageMiddlewareId,transactionTypeId,channelId,transactionDate,localTimeTransaction,acquirerTerminalCodeId,transactionNumberAcquirer,acquirerCountryId,purchaseAmount,pinBlock, ARQC, terminalId,
-                oPMode,schemeEMV,seqNumber,atc,unpredictableNumber,transactionData);
+                oPMode,schemeEMV,seqNumber,atc,unpredictableNumber,transactionData,tradeName);
     }
     @WebMethod    
     public TransactionResponse reverseWalletWithdrawal(
@@ -295,8 +299,9 @@ public class APIAuthorizerCardManagementSystem {
         @WebParam(name = "acquirerTerminalCodeId") String acquirerTerminalCodeId,
         @WebParam(name = "acquirerCountryId") Integer acquirerCountryId,
         @WebParam(name = "transactionNumber") String transactionNumber,
-        @WebParam(name = "transactionSequence") String transactionSequence){
-        return operations.reverseWalletWithdrawal(cardNumber, CVV,cardDueDate,cardHolder,ARQC,channelId,transactionTypeId,messageMiddlewareId,transactionDate,localTimeTransaction,acquirerTerminalCodeId,acquirerCountryId,transactionNumber,transactionSequence);
+        @WebParam(name = "transactionSequence") String transactionSequence,
+        @WebParam(name = "conceptTransaction") String conceptTransaction){
+        return operations.reverseWalletWithdrawal(cardNumber, CVV,cardDueDate,cardHolder,ARQC,channelId,transactionTypeId,messageMiddlewareId,transactionDate,localTimeTransaction,acquirerTerminalCodeId,acquirerCountryId,transactionNumber,transactionSequence,conceptTransaction);
     }
     
     @WebMethod
@@ -332,8 +337,30 @@ public class APIAuthorizerCardManagementSystem {
         @WebParam(name = "localTimeTransaction") String localTimeTransaction,
         @WebParam(name = "acquirerTerminalCodeId") String acquirerTerminalCodeId,
         @WebParam(name = "acquirerCountryId") Integer acquirerCountryId,
-        @WebParam(name = "transactionNumber") String transactionNumber){
-        return operations.reverseCardPurchage(cardNumber, CVV,cardDueDate,cardHolder,ARQC,channelId,transactionTypeId,messageMiddlewareId,transactionDate,localTimeTransaction,acquirerTerminalCodeId,acquirerCountryId,transactionNumber);
+        @WebParam(name = "transactionNumber") String transactionNumber,
+        @WebParam(name = "tradeName") String tradeName){
+        return operations.reverseCardPurchage(cardNumber, CVV,cardDueDate,cardHolder,ARQC,channelId,transactionTypeId,messageMiddlewareId,transactionDate,localTimeTransaction,acquirerTerminalCodeId,acquirerCountryId,transactionNumber,tradeName);
+    }
+    
+    @WebMethod  
+    public TransactionResponse reverseCardRecharge(
+        @WebParam(name = "cardNumber") String cardNumber,
+        @WebParam(name = "cardHolde") String cardHolder,
+        @WebParam(name = "CVV") String CVV,
+        @WebParam(name = "cardDueDate") String cardDueDate,
+        @WebParam(name = "messageMiddlewareId") Long messageMiddlewareId,
+        @WebParam(name = "transactionTypeId") Integer transactionTypeId,        
+        @WebParam(name = "channelId") Integer channelId,
+        @WebParam(name = "transactionDate") Date transactionDate,
+        @WebParam(name = "localTimeTransaction") String localTimeTransaction,
+        @WebParam(name = "acquirerTerminalCodeId") String acquirerTerminalCodeId,
+        @WebParam(name = "transactionNumberAcquirer") String transactionNumberAcquirer,
+        @WebParam(name = "acquirerCountryId") Integer acquirerCountryId,
+        @WebParam(name = "amountReverseRecharge") Float amountReverseRecharge,
+        @WebParam(name = "transactionNumberCardRecharge") String transactionNumberCardRecharge,
+        @WebParam(name = "sequenceTransactionCardRecharge") String sequenceTransactionCardRecharge,
+        @WebParam(name = "tradeName") String tradeName){
+        return operations.reverseCardRecharge(cardNumber,cardHolder,CVV,cardDueDate,messageMiddlewareId,transactionTypeId,channelId,transactionDate,localTimeTransaction,acquirerTerminalCodeId,transactionNumberAcquirer,acquirerCountryId,amountReverseRecharge,transactionNumberCardRecharge,sequenceTransactionCardRecharge,tradeName);
     }
     
 }
