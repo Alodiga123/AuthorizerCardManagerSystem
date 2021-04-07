@@ -1372,11 +1372,10 @@ public class APIOperations {
 
         try {
             CardResponse validateCard = validateCard(cardNumber, ARQC, cardHolder, CVV, cardDueDate, indValidateCardActive);
-            //Nota 20/03/2021: validar que retorna la validación
-            card = validateCard.getCard();
+            //Nota 20/03/2021: validar que retorna la validació
             String pattern = "MMyy";
             SimpleDateFormat simpleDateFormat = new SimpleDateFormat(pattern);
-            String expirationCardDate = simpleDateFormat.format(card.getExpirationDate());
+            String expirationCardDate = simpleDateFormat.format(cardDueDate);
             //Se crea el objeto TransactionManagement y se guarda en BD
             transactionManagement = operationsBD.createTransactionsManagement(null, null, acquirerTerminalCodeId, acquirerCountryId, null, transactionDate, TransactionE.RETIRO_DOMESTICO.getId(),
                     channelId, null, localTimeTransaction, localDateTransaction, null, null,
@@ -1390,6 +1389,7 @@ public class APIOperations {
             }
 
             if (validateCard.getCodigoRespuesta().equals(ResponseCode.SUCCESS.getCode())) {
+                card = validateCard.getCard();
                 validateLimits = getValidateLimits(card, TransactionE.RETIRO_DOMESTICO.getId(), channelId, card.getProductId().getIssuerId().getCountryId().getCode(), withdrawalAmount);
                 if (validateLimits.getCodigoRespuesta().equals(ResponseCode.SUCCESS.getCode())) {
                     transactionResponse = calculateCommisionCMS(card, channelId, transactionTypeId, withdrawalAmount, "12456");
@@ -1413,7 +1413,7 @@ public class APIOperations {
                         }
                         return new TransactionResponse(ResponseCode.CARD_MINIMUM_BALANCE_EXCEEDED.getCode(), ResponseCode.CARD_MINIMUM_BALANCE_EXCEEDED.getMessage());
                     } else {
-                        //sigues
+                        
                         if (currentBalance == null || currentBalance < amountWithdrawlTotal) {
                             //Se rechaza la transacción por no tener balance
                             transactionManagement.setStatusTransactionManagementId(StatusTransactionManagementE.REJECTED.getId());
