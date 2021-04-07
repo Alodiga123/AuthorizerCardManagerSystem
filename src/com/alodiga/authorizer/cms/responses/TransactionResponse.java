@@ -30,6 +30,7 @@ public class TransactionResponse extends Response {
         private Integer totalMovements;
         public List<TransactionsManagementHistory> transactionsManagementHistory;
         private Float amountWithdrawl;
+        private String ARPC;
         
 	public TransactionResponse() {
 		super();
@@ -88,6 +89,11 @@ public class TransactionResponse extends Response {
         this.currentBalance = currentBalance; 
         this.amountWithdrawl = amountWithdrawl;
     }  
+    
+    public TransactionResponse(String code, String mensaje, String ARPC) {
+            super(new Date(), code, mensaje);
+            this.ARPC = ARPC;
+    }
 
     public String getCardNumber() {
         return cardNumber;
@@ -152,5 +158,63 @@ public class TransactionResponse extends Response {
     public void setTransactionCommissionAmount(Float transactionCommissionAmount) {
         this.transactionCommissionAmount = transactionCommissionAmount;
     }
+
+    public Float getCurrentBalance() {
+        return currentBalance;
+    }
+
+    public void setCurrentBalance(Float currentBalance) {
+        this.currentBalance = currentBalance;
+    }
+
+    public Date getStartDate() {
+        return startDate;
+    }
+
+    public void setStartDate(Date startDate) {
+        this.startDate = startDate;
+    }
+
+    public Date getEndingDate() {
+        return endingDate;
+    }
+
+    public void setEndingDate(Date endingDate) {
+        this.endingDate = endingDate;
+    }
+
+    public Integer getTotalMovements() {
+        return totalMovements;
+    }
+
+    public void setTotalMovements(Integer totalMovements) {
+        this.totalMovements = totalMovements;
+    }
+
+    public List<TransactionsManagementHistory> getTransactionsManagementHistory() {
+        return transactionsManagementHistory;
+    }
+
+    public void setTransactionsManagementHistory(List<TransactionsManagementHistory> transactionsManagementHistory) {
+        this.transactionsManagementHistory = transactionsManagementHistory;
+    }
+
+    public Float getAmountWithdrawl() {
+        return amountWithdrawl;
+    }
+
+    public void setAmountWithdrawl(Float amountWithdrawl) {
+        this.amountWithdrawl = amountWithdrawl;
+    }
+
+    public String getARPC() {
+        return ARPC;
+    }
+
+    public void setARPC(String ARPC) {
+        this.ARPC = ARPC;
+    }
+    
+    
      
 }

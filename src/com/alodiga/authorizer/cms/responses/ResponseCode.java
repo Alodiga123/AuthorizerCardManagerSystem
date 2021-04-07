@@ -93,8 +93,10 @@ public enum ResponseCode {
     
     //Compra con Tarjeta
     CARD_PURCHAGE_SUCCESS("44","The card purchage was successful"),
-    BALANCE_NOT_AVAILABLE("45","The card has no unavailable balance");
+    BALANCE_NOT_AVAILABLE("45","The card has no unavailable balance"),
     
+    //Retiro cajero ATM
+    CARD_BALANCE_BELOW_MINIMUN("46","The balance of the card was below the minimum allowed");
     
     private final String code;
     private final String message;
