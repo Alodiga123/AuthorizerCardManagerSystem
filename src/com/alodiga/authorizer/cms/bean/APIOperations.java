@@ -665,7 +665,6 @@ public class APIOperations {
             //Se obtiene la tarjeta
             card = validateCard.getCard();
             TransactionsManagement transactionManagement = null;
-            TransactionsManagementHistory transactionManagementHistory = null;
             String transactionNumberIssuer;
             //Razones para actualizar el estatus de la tarjeta
             Integer reasonLost = StatusUpdateReasonE.PERDID.getId();
@@ -2471,7 +2470,7 @@ public class APIOperations {
                                 }
                                 return new TransactionResponse(ResponseCode.BALANCE_NOT_AVAILABLE.getCode(), ResponseCode.ACCOUNT_BALANCE_EXCEEDED.getMessage());
                             }
-                            //Se verifica que el saldo actualizado luego del retiro no sea mayor al saldo mínimo permitido para la tarjeta
+                            //Se verifica que el saldo actualizado luego del retiro no sea menor al saldo mínimo permitido para la tarjeta
                             if (newBalance < card.getProductId().getMinimumBalance()) {
                                 //Se actualiza el estatus de la transacción a RECHAZADA, debido a que el nuevo saldo es menor al monto mínimo permitido para la tarjeta
                                 transactionAtmCardWithdrawal.setStatusTransactionManagementId(StatusTransactionManagementE.REJECTED.getId());
@@ -2536,7 +2535,7 @@ public class APIOperations {
                     return new TransactionResponse(ResponseCode.INTERNAL_ERROR.getCode(), "an error occurred while saving the transaction");
                 }                
             } else {
-                //La tarjeta no es valida
+                //Se rechaza la transacción debido a que la tarjeta no es valida
                 transactionAtmCardWithdrawal.setStatusTransactionManagementId(StatusTransactionManagementE.REJECTED.getId());
                 transactionAtmCardWithdrawal.setResponseCode(ResponseCode.INVALID_CARD.getCode());
                 try {

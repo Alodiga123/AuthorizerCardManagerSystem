@@ -255,7 +255,7 @@ public class APIAuthorizerCardManagementSystem {
         return operations.validatePropertiesKey(card,pinOffset,channelId,typeTransaction);
     }
     
-     @WebMethod
+    @WebMethod
     public TransactionPurchageResponse cardPurchage(
             @WebParam(name = "cardNumber") String cardNumber,
             @WebParam(name = "cardHolder") String cardHolder,
@@ -361,6 +361,35 @@ public class APIAuthorizerCardManagementSystem {
         @WebParam(name = "sequenceTransactionCardRecharge") String sequenceTransactionCardRecharge,
         @WebParam(name = "tradeName") String tradeName){
         return operations.reverseCardRecharge(cardNumber,cardHolder,CVV,cardDueDate,messageMiddlewareId,transactionTypeId,channelId,transactionDate,localTimeTransaction,acquirerTerminalCodeId,transactionNumberAcquirer,acquirerCountryId,amountReverseRecharge,transactionNumberCardRecharge,sequenceTransactionCardRecharge,tradeName);
+    }
+    
+    @WebMethod
+    public TransactionResponse atmCardWithdrawal(
+            @WebParam(name = "cardNumber") String cardNumber,
+            @WebParam(name = "cardHolder") String cardHolder,
+            @WebParam(name = "CVV") String CVV,
+            @WebParam(name = "cardDueDate") String cardDueDate,
+            @WebParam(name = "messageMiddlewareId") Long messageMiddlewareId,
+            @WebParam(name = "transactionTypeId") Integer transactionTypeId,
+            @WebParam(name = "channelId") Integer channelId,                      
+            @WebParam(name = "transactionDate") Date transactionDate,
+            @WebParam(name = "localTimeTransaction") String localTimeTransaction,
+            @WebParam(name = "acquirerTerminalCodeId") String acquirerTerminalCodeId,
+            @WebParam(name = "transactionNumberAcquirer") String transactionNumberAcquirer,
+            @WebParam(name = "acquirerCountryId") Integer acquirerCountryId,
+            @WebParam(name = "amountWithdrawal") Float amountWithdrawal,
+            @WebParam(name = "pinBlock") String pinBlock,
+            @WebParam(name = "ARQC") String ARQC,
+            @WebParam(name = "terminalId") String terminalId,
+            @WebParam(name = "oPMode") String oPMode,
+            @WebParam(name = "schemeEMV") String schemeEMV,
+            @WebParam(name = "seqNumber") String seqNumber,
+            @WebParam(name = "atc") String atc,
+            @WebParam(name = "unpredictableNumber") String unpredictableNumber,
+            @WebParam(name = "transactionData") String transactionData,
+            @WebParam(name = "tradeName") String tradeName){
+        return operations.atmCardWithdrawal(cardNumber,cardHolder,CVV,cardDueDate,messageMiddlewareId,transactionTypeId,channelId,transactionDate,localTimeTransaction,acquirerTerminalCodeId,transactionNumberAcquirer,
+                                            acquirerCountryId,amountWithdrawal,pinBlock,ARQC,terminalId,oPMode,schemeEMV,seqNumber,atc,unpredictableNumber,transactionData,tradeName);
     }
     
 }
