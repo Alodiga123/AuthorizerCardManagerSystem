@@ -97,6 +97,8 @@ public enum ResponseCode {
     
     //Retiro cajero ATM
     CARD_BALANCE_BELOW_MINIMUN("46","The balance of the card was below the minimum allowed");
+    //validación PinOffset
+    ERROR_VALIDATING_PINNLUNCH("46","The verification digit of the card is not correct");
     
     private final String code;
     private final String message;
