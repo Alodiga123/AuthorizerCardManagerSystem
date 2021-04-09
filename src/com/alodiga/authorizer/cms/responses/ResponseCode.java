@@ -93,8 +93,10 @@ public enum ResponseCode {
     
     //Compra con Tarjeta
     CARD_PURCHAGE_SUCCESS("44","The card purchage was successful"),
-    BALANCE_NOT_AVAILABLE("45","The card has no unavailable balance");
+    BALANCE_NOT_AVAILABLE("45","The card has no unavailable balance"),
     
+    //validación PinOffset
+    ERROR_VALIDATING_PINNLUNCH("46","The verification digit of the card is not correct");
     
     private final String code;
     private final String message;

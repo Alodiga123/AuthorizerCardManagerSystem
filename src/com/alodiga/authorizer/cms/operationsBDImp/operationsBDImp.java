@@ -6,6 +6,7 @@
 package com.alodiga.authorizer.cms.operationsBDImp;
 
 import com.alodiga.authorizer.cms.operationsBD.operationsBD;
+import com.alodiga.authorizer.cms.responses.CardKeyHistoryListResponse;
 import com.alodiga.authorizer.cms.responses.CardResponse;
 import com.alodiga.authorizer.cms.responses.ResponseCode;
 import com.cms.commons.enumeraciones.TransactionE;
@@ -13,12 +14,14 @@ import com.cms.commons.models.AccountCard;
 import com.cms.commons.models.BalanceHistoryCard;
 import com.cms.commons.models.BonusCard;
 import com.cms.commons.models.Card;
+import com.cms.commons.models.CardKeyHistory;
 import com.cms.commons.models.CardStatus;
 import com.cms.commons.models.Channel;
 import com.cms.commons.models.Country;
 import com.cms.commons.models.DaysWeek;
 import com.cms.commons.models.DaysWeekHasProgramLoyalty;
 import com.cms.commons.models.HistoryCardStatusChanges;
+import com.cms.commons.models.KeyProperties;
 import com.cms.commons.models.Sequences;
 import com.cms.commons.models.TransactionsManagement;
 import com.cms.commons.models.TransactionsManagementHistory;
@@ -650,5 +653,27 @@ public class operationsBDImp implements operationsBD {
         } catch (NoResultException e) {
             return null;
         }
+    }
+    
+    public KeyProperties getKeyPropertiesByProductIdByChanelId(Long productId, Integer channelId,EntityManager entityManager) {
+        try {
+            Query query = entityManager.createQuery("SELECT k FROM KeyProperties k WHERE k.productId.id = " + productId + " AND k.channelId.id = " + channelId + "");
+            query.setMaxResults(1);
+            KeyProperties result = (KeyProperties) query.setHint("toplink.refresh", "true").getSingleResult();
+            return result;
+        } catch (NoResultException e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    public CardKeyHistoryListResponse getCardKeyHistoryByCardId(Long cardId, Integer limit,EntityManager entityManager) {
+        List<CardKeyHistory> cardKeyHistorys = null;
+        try {
+            cardKeyHistorys = entityManager.createNamedQuery("CardKeyHistory.findByCardId", CardKeyHistory.class).setParameter("cardId", cardId).setMaxResults(limit).getResultList();
+        } catch (Exception e) {
+            return new CardKeyHistoryListResponse(ResponseCode.INTERNAL_ERROR, "Error loading countries");
+        }
+        return new CardKeyHistoryListResponse(ResponseCode.SUCCESS, "", cardKeyHistorys);
     }
 }

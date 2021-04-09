@@ -99,8 +99,9 @@ public class APIAuthorizerCardManagementSystem {
             @WebParam(name = "transactionNumberAcquirer") String transactionNumberAcquirer,
             @WebParam(name = "cardDueDate") String cardDueDate,
             @WebParam(name = "cardHolder") String cardHolder,
-            @WebParam(name = "PinOffset") String PinOffset) {
-        return operations.cardBalanceInquiry(cardNumber, CVV, ARQC, documentIdentificationNumber, transactionTypeId, channelId, transactionDate, localTimeTransaction, acquirerTerminalCodeId, acquirerCountryId, messageMiddlewareId, transactionNumberAcquirer, cardDueDate, cardHolder, PinOffset);
+            @WebParam(name = "pinClear") String pinClear,
+            @WebParam(name = "terminalId") String terminalId) {
+        return operations.cardBalanceInquiry(cardNumber, CVV, ARQC, documentIdentificationNumber, transactionTypeId, channelId, transactionDate, localTimeTransaction, acquirerTerminalCodeId, acquirerCountryId, messageMiddlewareId, transactionNumberAcquirer, cardDueDate, cardHolder, pinClear,terminalId);
     }
       
     @WebMethod    
