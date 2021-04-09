@@ -95,6 +95,8 @@ public enum ResponseCode {
     CARD_PURCHAGE_SUCCESS("44","The card purchage was successful"),
     BALANCE_NOT_AVAILABLE("45","The card has no unavailable balance"),
     
+    //Retiro cajero ATM
+    CARD_BALANCE_BELOW_MINIMUN("46","The balance of the card was below the minimum allowed");
     //validación PinOffset
     ERROR_VALIDATING_PINNLUNCH("46","The verification digit of the card is not correct");
     
