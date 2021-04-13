@@ -726,19 +726,18 @@ public class APIOperations {
     }
 
     public OperationCardBalanceInquiryResponse cardBalanceInquiry(String cardNumber, String CVV, String ARQC, String documentIdentificationNumber, Integer transactionTypeId, Integer channelId, Date transactionDate, String localTimeTransaction,
-            String acquirerTerminalCodeId, Integer acquirerCountryId, Long messageMiddlewareId, String transactionNumberAcquirer, String cardDueDate, String cardHolder, String pinClear, String PinOffset) {
-        
+                String acquirerTerminalCodeId, Integer acquirerCountryId, Long messageMiddlewareId, String transactionNumberAcquirer, String cardDueDate, String cardHolder, String pinClear, String terminalId) {
+            
         int indValidateCardActive = 1;
-        Card card = null;
+        Utils utils = new Utils();
+        Float cardCurrentBalance = 0.00F;
         String transactionConcept = "Consulta de Saldo sin Movimientos";
         try {
-            CardResponse validateCard = validateCard(cardNumber, ARQC, cardHolder, CVV, cardDueDate, indValidateCardActive);
+            CardResponse cardResponse = validateCard(cardNumber, ARQC, cardHolder, CVV, cardDueDate, indValidateCardActive);
             String maskCardNumber = operationsBD.maskCCNumber(cardNumber);
             TransactionsManagement transactionsManagement = new TransactionsManagement();
-            TransactionsManagementHistory transactionsManagementHistory = new TransactionsManagementHistory();
-            if (validateCard.getCodigoRespuesta().equals(ResponseCode.SUCCESS.getCode())) {
-                card = validateCard.getCard();
-                //Se guarda la transacción en la BD
+            if (cardResponse.getCodigoRespuesta().equals(ResponseCode.SUCCESS.getCode())) {
+                //validar contra la caja 
                 transactionsManagement = operationsBD.createTransactionsManagement(null, null, acquirerTerminalCodeId, acquirerCountryId, transactionNumberAcquirer, transactionDate,
                         TransactionE.CONSULTA.getId(), channelId, null, localTimeTransaction, null, null, null,
                         null, null, null, null, null, null,
@@ -749,14 +748,42 @@ public class APIOperations {
                 } catch (Exception e) {
                     return new OperationCardBalanceInquiryResponse(ResponseCode.INTERNAL_ERROR.getCode(), "an error occurred while saving the transaction");
                 }
-                Float cardCurrentBalance = getCurrentBalanceCard(card.getId());
-                if (cardCurrentBalance == null) {
-                    cardCurrentBalance = 0.00F;
+                Card card = cardResponse.getCard();
+                String pinBlock = utils.generatePinBlock(cardNumber, pinClear);
+                //Se realizan las validaciones del HSM
+                ParameterRequest request = new ParameterRequest();
+                LoadProperties lp = LoadProperties.getIntance();
+                String metod = lp.getProperties("prop.verifyPINUsingIBMMethod");
+                String params = request.getVerifyPinUsingIBMMethodRequest(terminalId, pinBlock, cardNumber, pinClear);
+                VerifyPinUsingIBMMethodResponse response = (VerifyPinUsingIBMMethodResponse) getResponse(metod, params, VerifyPinUsingIBMMethodResponse.class);
+                if (response.getResponseCode().equals(ResponseCode.SUCCESS.getCode())) {
+                    cardCurrentBalance = getCurrentBalanceCard(card.getId());
+                    if (cardCurrentBalance == null) {
+                        cardCurrentBalance = 0.00F;
+                    }
+                } else {
+                    //Fallo en la verificación del pin
+                    transactionsManagement.setStatusTransactionManagementId(StatusTransactionManagementE.REJECTED.getId());
+                    transactionsManagement.setResponseCode(ResponseCode.INVALID_PIN.getCode());
+                    try {
+                        transactionsManagement = operationsBD.saveTransactionsManagement(transactionsManagement, entityManager);
+                    } catch (Exception e) {
+                        return new OperationCardBalanceInquiryResponse(ResponseCode.INTERNAL_ERROR.getCode(), "an error occurred while saving the transaction");
+                    }
+                    return new OperationCardBalanceInquiryResponse(ResponseCode.INVALID_PIN.getCode(), ResponseCode.INVALID_PIN.getMessage());
                 }
-                return new OperationCardBalanceInquiryResponse(ResponseCode.SUCCESS, "SUCCESS", maskCardNumber, cardCurrentBalance, transactionsManagement.getTransactionNumberIssuer(), new Timestamp(new Date().getTime()), messageMiddlewareId);
             } else {
-                return new OperationCardBalanceInquiryResponse(ResponseCode.INVALID_CARD.getCode(), ResponseCode.INVALID_CARD.getMessage());
+                //Fallo en la validación de la tarjeta
+                transactionsManagement.setStatusTransactionManagementId(StatusTransactionManagementE.REJECTED.getId());
+                transactionsManagement.setResponseCode(ResponseCode.INVALID_CARD.getCode());
+                try {
+                    transactionsManagement = operationsBD.saveTransactionsManagement(transactionsManagement, entityManager);
+                } catch (Exception e) {
+                    return new OperationCardBalanceInquiryResponse(ResponseCode.INTERNAL_ERROR.getCode(), "an error occurred while saving the transaction");
+                }
+                return new OperationCardBalanceInquiryResponse(cardResponse.getCodigoRespuesta(), cardResponse.getMensajeRespuesta());
             }
+            return new OperationCardBalanceInquiryResponse(ResponseCode.SUCCESS, "SUCCESS", maskCardNumber, cardCurrentBalance, transactionsManagement.getTransactionNumberIssuer(), new Timestamp(new Date().getTime()), messageMiddlewareId);
         } catch (Exception e) {
             e.printStackTrace();
             return new OperationCardBalanceInquiryResponse(ResponseCode.INTERNAL_ERROR.getCode(), "");
