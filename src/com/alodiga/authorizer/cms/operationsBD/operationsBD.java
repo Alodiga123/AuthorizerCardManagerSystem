@@ -5,6 +5,7 @@
  */
 package com.alodiga.authorizer.cms.operationsBD;
 
+import com.alodiga.authorizer.cms.responses.CardKeyHistoryListResponse;
 import com.alodiga.authorizer.cms.responses.CardResponse;
 import com.cms.commons.models.AccountCard;
 import com.cms.commons.models.BalanceHistoryCard;
@@ -15,6 +16,7 @@ import com.cms.commons.models.Channel;
 import com.cms.commons.models.Country;
 import com.cms.commons.models.DaysWeek;
 import com.cms.commons.models.HistoryCardStatusChanges;
+import com.cms.commons.models.KeyProperties;
 import com.cms.commons.models.ProductHasChannelHasTransaction;
 import com.cms.commons.models.ProgramLoyalty;
 import com.cms.commons.models.ProgramLoyaltyTransaction;
@@ -91,4 +93,8 @@ public interface operationsBD {
     public boolean testConsecutive(String pinoffset);
     public boolean testContinuous(String pinOffset);
     public boolean isNumeric(String pinOffset);
+    
+    
+    public KeyProperties getKeyPropertiesByProductIdByChanelId(Long productId, Integer channelId,EntityManager entityManager);
+    public CardKeyHistoryListResponse getCardKeyHistoryByCardId(Long cardId, Integer limit,EntityManager entityManager);
 }
