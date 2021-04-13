@@ -65,7 +65,7 @@ public class operationsBDImp implements operationsBD {
             s.setCurrentValue(s.getCurrentValue() + 1);
             Calendar cal = Calendar.getInstance();
             int year = cal.get(Calendar.YEAR);
-            secuence = ((s.getOriginApplicationId().getId().equals(Constants.ORIGIN_APPLICATION_CMS_ID)) ? "CMS-" : "APP-")
+            secuence = ((s.getOriginApplicationId().getId().equals(Constants.ORIGIN_APPLICATION_WALLET_ID)) ? "APP-" : "CMS-")
                     .concat(s.getDocumentTypeId().getAcronym()).concat("-")
                     .concat(String.valueOf(year)).concat("-")
                     .concat(numberSequence.toString());
@@ -92,6 +92,7 @@ public class operationsBDImp implements operationsBD {
         if (management == null) {
             transactionsManagement.setAcquirerTerminalCode(acquirerTerminalCode);
             transactionsManagement.setAcquirerCountryId(acquirerCountryId);
+            transactionsManagement.setTransactionNumberAcquirer(transactionNumberAcquirer);
             transactionsManagement.setDateTransaction(dateTransaction);
             transactionsManagement.setCardHolder(cardHolder);
             transactionsManagement.setCardNumber(cardNumber);
@@ -112,6 +113,7 @@ public class operationsBDImp implements operationsBD {
             transactionsManagement.setIssuerId(management.getIssuerId());
             transactionsManagement.setMccCodeTrade(management.getMccCodeTrade());
             transactionsManagement.setTradeName(management.getTradeName());
+            transactionsManagement.setAcquirerCommisionAmount(management.getAcquirerCommisionAmount());
         }
         transactionsManagement.setTransactionNumberIssuer(transactionNumberIssuer);
         transactionsManagement.setTransactionDateIssuer(new Timestamp(new Date().getTime()));
@@ -268,13 +270,8 @@ public class operationsBDImp implements operationsBD {
     }
 
     @Override
-    public Long getTransactionsByCardByTransactionByProductCurrentDate(String cardNumber, Date begginingDateTime, Date endingDateTime, Integer transactionTypeId, Integer channelId, String code, boolean isTransactionLocal, Integer countryId, EntityManager entityManager) {
-        String sql = "SELECT * FROM transactionsManagement t WHERE t.dateTransaction between ?1 AND ?2 AND t.cardNumber = ?3 AND t.transactionTypeId = ?4 AND t.channelId = ?5 AND t.responseCode =?6";
-        if (isTransactionLocal) {
-            sql += (" AND acquirerCountryId = ?7");
-        } else {
-            sql += (" AND acquirerCountryId <> ?7");
-        }
+    public Long getTransactionsByCardByTransactionByProductCurrentDate(String cardNumber, Date begginingDateTime, Date endingDateTime, Integer transactionTypeId, Integer channelId, String code, EntityManager entityManager) {
+        String sql = "SELECT * FROM transactionsManagement t WHERE t.transactionDateIssuer between ?1 AND ?2 AND t.cardNumber = ?3 AND t.transactionTypeId = ?4 AND t.channelId = ?5 AND t.responseCode =?6";
         StringBuilder sqlBuilder = new StringBuilder(sql);
         Query query = entityManager.createNativeQuery(sqlBuilder.toString());
         query.setParameter("1", begginingDateTime);
@@ -283,14 +280,13 @@ public class operationsBDImp implements operationsBD {
         query.setParameter("4", transactionTypeId);
         query.setParameter("5", channelId);
         query.setParameter("6", code);
-        query.setParameter("7", countryId);
         List result = (List) query.setHint("toplink.refresh", "true").getResultList();
         return !result.isEmpty() ? (Long) result.get(0) : 0l;
     }
 
     @Override
     public Double getAmountMaxByUserByUserByTransactionByProductCurrentDate(String cardNumber, Date begginingDateTime, Date endingDateTime, Integer transactionTypeId, Integer channelId, String code, boolean isTransactionLocal, Integer countryId, EntityManager entityManager) {
-        String sql = "SELECT SUM(t.settlementTransactionAmount) FROM transactionsManagement t WHERE t.dateTransaction between ?1 AND ?2 AND t.cardNumber = ?3 AND t.transactionTypeId = ?4 AND t.channelId = ?5 AND t.responseCode =?6";
+        String sql = "SELECT SUM(t.settlementTransactionAmount) FROM transactionsManagement t WHERE t.transactionDateIssuer between ?1 AND ?2 AND t.cardNumber = ?3 AND t.transactionTypeId = ?4 AND t.channelId = ?5 AND t.responseCode =?6";
         if (isTransactionLocal) {
             sql += (" AND acquirerCountryId = ?7");
         } else {
@@ -387,7 +383,7 @@ public class operationsBDImp implements operationsBD {
 
     @Override
     public TransactionsManagement getTransactionsManagementByNumber(String transactionNumber, EntityManager entityManager) {
-        String sql = "SELECT t FROM TransactionsManagement t WHERE t.transactionNumberAcquirer = ?1";
+        String sql = "SELECT t FROM TransactionsManagement t WHERE t.transactionNumberIssuer = ?1";
         StringBuilder sqlBuilder = new StringBuilder(sql);
         Query query = entityManager.createQuery(sqlBuilder.toString());
         query.setParameter("1", transactionNumber);
