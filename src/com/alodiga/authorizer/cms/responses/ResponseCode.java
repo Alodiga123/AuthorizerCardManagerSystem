@@ -28,10 +28,10 @@ public enum ResponseCode {
     
     //validaciones para calcular bonificaciones
     PROGRAM_LOYALTY_BY_CARD_NOT_EXISTS("60","The card does not have a loyalty program associated with it"), 
-    TRANSACTION_MANAGER_BY_NUMBER_NOT_EXISTS("60","The transaction number does not exist"), 
+    TRANSACTION_MANAGER_BY_NUMBER_NOT_EXISTS("61","The transaction number does not exist"), 
     
     //validacion de Tarjeta
-    THE_CARDHOLDER_IS_VERIFIED("145","Cardholder data has been successfully verified"),
+    THE_CARDHOLDER_IS_VERIFIED("144","Cardholder data has been successfully verified"),
     THE_CARDHOLDER_NOT_MATCH("145","Cardholder details do not match"),
     CARD_OWNER_NOT_FOUND("146","Error finding card owner"),
     CARD_NOT_FOUND("147","Error finding the card to verify cardholder data"),
@@ -46,7 +46,7 @@ public enum ResponseCode {
     THE_CARD_HAS_NO_MOVEMENTS("156","The card has no movements"),
     PIN_OFFSET_DIFFERENT("157","The pinOffset is Different"),
     CARD_MINIMUM_BALANCE_EXCEEDED("158","The card minimum balance has exceeded"),
-    DIFFERENT_PIN_OFFSET_LENGTH("158","KEY LENGTH IS DIFFERENT"),
+    DIFFERENT_PIN_OFFSET_LENGTH("167","KEY LENGTH IS DIFFERENT"),
     EXPIRED_KEY("159","EXPIRED KEY"),
     CONSECUTIVE_KEY("160","THE KEY CANNOT HAVE CONSECUTIVE NUMBERS"),
     NO_NUMBER("161","it is not a number"),
