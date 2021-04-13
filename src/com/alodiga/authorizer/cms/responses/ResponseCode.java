@@ -64,6 +64,9 @@ public enum ResponseCode {
     PHONE_CUSTOMER_NOT_MATCH("24","The card was not active because the customer's phone did not match"),
     CARD_ALREADY_ACTIVE("25","The card is already active"),
     
+    //Cambio de estatus de la Tarjeta
+    CARD_STATUS_UPDATE("167", "The card status change was successful"),
+    
     //Comisiones CMS
     COMMISSION_NOT_APPLY("27","The transaction received did not generate commission to be charged"),
     COMMISSION_YES_APPLY("28","The transaction to record the Alodiga commission corresponding to the received transaction was successfully saved in the database."),
@@ -96,7 +99,8 @@ public enum ResponseCode {
     BALANCE_NOT_AVAILABLE("45","The card has no unavailable balance"),
     
     //Retiro cajero ATM
-    CARD_BALANCE_BELOW_MINIMUN("46","The balance of the card was below the minimum allowed");
+    CARD_BALANCE_BELOW_MINIMUN("46","The balance of the card was below the minimum allowed"),
+    
     //validación PinOffset
     ERROR_VALIDATING_PINNLUNCH("46","The verification digit of the card is not correct");
     
