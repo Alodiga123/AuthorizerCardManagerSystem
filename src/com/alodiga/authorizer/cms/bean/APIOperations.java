@@ -425,7 +425,7 @@ public class APIOperations {
         }
         
         //Se obtiene el país asociado al emisor de la tarjeta
-        countryIssuerId = card.getProductId().getIssuerId().getCountryId().getId();
+        countryIssuerId = card.getProductId().getCountryId().getId();
 
         ProductHasChannelHasTransaction productHasChannelHasTransaction = operationsBD.getSettingLimits(transactionTypeId, channelId, card.getProductId().getId(), entityManager);
 
@@ -1298,7 +1298,7 @@ public class APIOperations {
                             }
 
                             //Se retorna que la recarga de la tarjeta se realizó satisfactoriamente
-                            return new TransactionResponse(ResponseCode.CARD_RECHARGE_SUCCESS.getCode(), ResponseCode.CARD_RECHARGE_SUCCESS.getMessage());
+                            return new TransactionResponse(ResponseCode.SUCCESS.getCode(), ResponseCode.SUCCESS.getMessage());
                         }
                     }
                 } else {
@@ -1353,8 +1353,8 @@ public class APIOperations {
         return new CardResponse(ResponseCode.SUCCESS.getCode(), "The PinOffset is correct and exists in the CMS");
     }
 
-    public TransactionResponse cardWithdrawal(String cardNumber, String CVV, String cardDueDate, String cardHolder, String documentIdentificationNumber, Integer channelId, Integer transactionTypeId, Long messageMiddlewareId, Date transactionDate,
-            String localTimeTransaction, String acquirerTerminalCodeId, Integer acquirerCountryId, Date localDateTransaction, Float withdrawalAmount, String conceptTransaction) {
+    public TransactionResponse cardWithdrawal(Integer acquirerCountryId, String cardNumber, String CVV, String cardDueDate, String cardHolder, String documentIdentificationNumber, Integer channelId, Integer transactionTypeId,
+            Long messageMiddlewareId, Date transactionDate, String localTimeTransaction, String acquirerTerminalCodeId, Date localDateTransaction, Float withdrawalAmount, String conceptTransaction) {
 
         Card card = null;
         TransactionResponse transactionResponse = new TransactionResponse();
@@ -1371,16 +1371,12 @@ public class APIOperations {
 
         try {
             CardResponse validateCard = validateCard(cardNumber, ARQC, cardHolder, CVV, cardDueDate, indValidateCardActive);
-            //Nota 20/03/2021: validar que retorna la validació
-            String pattern = "MMyy";
-            SimpleDateFormat simpleDateFormat = new SimpleDateFormat(pattern);
-            String expirationCardDate = simpleDateFormat.format(cardDueDate);
             //Se crea el objeto TransactionManagement y se guarda en BD
-            transactionManagement = operationsBD.createTransactionsManagement(null, null, acquirerTerminalCodeId, acquirerCountryId, null, transactionDate, TransactionE.RETIRO_DOMESTICO.getId(),
+            Country country = operationsBD.getCountry(String.valueOf(acquirerCountryId), entityManager);
+            transactionManagement = operationsBD.createTransactionsManagement(null, null, acquirerTerminalCodeId, country.getId(), null, transactionDate, TransactionE.RETIRO_DOMESTICO.getId(),
                     channelId, null, localTimeTransaction, localDateTransaction, null, null,
                     null, withdrawalAmount, null, null, null, null, null, StatusTransactionManagementE.APPROVED.getId(), cardNumber,
-                    cardHolder, CVV, expirationCardDate, null, null, null, null, null, null, null, ResponseCode.SUCCESS.getCode(), messageMiddlewareId, DocumentTypeE.CARD_WITHDRAWL.getId(), conceptTransaction, entityManager);
-
+                    cardHolder, CVV, cardDueDate, null, null, null, null, null, null, null, ResponseCode.SUCCESS.getCode(), messageMiddlewareId, DocumentTypeE.CARD_WITHDRAWL.getId(), conceptTransaction, entityManager);
             try {
                 transactionManagement = operationsBD.saveTransactionsManagement(transactionManagement, entityManager);
             } catch (Exception e) {
@@ -1389,7 +1385,7 @@ public class APIOperations {
 
             if (validateCard.getCodigoRespuesta().equals(ResponseCode.SUCCESS.getCode())) {
                 card = validateCard.getCard();
-                validateLimits = getValidateLimits(card, TransactionE.RETIRO_DOMESTICO.getId(), channelId, card.getProductId().getIssuerId().getCountryId().getCode(), withdrawalAmount);
+                validateLimits = getValidateLimits(card, TransactionE.RETIRO_DOMESTICO.getId(), channelId, acquirerCountryId.toString(), withdrawalAmount);
                 if (validateLimits.getCodigoRespuesta().equals(ResponseCode.SUCCESS.getCode())) {
                     transactionResponse = calculateCommisionCMS(card, channelId, transactionTypeId, withdrawalAmount, "12456");
                     if (transactionResponse.getCodigoRespuesta().equals(ResponseCode.COMMISSION_YES_APPLY.getCode())) {

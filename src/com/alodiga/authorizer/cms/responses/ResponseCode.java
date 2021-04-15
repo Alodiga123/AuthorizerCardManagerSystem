@@ -2,7 +2,7 @@ package com.alodiga.authorizer.cms.responses;
 
 public enum ResponseCode {
 
-    SUCCESS("00","SUCCESS"),
+    SUCCESS("00","The transaction was successful"),
     INVALID_DATA("01","Invalid data"),
     EXPIRED_PASSWORD("03",""),
     NO_TRUST_IP("04",""),
