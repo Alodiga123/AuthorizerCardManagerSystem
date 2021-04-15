@@ -425,7 +425,7 @@ public class APIOperations {
         }
         
         //Se obtiene el país asociado al emisor de la tarjeta
-        countryIssuerId = card.getProductId().getIssuerId().getCountryId().getId();
+        countryIssuerId = card.getProductId().getCountryId().getId();
 
         ProductHasChannelHasTransaction productHasChannelHasTransaction = operationsBD.getSettingLimits(transactionTypeId, channelId, card.getProductId().getId(), entityManager);
 
@@ -1297,7 +1297,7 @@ public class APIOperations {
                             }
 
                             //Se retorna que la recarga de la tarjeta se realizó satisfactoriamente
-                            return new TransactionResponse(ResponseCode.CARD_RECHARGE_SUCCESS.getCode(), ResponseCode.CARD_RECHARGE_SUCCESS.getMessage());
+                            return new TransactionResponse(ResponseCode.SUCCESS.getCode(), ResponseCode.SUCCESS.getMessage());
                         }
                     }
                 } else {
