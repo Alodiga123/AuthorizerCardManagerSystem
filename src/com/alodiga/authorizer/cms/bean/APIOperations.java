@@ -1459,14 +1459,14 @@ public class APIOperations {
             } else {
                 //Se actualiza el estatus de la transacción a RECHAZADA, debido a que falló la validación de la tarjeta
                 transactionManagement.setStatusTransactionManagementId(StatusTransactionManagementE.REJECTED.getId());
-                transactionManagement.setResponseCode(ResponseCode.CARD_NOT_VALIDATE.getCode());
+                transactionManagement.setResponseCode(ResponseCode.INVALID_CARD.getCode());
                 try {
                     transactionManagement = operationsBD.saveTransactionsManagement(transactionManagement, entityManager);
                 } catch (Exception e) {
                     return new TransactionResponse(ResponseCode.INTERNAL_ERROR.getCode(), "an error occurred while saving the transaction");
                 }
 
-                return new TransactionResponse(ResponseCode.CARD_NOT_VALIDATE.getCode(), ResponseCode.CARD_NOT_VALIDATE.getMessage());
+                return new TransactionResponse(ResponseCode.INVALID_CARD.getCode(), ResponseCode.INVALID_CARD.getMessage());
             }
         } catch (Exception e) {
             return new TransactionResponse(ResponseCode.INTERNAL_ERROR.getCode(), "");
