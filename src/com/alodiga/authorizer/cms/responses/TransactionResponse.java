@@ -24,13 +24,14 @@ public class TransactionResponse extends Response {
         public Date transactionDateIssuer;
         public TransactionsManagement transactionsManagement;
         private Float transactionCommissionAmount;
-        private Float currentBalance; 
+        private Float currentBalanceAmount; 
         private Date startDate;
         private Date endingDate;
         private Integer totalMovements;
         public List<TransactionsManagementHistory> transactionsManagementHistory;
-        private Float amountWithdrawl;
+        private Float transactionAmount;
         private String ARPC;
+        private Float transanctionBonusAmount;
         
 	public TransactionResponse() {
 		super();
@@ -71,7 +72,7 @@ public class TransactionResponse extends Response {
         this.descriptionStatusCard = descriptionStatusCard;
         this.messageMiddlewareId = messageMiddlewareId;
         this.transactionNumberIssuer = transactionNumberIssuer;
-        this.currentBalance = currentBalance; 
+        this.currentBalanceAmount = currentBalance; 
         this.startDate = startDate;
         this.endingDate = endingDate;
         this.totalMovements = totalMovements;
@@ -79,15 +80,17 @@ public class TransactionResponse extends Response {
     }  
     
     public TransactionResponse(String code, String mensaje, String cardNumber, int cardStatusId,
-                                   String descriptionStatusCard, Long messageMiddlewareId, String transactionNumberIssuer,Float currentBalance,Float amountWithdrawl) {
+                                   String descriptionStatusCard, Long messageMiddlewareId, String transactionNumberIssuer,Float currentBalanceAmount,Float transactionAmount, Float transactionCommissionAmount, Float transanctionBonusAmount) {
         super(new Date(), code, mensaje);
         this.cardNumber = cardNumber;
         this.cardStatusId = cardStatusId;
         this.descriptionStatusCard = descriptionStatusCard;
         this.messageMiddlewareId = messageMiddlewareId;
         this.transactionNumberIssuer = transactionNumberIssuer;
-        this.currentBalance = currentBalance; 
-        this.amountWithdrawl = amountWithdrawl;
+        this.currentBalanceAmount= currentBalanceAmount; 
+        this.transactionAmount = transactionAmount;
+        this.transactionCommissionAmount = transactionCommissionAmount;
+        this.transanctionBonusAmount = transanctionBonusAmount;
     }  
     
     public TransactionResponse(String code, String mensaje, String ARPC) {
@@ -159,12 +162,20 @@ public class TransactionResponse extends Response {
         this.transactionCommissionAmount = transactionCommissionAmount;
     }
 
+    public Float getTransanctionBonusAmount() {
+        return transanctionBonusAmount;
+    }
+
+    public void setTransanctionBonusAmount(Float transanctionBonusAmount) {
+        this.transanctionBonusAmount = transanctionBonusAmount;
+    }
+    
     public Float getCurrentBalance() {
-        return currentBalance;
+        return currentBalanceAmount;
     }
 
     public void setCurrentBalance(Float currentBalance) {
-        this.currentBalance = currentBalance;
+        this.currentBalanceAmount = currentBalance;
     }
 
     public Date getStartDate() {
@@ -199,12 +210,12 @@ public class TransactionResponse extends Response {
         this.transactionsManagementHistory = transactionsManagementHistory;
     }
 
-    public Float getAmountWithdrawl() {
-        return amountWithdrawl;
+    public Float getTransactionAmount() {
+        return transactionAmount;
     }
 
-    public void setAmountWithdrawl(Float amountWithdrawl) {
-        this.amountWithdrawl = amountWithdrawl;
+    public void setTransactionAmount(Float transactionAmount) {
+        this.transactionAmount = transactionAmount;
     }
 
     public String getARPC() {
