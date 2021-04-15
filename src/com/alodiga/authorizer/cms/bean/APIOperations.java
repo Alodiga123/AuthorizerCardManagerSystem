@@ -801,6 +801,7 @@ public class APIOperations {
         Integer indFuncionality = 2;
         Currency currencyTransaction = null;
         TransactionsManagement transactionBonificationCMS = null;
+        Float bonusAmount = 0.00F;
 
         if (cardNumber == null || countryCode == null || transactionNumber == null) {
             return new CalculateBonusCardResponse(ResponseCode.INVALID_DATA, "The invalid data");
@@ -889,9 +890,10 @@ public class APIOperations {
                                 currencyTransaction = card.getProductId().getInternationalCurrencyId();
                             }
                             try {
+                                bonusAmount = programLoyaltyTransaction.getTotalBonificationValue();
                                 transactionBonificationCMS = operationsBD.createTransactionsManagement(transactionsManagement, null, null, null, null, null,
                                         TransactionE.BONIFICATION_CMS.getId(), ChannelE.INT.getId(), null, null, null, null, null,
-                                        currencyTransaction.getId(), programLoyaltyTransaction.getTotalBonificationValue(), null, null, null, null,
+                                        currencyTransaction.getId(), bonusAmount, null, null, null, null,
                                         null, StatusTransactionManagementE.APPROVED.getId(), cardNumber, card.getCardHolder(), card.getSecurityCodeCard(), transactionsManagement.getExpirationCardDate(), null, null, null, null,
                                         null, null, null, ResponseCode.SUCCESS.getCode(), null, DocumentTypeE.BONUS_TRANSACTION_CMS.getId(), conceptTransaction, entityManager);
                                 try {
@@ -926,7 +928,7 @@ public class APIOperations {
                 }
             }
         }
-        return new CalculateBonusCardResponse(ResponseCode.SUCCESS, "SUCCESS");
+        return new CalculateBonusCardResponse(ResponseCode.SUCCESS, "SUCCESS", bonusAmount);
     }
 
     public BonusCard saveBonusCard(BonusCard bonusCard) throws Exception {
@@ -1202,6 +1204,7 @@ public class APIOperations {
         CalculateBonusCardResponse calculateBonification = null;
         BalanceHistoryCard balanceHistoryCard = null;
         Float newBalance = 0.00F;
+        Float bonusAmount = 0.00F;
 
         try {
             //Se registra la transacción de Recarga de la Tarjeta en la BD
@@ -1261,11 +1264,8 @@ public class APIOperations {
                             }
                             return new TransactionResponse(ResponseCode.ACCOUNT_BALANCE_EXCEEDED.getCode(), ResponseCode.ACCOUNT_BALANCE_EXCEEDED.getMessage());
                         } else {
-                            //Verificar si la transacción genera bonificación
-                            calculateBonification = calculateBonus(card.getCardNumber(), transactionTypeId, channelId, acquirerCountryId.toString(), amountRecharge, transactionRechargeCard.getTransactionNumberIssuer());
-
                             //Se actualiza el historial del saldos de la tarjeta en la BD del CMS
-                            balanceHistoryCard = operationsBD.createBalanceHistoryCard(card, transactionRechargeCard.getId(), currentBalance, newBalance, entityManager);
+                            balanceHistoryCard = operationsBD.createBalanceHistoryCard(card, transactionRechargeCard.getId(),currentBalance, newBalance, entityManager);
                             try {
                                 balanceHistoryCard = operationsBD.saveBalanceHistoryCard(balanceHistoryCard, entityManager);
                             } catch (Exception e) {
@@ -1276,6 +1276,9 @@ public class APIOperations {
                             accountCard.setCurrentBalance(newBalance);
                             accountCard.setUpdateDate(new Timestamp(new Date().getTime()));
                             entityManager.persist(accountCard);
+                            
+                            //Verificar si la transacción genera bonificación
+                            calculateBonification = calculateBonus(card.getCardNumber(), transactionTypeId, channelId, acquirerCountryId.toString(), amountRecharge, transactionRechargeCard.getTransactionNumberIssuer());
 
                             //Se actualiza la transacción
                             if (card.getProductId().getDomesticCurrencyId() != null) {
