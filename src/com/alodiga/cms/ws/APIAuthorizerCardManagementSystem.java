@@ -201,11 +201,12 @@ public class APIAuthorizerCardManagementSystem {
             @WebParam(name = "transactionDate") Date transactionDate,
             @WebParam(name = "localTimeTransaction") String localTimeTransaction,
             @WebParam(name = "acquirerTerminalCodeId") String acquirerTerminalCodeId,
-            @WebParam(name = "acquirerCountryId") Integer acquirerCountryId,
+            @WebParam(name = "acquirerCountryId") String acquirerCountryId,
+            @WebParam(name = "transactionNumberAcquirer") String transactionNumberAcquirer,
             @WebParam(name = "localDateTransaction")Date localDateTransaction,
             @WebParam(name = "withdrawalAmount") Float withdrawalAmount,
             @WebParam(name = "conceptTransaction") String conceptTransaction) {
-        return operations.cardWithdrawal(cardNumber,CVV,cardDueDate,cardHolder,documentIdentificationNumber,channelId,transactionTypeId,messageMiddlewareId,transactionDate,localTimeTransaction,acquirerTerminalCodeId,acquirerCountryId,localDateTransaction,withdrawalAmount,conceptTransaction);
+        return operations.cardWithdrawal(cardNumber,CVV,cardDueDate,cardHolder,documentIdentificationNumber,channelId,transactionTypeId,messageMiddlewareId,transactionDate,localTimeTransaction,acquirerTerminalCodeId,acquirerCountryId,transactionNumberAcquirer,localDateTransaction,withdrawalAmount,conceptTransaction);
     }
     
     @WebMethod
