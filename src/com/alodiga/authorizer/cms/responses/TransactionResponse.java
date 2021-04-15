@@ -31,6 +31,7 @@ public class TransactionResponse extends Response {
         public List<TransactionsManagementHistory> transactionsManagementHistory;
         private Float amountWithdrawl;
         private String ARPC;
+        private Float amountCommission;
         
 	public TransactionResponse() {
 		super();
@@ -79,7 +80,7 @@ public class TransactionResponse extends Response {
     }  
     
     public TransactionResponse(String code, String mensaje, String cardNumber, int cardStatusId,
-                                   String descriptionStatusCard, Long messageMiddlewareId, String transactionNumberIssuer,Float currentBalance,Float amountWithdrawl) {
+                                   String descriptionStatusCard, Long messageMiddlewareId, String transactionNumberIssuer,Float currentBalance,Float amountWithdrawl, Float amountCommission) {
         super(new Date(), code, mensaje);
         this.cardNumber = cardNumber;
         this.cardStatusId = cardStatusId;
@@ -88,6 +89,7 @@ public class TransactionResponse extends Response {
         this.transactionNumberIssuer = transactionNumberIssuer;
         this.currentBalance = currentBalance; 
         this.amountWithdrawl = amountWithdrawl;
+        this.amountCommission = amountCommission;
     }  
     
     public TransactionResponse(String code, String mensaje, String ARPC) {

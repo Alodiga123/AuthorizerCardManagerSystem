@@ -1100,7 +1100,7 @@ public class APIOperations {
                 //Colocar asteriscos al cardNumber
                 String cardNumberEncript = operationsBD.transformCardNumber(cardNumber);
                 //Se obtiene la tarjeta asociada
-                card = getCardByCardNumber(cardNumber);
+                card = validateCard.getCard();
                 //Se buscan los movimientos de la tarjeta
                 List<TransactionsManagementHistory> transactionsManagementHistory = operationsBD.getCardMovements(cardNumber, date1, date2, entityManager);
                 if (!transactionsManagementHistory.isEmpty() || transactionsManagementHistory.size() != 0) {
@@ -1116,8 +1116,7 @@ public class APIOperations {
                         transactionsManagementHistoryList.add(movements);
                     }
 
-                    //Se obtiene la tarjeta asociada a la transacción y el saldo actual
-                    card = validateCard.getCard();
+                    //Se obtiene el saldo actual
                     Float currentBalance = getCurrentBalanceCard(card.getId());
                     //Se crea el objeto TransactionManagement y se guarda en BD
                     String pattern = "MMyy";
@@ -1153,7 +1152,7 @@ public class APIOperations {
                     return new TransactionResponse(ResponseCode.THE_CARD_HAS_NO_MOVEMENTS.getCode(), ResponseCode.THE_CARD_HAS_NO_MOVEMENTS.getMessage());
                 }
             } else {
-                // La tarjeta no puede validación
+                // La tarjeta no es valida
                 String pattern = "MMyy";
                 SimpleDateFormat simpleDateFormat = new SimpleDateFormat(pattern);
                 String expirationCardDate = simpleDateFormat.format(card.getExpirationDate());
@@ -1359,7 +1358,6 @@ public class APIOperations {
 
         try {
             CardResponse validateCard = validateCard(cardNumber, ARQC, cardHolder, CVV, cardDueDate, indValidateCardActive);
-            //Nota 20/03/2021: validar que retorna la validació
             String pattern = "MMyy";
             SimpleDateFormat simpleDateFormat = new SimpleDateFormat(pattern);
             String expirationCardDate = simpleDateFormat.format(cardDueDate);
@@ -1433,7 +1431,7 @@ public class APIOperations {
                     //Se verifica si aplica bonificación
                     CalculateBonusCardResponse calculateBonus = calculateBonus(cardNumber, transactionTypeId, channelId, card.getProductId().getIssuerId().getCountryId().getCode(), withdrawalAmount, transactionManagement.getCardNumber());
 
-                    return new TransactionResponse(ResponseCode.SUCCESS.getCode(), "", cardNumberEncript, card.getCardStatusId().getId(), card.getCardStatusId().getDescription(), messageMiddlewareId.longValue(), transactionManagement.getTransactionNumberIssuer(), currentBalanceSource, amountWithdrawlTotal);
+                    return new TransactionResponse(ResponseCode.SUCCESS.getCode(), "", cardNumberEncript, card.getCardStatusId().getId(), card.getCardStatusId().getDescription(), messageMiddlewareId.longValue(), transactionManagement.getTransactionNumberIssuer(), currentBalanceSource, amountWithdrawlTotal, amountCommission);
 
                 } else {
                     //El cliente excedio los límites transaccionales
@@ -1446,7 +1444,7 @@ public class APIOperations {
                     }
                     return new TransactionResponse(validateLimits.getCodigoRespuesta(), validateLimits.getMensajeRespuesta());
 
-                }
+                    }
             } else {
                 //Se actualiza el estatus de la transacción a RECHAZADA, debido a que falló la validación de la tarjeta
                 transactionManagement.setStatusTransactionManagementId(StatusTransactionManagementE.REJECTED.getId());
