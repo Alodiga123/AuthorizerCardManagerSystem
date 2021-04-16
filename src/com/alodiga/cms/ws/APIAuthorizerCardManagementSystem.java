@@ -190,7 +190,6 @@ public class APIAuthorizerCardManagementSystem {
     
     @WebMethod
     public TransactionResponse cardWithdrawal(
-            @WebParam(name = "acquirerCountryId") Integer acquirerCountryId,
             @WebParam(name = "cardNumber") String cardNumber,
             @WebParam(name = "CVV") String CVV,
             @WebParam(name = "cardDueDate") String cardDueDate,
