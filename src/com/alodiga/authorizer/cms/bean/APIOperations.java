@@ -66,6 +66,7 @@ import com.cms.commons.models.CardKeyHistory;
 import com.cms.commons.models.Currency;
 import com.cms.commons.models.HistoryCardStatusChanges;
 import com.cms.commons.models.KeyProperties;
+import java.net.ResponseCache;
 import java.util.ArrayList;
 
 @Stateless(name = "FsProcessorCMSAuthorizer", mappedName = "ejb/FsProcessorCMSAuthorizer")
@@ -2053,7 +2054,7 @@ public class APIOperations {
                         } catch (Exception e) {
                             return new TransactionResponse(ResponseCode.INTERNAL_ERROR.getCode(), "an error occurred while saving the transaction");
                         }
-                        return new TransactionResponse(ResponseCode.INVALID_PIN.getCode(), ResponseCode.INVALID_PIN.getMessage());
+                        return new TransactionResponse(ResponseCode.INVALID_PIN.getCode(), response.getResponseMessage());
 
                     }
                 } else {
@@ -2065,7 +2066,7 @@ public class APIOperations {
                     } catch (Exception e) {
                         return new TransactionResponse(ResponseCode.INTERNAL_ERROR.getCode(), "an error occurred while saving the transaction");
                     }
-                    return new TransactionResponse(ResponseCode.INVALID_PROPERTIES.getCode(), ResponseCode.INVALID_PROPERTIES.getMessage());
+                    return new TransactionResponse(ResponseCode.INVALID_PROPERTIES.getCode(), transactionResponse.getMensajeRespuesta());
 
                 }
             } else {
@@ -2077,7 +2078,7 @@ public class APIOperations {
                 } catch (Exception e) {
                     return new TransactionResponse(ResponseCode.INTERNAL_ERROR.getCode(), "an error occurred while saving the transaction");
                 }
-                return new TransactionResponse(cardResponse.getCodigoRespuesta(), cardResponse.getMensajeRespuesta());
+                return new TransactionResponse(ResponseCode.INVALID_CARD.getCode(), cardResponse.getMensajeRespuesta());
 
             }
 
