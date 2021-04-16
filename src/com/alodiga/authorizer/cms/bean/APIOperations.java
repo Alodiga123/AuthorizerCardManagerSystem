@@ -1442,7 +1442,7 @@ public class APIOperations {
                     entityManager.persist(accountCard);
 
                     //Se verifica si aplica bonificación
-                    CalculateBonusCardResponse calculateBonus = calculateBonus(cardNumber, transactionTypeId, channelId, card.getProductId().getIssuerId().getCountryId().getCode(), withdrawalAmount, transactionManagement.getCardNumber());
+                    CalculateBonusCardResponse calculateBonus = calculateBonus(cardNumber, transactionTypeId, channelId, country.getCodeIso3(), withdrawalAmount, transactionManagement.getTransactionNumberIssuer());
                     //Si aplica bonificación se obtiene el monto aplicado
                     if(calculateBonus.getCodigoRespuesta().equals(ResponseCode.SUCCESS.getCode())){
                       bonusAmount = calculateBonus.getBonusAmount();  
