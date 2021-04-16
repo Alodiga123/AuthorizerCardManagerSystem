@@ -84,48 +84,51 @@ public class operationsBDImp implements operationsBD {
             String mccCodeTrade, String tradeName, String systemTraceAuditNumber, Integer numberMovementsCheckBalance, String responseCode, Long messageMiddlewareId, Integer DocumentTypeId, String transactionConcept, EntityManager entityManager) {
 
         TransactionsManagement transactionsManagement = new TransactionsManagement();
-        Sequences sequence = getSequencesByDocumentTypeByOriginApplication(DocumentTypeId, Constants.ORIGIN_APPLICATION_CMS_AUTHORIZE, entityManager);
-        String transactionNumberIssuer = generateNumberSequence(sequence, entityManager);
-        Calendar cal = Calendar.getInstance();
-        int year = cal.get(Calendar.YEAR);
-        String transactionSequenceNumber = transactionTypeId.toString().concat(String.valueOf(year)).concat(sequence.getCurrentValue().toString());
-        if (management == null) {
-            transactionsManagement.setAcquirerTerminalCode(acquirerTerminalCode);
-            transactionsManagement.setAcquirerCountryId(acquirerCountryId);
-            transactionsManagement.setTransactionNumberAcquirer(transactionNumberAcquirer);
-            transactionsManagement.setDateTransaction(dateTransaction);
-            transactionsManagement.setCardHolder(cardHolder);
-            transactionsManagement.setCardNumber(cardNumber);
-            transactionsManagement.setCvv(CVV);
-            transactionsManagement.setExpirationCardDate(expirationCardDate);
-            transactionsManagement.setIssuerId(issuerId);
-            transactionsManagement.setMccCodeTrade(mccCodeTrade);
-            transactionsManagement.setTradeName(tradeName);
-        } else {
-            transactionsManagement.setAcquirerTerminalCode(management.getAcquirerTerminalCode());
-            transactionsManagement.setAcquirerCountryId(management.getAcquirerCountryId());
-            transactionsManagement.setTransactionReference(management.getTransactionNumberAcquirer());
-            transactionsManagement.setDateTransaction(management.getDateTransaction());
-            transactionsManagement.setCardHolder(management.getCardHolder());
-            transactionsManagement.setCardNumber(management.getCardNumber());
-            transactionsManagement.setCvv(management.getCvv());
-            transactionsManagement.setExpirationCardDate(management.getExpirationCardDate());
-            transactionsManagement.setIssuerId(management.getIssuerId());
-            transactionsManagement.setMccCodeTrade(management.getMccCodeTrade());
-            transactionsManagement.setTradeName(management.getTradeName());
-            transactionsManagement.setAcquirerCommisionAmount(management.getAcquirerCommisionAmount());
-        }
-        transactionsManagement.setTransactionNumberIssuer(transactionNumberIssuer);
-        transactionsManagement.setTransactionDateIssuer(new Timestamp(new Date().getTime()));
-        transactionsManagement.setTransactionSequence(transactionSequenceNumber);
-        transactionsManagement.setTransactionTypeId(transactionTypeId);
-        transactionsManagement.setChannelId(channelId);
-        transactionsManagement.setSettlementTransactionAmount(settlementTransactionAmount);
-        transactionsManagement.setSettlementCurrencyTransactionId(settlementCurrencyTransactionId);
-        transactionsManagement.setStatusTransactionManagementId(statusTransactionManagementId);
-        transactionsManagement.setResponseCode(responseCode);
-        transactionsManagement.setCreateDate(new Timestamp(new Date().getTime()));
-
+        try {            
+            Sequences sequence = getSequencesByDocumentTypeByOriginApplication(DocumentTypeId, Constants.ORIGIN_APPLICATION_CMS_AUTHORIZE, entityManager);
+            String transactionNumberIssuer = generateNumberSequence(sequence, entityManager);
+            Calendar cal = Calendar.getInstance();
+            int year = cal.get(Calendar.YEAR);
+            String transactionSequenceNumber = transactionTypeId.toString().concat(String.valueOf(year)).concat(sequence.getCurrentValue().toString());
+            if (management == null) {
+                transactionsManagement.setAcquirerTerminalCode(acquirerTerminalCode);
+                transactionsManagement.setAcquirerCountryId(acquirerCountryId);
+                transactionsManagement.setTransactionNumberAcquirer(transactionNumberAcquirer);
+                transactionsManagement.setDateTransaction(dateTransaction);
+                transactionsManagement.setCardHolder(cardHolder);
+                transactionsManagement.setCardNumber(cardNumber);
+                transactionsManagement.setCvv(CVV);
+                transactionsManagement.setExpirationCardDate(expirationCardDate);
+                transactionsManagement.setIssuerId(issuerId);
+                transactionsManagement.setMccCodeTrade(mccCodeTrade);
+                transactionsManagement.setTradeName(tradeName);
+            } else {
+                transactionsManagement.setAcquirerTerminalCode(management.getAcquirerTerminalCode());
+                transactionsManagement.setAcquirerCountryId(management.getAcquirerCountryId());
+                transactionsManagement.setTransactionReference(management.getTransactionNumberAcquirer());
+                transactionsManagement.setDateTransaction(management.getDateTransaction());
+                transactionsManagement.setCardHolder(management.getCardHolder());
+                transactionsManagement.setCardNumber(management.getCardNumber());
+                transactionsManagement.setCvv(management.getCvv());
+                transactionsManagement.setExpirationCardDate(management.getExpirationCardDate());
+                transactionsManagement.setIssuerId(management.getIssuerId());
+                transactionsManagement.setMccCodeTrade(management.getMccCodeTrade());
+                transactionsManagement.setTradeName(management.getTradeName());
+                transactionsManagement.setAcquirerCommisionAmount(management.getAcquirerCommisionAmount());
+            }
+            transactionsManagement.setTransactionNumberIssuer(transactionNumberIssuer);
+            transactionsManagement.setTransactionDateIssuer(new Timestamp(new Date().getTime()));
+            transactionsManagement.setTransactionSequence(transactionSequenceNumber);
+            transactionsManagement.setTransactionTypeId(transactionTypeId);
+            transactionsManagement.setChannelId(channelId);
+            transactionsManagement.setSettlementTransactionAmount(settlementTransactionAmount);
+            transactionsManagement.setSettlementCurrencyTransactionId(settlementCurrencyTransactionId);
+            transactionsManagement.setStatusTransactionManagementId(statusTransactionManagementId);
+            transactionsManagement.setResponseCode(responseCode);
+            transactionsManagement.setCreateDate(new Timestamp(new Date().getTime()));
+        } catch (Exception e) {
+            e.printStackTrace();
+        }      
         return transactionsManagement;
     }
 
@@ -271,7 +274,7 @@ public class operationsBDImp implements operationsBD {
 
     @Override
     public Long getTransactionsByCardByTransactionByProductCurrentDate(String cardNumber, Date begginingDateTime, Date endingDateTime, Integer transactionTypeId, Integer channelId, String code, EntityManager entityManager) {
-        String sql = "SELECT * FROM transactionsManagement t WHERE t.transactionDateIssuer between ?1 AND ?2 AND t.cardNumber = ?3 AND t.transactionTypeId = ?4 AND t.channelId = ?5 AND t.responseCode =?6";
+        String sql = "SELECT COUNT(t.id) FROM transactionsManagement t WHERE t.transactionDateIssuer between ?1 AND ?2 AND t.cardNumber = ?3 AND t.transactionTypeId = ?4 AND t.channelId = ?5 AND t.responseCode =?6";
         StringBuilder sqlBuilder = new StringBuilder(sql);
         Query query = entityManager.createNativeQuery(sqlBuilder.toString());
         query.setParameter("1", begginingDateTime);
@@ -285,12 +288,14 @@ public class operationsBDImp implements operationsBD {
     }
 
     @Override
-    public Double getAmountMaxByUserByUserByTransactionByProductCurrentDate(String cardNumber, Date begginingDateTime, Date endingDateTime, Integer transactionTypeId, Integer channelId, String code, boolean isTransactionLocal, Integer countryId, EntityManager entityManager) {
+    public Double getAmountMaxByUserByUserByTransactionByProductCurrentDate(String cardNumber, Date begginingDateTime, Date endingDateTime, Integer transactionTypeId, Integer channelId, String code, boolean isTransactionLocal, Integer countryId, Integer indFuncionality, EntityManager entityManager) {
         String sql = "SELECT SUM(t.settlementTransactionAmount) FROM transactionsManagement t WHERE t.transactionDateIssuer between ?1 AND ?2 AND t.cardNumber = ?3 AND t.transactionTypeId = ?4 AND t.channelId = ?5 AND t.responseCode =?6";
-        if (isTransactionLocal) {
-            sql += (" AND acquirerCountryId = ?7");
-        } else {
-            sql += (" AND acquirerCountryId <> ?7");
+        if (indFuncionality == 1) { //Validar Límites Transaccionales
+            if (isTransactionLocal) {
+                sql += (" AND acquirerCountryId = ?7");
+            } else {
+                sql += (" AND acquirerCountryId <> ?7");
+            }
         }
         StringBuilder sqlBuilder = new StringBuilder(sql);
         Query query = entityManager.createNativeQuery(sqlBuilder.toString());
@@ -300,7 +305,9 @@ public class operationsBDImp implements operationsBD {
         query.setParameter("4", transactionTypeId);
         query.setParameter("5", channelId);
         query.setParameter("6", code);
-        query.setParameter("7", countryId);
+        if (indFuncionality == 1) {
+            query.setParameter("7", countryId);
+        }        
         List result = (List) query.setHint("toplink.refresh", "true").getResultList();
         return result.get(0) != null ? (double) result.get(0) : 0f;
     }
@@ -412,7 +419,7 @@ public class operationsBDImp implements operationsBD {
     @Override
     public BalanceHistoryCard loadLastBalanceHistoryByCard(Long cardId, EntityManager entityManager) {
         try {
-            Query query = entityManager.createQuery("SELECT b FROM BalanceHistoryCard b WHERE b.cardUserId.id = '" + cardId + "'");
+            Query query = entityManager.createQuery("SELECT b FROM BalanceHistoryCard b WHERE b.cardUserId.id = '" + cardId + "'" + "ORDER BY b.id desc");
             query.setMaxResults(1);
             BalanceHistoryCard result = (BalanceHistoryCard) query.setHint("toplink.refresh", "true").getSingleResult();
             return result;
