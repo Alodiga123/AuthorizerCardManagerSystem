@@ -1447,7 +1447,7 @@ public class APIOperations {
                     if(calculateBonus.getCodigoRespuesta().equals(ResponseCode.SUCCESS.getCode())){
                       bonusAmount = calculateBonus.getBonusAmount();  
                     }
-                    return new TransactionResponse(ResponseCode.SUCCESS.getCode(), "", cardNumberEncript, card.getCardStatusId().getId(), card.getCardStatusId().getDescription(), messageMiddlewareId.longValue(), transactionManagement.getTransactionNumberIssuer(), currentBalanceSource, amountWithdrawlTotal, amountCommission, bonusAmount);
+                    return new TransactionResponse(ResponseCode.SUCCESS.getCode(), ResponseCode.SUCCESS.getMessage(), cardNumberEncript, card.getCardStatusId().getId(), card.getCardStatusId().getDescription(), messageMiddlewareId.longValue(), transactionManagement.getTransactionNumberIssuer(), currentBalanceSource, amountWithdrawlTotal, amountCommission, bonusAmount);
 
                 } else {
                     //El cliente excedio los límites transaccionales
