@@ -124,6 +124,7 @@ public class operationsBDImp implements operationsBD {
             transactionsManagement.setSettlementTransactionAmount(settlementTransactionAmount);
             transactionsManagement.setSettlementCurrencyTransactionId(settlementCurrencyTransactionId);
             transactionsManagement.setStatusTransactionManagementId(statusTransactionManagementId);
+            transactionsManagement.setTransactionConcept(transactionConcept);
             transactionsManagement.setResponseCode(responseCode);
             transactionsManagement.setCreateDate(new Timestamp(new Date().getTime()));
         } catch (Exception e) {
@@ -313,9 +314,9 @@ public class operationsBDImp implements operationsBD {
     }
 
     @Override
-    public List<TransactionsManagementHistory> getCardMovements(String cardNumber, Date startDate, Date endingDate, EntityManager entityManager) {
-        List<TransactionsManagementHistory> transactionsManagementHistory = new ArrayList<TransactionsManagementHistory>();
-        String sql = "SELECT t FROM TransactionsManagementHistory t WHERE t.cardNumber = '" + cardNumber + "' AND t.transactionDateIssuer BETWEEN ?1 AND ?2 AND t.transactionTypeId IN(?3,?4,?5,?6,?7,?8,?9,?10,?11)";
+    public List<TransactionsManagement> getCardMovements(String cardNumber, Date startDate, Date endingDate, EntityManager entityManager) {
+        List<TransactionsManagement> transactionsManagement = new ArrayList<TransactionsManagement>();
+        String sql = "SELECT t FROM TransactionsManagement t WHERE t.cardNumber = '" + cardNumber + "' AND t.transactionDateIssuer BETWEEN ?1 AND ?2 AND t.transactionTypeId IN(?3,?4,?5,?6,?7,?8,?9,?10,?11)";
         StringBuilder sqlBuilder = new StringBuilder(sql);
         Query query = entityManager.createQuery(sqlBuilder.toString());
         query.setParameter("1", startDate);
@@ -330,11 +331,11 @@ public class operationsBDImp implements operationsBD {
         query.setParameter("10", TransactionE.TRANSFERENCIAS_PROPIAS.getId());
         query.setParameter("11", TransactionE.RECARGA_MANUAL.getId());
         try {
-            transactionsManagementHistory = query.setHint("toplink.refresh", "true").getResultList();
+            transactionsManagement = query.setHint("toplink.refresh", "true").getResultList();
         } catch (NoResultException e) {
             return null;
         }
-        return transactionsManagementHistory;
+        return transactionsManagement;
     }
 
     @Override

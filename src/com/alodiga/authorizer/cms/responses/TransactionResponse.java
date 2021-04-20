@@ -28,7 +28,7 @@ public class TransactionResponse extends Response {
         private Date startDate;
         private Date endingDate;
         private Integer totalMovements;
-        public List<TransactionsManagementHistory> transactionsManagementHistory;
+        public List<TransactionsManagement> transactionsManagementList;
         private Float transactionAmount;
         private String ARPC;
         private Float transanctionBonusAmount;
@@ -65,7 +65,7 @@ public class TransactionResponse extends Response {
     }
         
     public TransactionResponse(String code, String mensaje, String cardNumber, int cardStatusId,
-                                   String descriptionStatusCard, Long messageMiddlewareId, String transactionNumberIssuer,Float currentBalance, Date startDate, Date endingDate,Integer totalMovements, List<TransactionsManagementHistory> transactionsManagementHistory) {
+                                   String descriptionStatusCard, Long messageMiddlewareId, String transactionNumberIssuer,Float currentBalance, Date startDate, Date endingDate,Integer totalMovements, List<TransactionsManagement> transactionsManagementList) {
         super(new Date(), code, mensaje);
         this.cardNumber = cardNumber;
         this.cardStatusId = cardStatusId;
@@ -76,7 +76,7 @@ public class TransactionResponse extends Response {
         this.startDate = startDate;
         this.endingDate = endingDate;
         this.totalMovements = totalMovements;
-        this.transactionsManagementHistory = transactionsManagementHistory;
+        this.transactionsManagementList = transactionsManagementList;
     }  
     
     public TransactionResponse(String code, String mensaje, String cardNumber, int cardStatusId,
@@ -169,14 +169,6 @@ public class TransactionResponse extends Response {
     public void setTransanctionBonusAmount(Float transanctionBonusAmount) {
         this.transanctionBonusAmount = transanctionBonusAmount;
     }
-    
-    public Float getCurrentBalance() {
-        return currentBalanceAmount;
-    }
-
-    public void setCurrentBalance(Float currentBalance) {
-        this.currentBalanceAmount = currentBalance;
-    }
 
     public Date getStartDate() {
         return startDate;
@@ -202,13 +194,23 @@ public class TransactionResponse extends Response {
         this.totalMovements = totalMovements;
     }
 
-    public List<TransactionsManagementHistory> getTransactionsManagementHistory() {
-        return transactionsManagementHistory;
+    public Float getCurrentBalanceAmount() {
+        return currentBalanceAmount;
     }
 
-    public void setTransactionsManagementHistory(List<TransactionsManagementHistory> transactionsManagementHistory) {
-        this.transactionsManagementHistory = transactionsManagementHistory;
+    public void setCurrentBalanceAmount(Float currentBalanceAmount) {
+        this.currentBalanceAmount = currentBalanceAmount;
     }
+
+    public List<TransactionsManagement> getTransactionsManagementList() {
+        return transactionsManagementList;
+    }
+
+    public void setTransactionsManagementList(List<TransactionsManagement> transactionsManagementList) {
+        this.transactionsManagementList = transactionsManagementList;
+    }
+
+    
 
     public Float getTransactionAmount() {
         return transactionAmount;
