@@ -66,6 +66,7 @@ import com.cms.commons.models.CardKeyHistory;
 import com.cms.commons.models.Currency;
 import com.cms.commons.models.HistoryCardStatusChanges;
 import com.cms.commons.models.KeyProperties;
+import java.net.ResponseCache;
 import java.util.ArrayList;
 
 @Stateless(name = "FsProcessorCMSAuthorizer", mappedName = "ejb/FsProcessorCMSAuthorizer")
@@ -1100,7 +1101,7 @@ public class APIOperations {
         TransactionsManagementHistory transactionManagementHistory = null;
         String ARQC = null;
         int indValidateCardActive = 1;
-        List<TransactionsManagementHistory> transactionsManagementHistoryList = new ArrayList<TransactionsManagementHistory>();
+        List<TransactionsManagement> transactionsManagementList = new ArrayList<TransactionsManagement>();
         String conceptTransaction = "Consultar Movimientos de la Tarjeta";
         try {
             CardResponse validateCard = validateCard(cardNumber, ARQC, cardHolder, CVV, cardDueDate, indValidateCardActive);
@@ -1113,18 +1114,18 @@ public class APIOperations {
                 //Se obtiene la tarjeta asociada
                 card = validateCard.getCard();
                 //Se buscan los movimientos de la tarjeta
-                List<TransactionsManagementHistory> transactionsManagementHistory = operationsBD.getCardMovements(cardNumber, date1, date2, entityManager);
-                if (!transactionsManagementHistory.isEmpty() || transactionsManagementHistory.size() != 0) {
+                List<TransactionsManagement> transactionsManagement = operationsBD.getCardMovements(cardNumber, date1, date2, entityManager);
+                if (!transactionsManagement.isEmpty() || transactionsManagement.size() != 0) {
 
                     //Se guarda la lista de respuesta solamente con los campos deseados a mostrar
-                    for (TransactionsManagementHistory th : transactionsManagementHistory) {
-                        TransactionsManagementHistory movements = new TransactionsManagementHistory();
-                        movements.setTransactionReference(th.getTransactionReference());
-                        movements.setTransactionTypeId(th.getTransactionTypeId());
-                        movements.setDateTransaction(th.getDateTransaction());
-                        movements.setSettlementTransactionAmount(th.getSettlementTransactionAmount());
-                        movements.setTransactionConcept(th.getTransactionConcept());
-                        transactionsManagementHistoryList.add(movements);
+                    for (TransactionsManagement tm : transactionsManagement) {
+                        TransactionsManagement movements = new TransactionsManagement();
+                        movements.setTransactionSequence(tm.getTransactionSequence());
+                        movements.setTransactionTypeId(tm.getTransactionTypeId());
+                        movements.setTransactionDateIssuer(tm.getTransactionDateIssuer());
+                        movements.setSettlementTransactionAmount(tm.getSettlementTransactionAmount());
+                        movements.setTransactionConcept(tm.getTransactionConcept());
+                        transactionsManagementList.add(movements);
                     }
 
                     //Se obtiene el saldo actual
@@ -1144,7 +1145,7 @@ public class APIOperations {
                     } catch (Exception e) {
                         return new TransactionResponse(ResponseCode.INTERNAL_ERROR.getCode(), "an error occurred while saving the transaction");
                     }
-                    return new TransactionResponse(ResponseCode.SUCCESS.getCode(), "", cardNumberEncript, card.getCardStatusId().getId(), card.getCardStatusId().getDescription(), messageMiddlewareId.longValue(), transactionManagement.getTransactionNumberIssuer(), currentBalance, date1, date2, transactionsManagementHistory.size(), transactionsManagementHistoryList);
+                    return new TransactionResponse(ResponseCode.SUCCESS.getCode(), "", cardNumberEncript, card.getCardStatusId().getId(), card.getCardStatusId().getDescription(), messageMiddlewareId.longValue(), transactionManagement.getTransactionNumberIssuer(), currentBalance, date1, date2, transactionsManagement.size(), transactionsManagementList);
                 } else {
                     //La tarjeta no tiene movientos
                     String pattern = "MMyy";
@@ -2070,7 +2071,7 @@ public class APIOperations {
                         } catch (Exception e) {
                             return new TransactionResponse(ResponseCode.INTERNAL_ERROR.getCode(), "an error occurred while saving the transaction");
                         }
-                        return new TransactionResponse(ResponseCode.INVALID_PIN.getCode(), ResponseCode.INVALID_PIN.getMessage());
+                        return new TransactionResponse(ResponseCode.INVALID_PIN.getCode(), response.getResponseMessage());
 
                     }
                 } else {
@@ -2082,7 +2083,7 @@ public class APIOperations {
                     } catch (Exception e) {
                         return new TransactionResponse(ResponseCode.INTERNAL_ERROR.getCode(), "an error occurred while saving the transaction");
                     }
-                    return new TransactionResponse(ResponseCode.INVALID_PROPERTIES.getCode(), ResponseCode.INVALID_PROPERTIES.getMessage());
+                    return new TransactionResponse(ResponseCode.INVALID_PROPERTIES.getCode(), transactionResponse.getMensajeRespuesta());
 
                 }
             } else {
@@ -2094,7 +2095,7 @@ public class APIOperations {
                 } catch (Exception e) {
                     return new TransactionResponse(ResponseCode.INTERNAL_ERROR.getCode(), "an error occurred while saving the transaction");
                 }
-                return new TransactionResponse(cardResponse.getCodigoRespuesta(), cardResponse.getMensajeRespuesta());
+                return new TransactionResponse(ResponseCode.INVALID_CARD.getCode(), cardResponse.getMensajeRespuesta());
 
             }
 

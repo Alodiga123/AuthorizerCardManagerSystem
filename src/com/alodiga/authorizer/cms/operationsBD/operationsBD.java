@@ -71,7 +71,7 @@ public interface operationsBD {
     public ProductHasChannelHasTransaction getSettingLimits(Integer transactionId, Integer channelId, Long productId, EntityManager entityManager);
     public Long getTransactionsByCardByTransactionByProductCurrentDate(String cardNumber, Date begginingDateTime, Date endingDateTime, Integer transactionTypeId, Integer channelId, String code, EntityManager entityManager);
     public Double getAmountMaxByUserByUserByTransactionByProductCurrentDate(String cardNumber, Date begginingDateTime, Date endingDateTime, Integer transactionTypeId, Integer channelId, String code, boolean isTransactionLocal, Integer countryId, Integer indFuncionality, EntityManager entityManager);
-    public List<TransactionsManagementHistory> getCardMovements(String cardNumber, Date startDate, Date endingDate, EntityManager entityManager);
+    public List<TransactionsManagement> getCardMovements(String cardNumber, Date startDate, Date endingDate, EntityManager entityManager);
     public List<ProgramLoyalty> getProgramLoyaltybyProductId(Long productId, EntityManager entityManager);
     public ProgramLoyaltyTransaction getProgramLoyaltyTransactionbyParam(Long programLoyaltyId, Integer transactionId, Integer channelId, EntityManager entityManager);
     public boolean checkActiveProgramLoyalty(Long programLoyaltyId, int dayWeekId, EntityManager entityManager);
