@@ -1958,20 +1958,23 @@ public class APIOperations {
                     entityManager.merge(accountCard);
 
                     //Se revisa si la transacción de recarga generó comisión
-                    if (transactionRechargeCardOriginal.getTransactionCommissionAmount() > 0) { 
-                        conceptTransaction = "Reverso Comisión CMS";
-                        //Se registra la transacción de reverso de la comission
-                        transactionReverseComissionRechargeCard = (TransactionsManagement) operationsBD.createTransactionsManagement(null, null, acquirerTerminalCodeId, acquirerCountryId, null, transactionDate,
-                        TransactionE.REVERSE_COMISSION.getId(), channelId, null, localTimeTransaction, null, null, null,
-                        null, null, null, null, null, null,
-                        null, null, cardNumber, cardHolder, CVV, cardDueDate, null, null, null, null,
-                        null, null, null, null, messageMiddlewareId, DocumentTypeE.REVERSE_COMISSION.getId(), conceptTransaction, entityManager);
-                        
-                        //Se realiza el reverso de la comisión generada por le recarga
-                        TransactionResponse transactionResponse = reverseComission(transactionNumberCardRecharge, transactionReverseComissionRechargeCard, card);
-                        if (!transactionResponse.getCodigoRespuesta().equals(ResponseCode.SUCCESS.getCode())) {
-                            return transactionResponse;
+                    if (transactionRechargeCardOriginal.getTransactionCommissionAmount() != null) { 
+                        if(transactionRechargeCardOriginal.getTransactionCommissionAmount() > 0){
+                            conceptTransaction = "Reverso Comisión CMS";
+                            //Se registra la transacción de reverso de la comission
+                            transactionReverseComissionRechargeCard = (TransactionsManagement) operationsBD.createTransactionsManagement(null, null, acquirerTerminalCodeId, acquirerCountryId, null, transactionDate,
+                            TransactionE.REVERSE_COMISSION.getId(), channelId, null, localTimeTransaction, null, null, null,
+                            null, null, null, null, null, null,
+                            null, null, cardNumber, cardHolder, CVV, cardDueDate, null, null, null, null,
+                            null, null, null, null, messageMiddlewareId, DocumentTypeE.REVERSE_COMISSION.getId(), conceptTransaction, entityManager);
+
+                            //Se realiza el reverso de la comisión generada por le recarga
+                            TransactionResponse transactionResponse = reverseComission(transactionNumberCardRecharge, transactionReverseComissionRechargeCard, card);
+                            if (!transactionResponse.getCodigoRespuesta().equals(ResponseCode.SUCCESS.getCode())) {
+                                return transactionResponse;
+                            }
                         }
+                        
                     }
 
                     //Se revisa si la transacción de recarga generó una bonificación
