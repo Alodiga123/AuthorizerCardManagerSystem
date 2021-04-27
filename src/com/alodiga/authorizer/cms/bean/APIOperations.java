@@ -1931,8 +1931,10 @@ public class APIOperations {
         Float newBalance = 0.00F;
 
         try {
+            //Buscar pais
+            Country country = operationsBD.getCountry(acquirerCountryId.toString(), entityManager);
             //Se registra la transacción de Reverso de Recarga de la Tarjeta en la BD
-            transactionReverseRechargeCard = operationsBD.createTransactionsManagement(null, null, acquirerTerminalCodeId, acquirerCountryId, transactionNumberAcquirer, transactionDate,
+            transactionReverseRechargeCard = operationsBD.createTransactionsManagement(null, null, acquirerTerminalCodeId,  country.getId(), transactionNumberAcquirer, transactionDate,
                     TransactionE.REVERSE_CARD_RECHARGE.getId(), channelId, null, localTimeTransaction, null, null, null,
                     null, amountReverseRecharge, null, null, null, null,
                     null, StatusTransactionManagementE.APPROVED.getId(), cardNumber, cardHolder, CVV, cardDueDate, null, null, null, null, null, null, null,
@@ -2145,8 +2147,10 @@ public class APIOperations {
         String conceptTransaction = "Reverso de Compra POS - ";
         try {
             conceptTransaction.concat(tradeName);
+            //Buscar pais
+            Country country = operationsBD.getCountry(acquirerCountryId.toString(), entityManager);
             //Se crea la transaction
-            transactionsManagement = (TransactionsManagement) operationsBD.createTransactionsManagement(null, null, acquirerTerminalCodeId, acquirerCountryId, null, transactionDate,
+            transactionsManagement = (TransactionsManagement) operationsBD.createTransactionsManagement(null, null, acquirerTerminalCodeId, country.getId(), null, transactionDate,
                     TransactionE.REVERSE_CARD_PURCHAGE.getId(), channelId, null, localTimeTransaction, null, null, null,
                     null, null, null, null, null, null,
                     null, null, cardNumber, cardHolder, CVV, cardDueDate, null, null, null, null, null, null, null,
@@ -2196,7 +2200,7 @@ public class APIOperations {
                         return new TransactionResponse(ResponseCode.INTERNAL_ERROR.getCode(), "an error occurred while saving Balance History");
                     }
 
-                    AccountCard accountNumber = getAccountNumberByCard(cardNumber);
+                    AccountCard accountNumber = getAccountNumberByCard(card.getCardNumber());
                     AccountCard accountCard = entityManager.find(AccountCard.class, accountNumber.getId());
                     accountCard.setUpdateDate(new Timestamp(new Date().getTime()));
                     accountCard.setCurrentBalance(newBalance);
@@ -2212,7 +2216,8 @@ public class APIOperations {
                                 null, null, cardNumber, cardHolder, CVV, cardDueDate, null, null, null, null, null, null, null,
                                 null, null, null, null, messageMiddlewareId, DocumentTypeE.REVERSE_COMISSION.getId(), conceptTransaction, entityManager);
 
-                        reverseComission(transactionNumber, transactionsManagementReverseCommision, card);
+                            reverseComission(transactionNumber, transactionsManagementReverseCommision, card);
+                       }  
                     }
                     //Se crea la transaction de reverso de bonificacion
                     conceptTransaction = "Reverso de Bonificación CMS";
@@ -2239,13 +2244,13 @@ public class APIOperations {
             } else {
                 //La tarjeta no es valida
                 transactionsManagement.setStatusTransactionManagementId(StatusTransactionManagementE.REJECTED.getId());
-                transactionsManagement.setResponseCode(ResponseCode.INVALID_CARD.getCode());
+                transactionsManagement.setResponseCode(cardResponse.getCodigoRespuesta());
                 try {
                     transactionsManagement = operationsBD.saveTransactionsManagement(transactionsManagement, entityManager);
                 } catch (Exception e) {
                     return new TransactionResponse(ResponseCode.INTERNAL_ERROR.getCode(), "an error occurred while saving the transaction");
                 }
-                return new TransactionResponse(ResponseCode.INVALID_CARD.getCode(), ResponseCode.INVALID_CARD.getMessage());
+                return new TransactionResponse(cardResponse.getCodigoRespuesta(), cardResponse.getMensajeRespuesta());
             }
         } catch (Exception e) {
             e.printStackTrace();
