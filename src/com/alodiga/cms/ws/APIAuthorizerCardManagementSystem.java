@@ -222,7 +222,7 @@ public class APIAuthorizerCardManagementSystem {
             @WebParam(name = "localTimeTransaction") String localTimeTransaction,
             @WebParam(name = "acquirerTerminalCodeId") String acquirerTerminalCodeId,
             @WebParam(name = "transactionNumberAcquirer") String transactionNumberAcquirer,
-            @WebParam(name = "acquirerCountryId") Integer acquirerCountryId,
+            @WebParam(name = "acquirerCountryId") String acquirerCountryId,
             @WebParam(name = "amountRecharge") Float amountRecharge,
             @WebParam(name = "conceptTransaction") String conceptTransaction) {
         return operations.cardRecharge(cardNumber,cardHolder,CVV,cardDueDate,messageMiddlewareId,transactionTypeId,channelId,transactionDate,localTimeTransaction,acquirerTerminalCodeId,transactionNumberAcquirer,acquirerCountryId,amountRecharge,conceptTransaction);
