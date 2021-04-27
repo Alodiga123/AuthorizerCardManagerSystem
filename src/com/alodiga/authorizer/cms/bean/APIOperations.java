@@ -155,7 +155,7 @@ public class APIOperations {
 
     public Float getCurrentBalanceCard(Long cardId) {
         try {
-            Query query = entityManager.createQuery("SELECT b FROM BalanceHistoryCard b WHERE b.cardUserId.id = '" + cardId + "'");
+            Query query = entityManager.createQuery("SELECT b FROM BalanceHistoryCard b WHERE b.cardUserId.id = '" + cardId + "'" + "ORDER BY b.id desc");
             query.setMaxResults(1);
             BalanceHistoryCard result = (BalanceHistoryCard) query.setHint("toplink.refresh", "true").getSingleResult();
             return result.getCurrentBalance();
@@ -206,7 +206,7 @@ public class APIOperations {
                 return new CardResponse(ResponseCode.SUCCESS.getCode(), "The verification digit on the card is valid");
             } else {
                 System.out.println("This is not a valid card");
-                return new CardResponse(ResponseCode.ERROR_VALIDATING_PINNLUNCH.getCode(), ResponseCode.ERROR_VALIDATING_PINNLUNCH.getMessage());
+                return new CardResponse(ResponseCode.CHECK_DIGIT_CARD_INCORRECT.getCode(), ResponseCode.CHECK_DIGIT_CARD_INCORRECT.getMessage());
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -228,8 +228,7 @@ public class APIOperations {
             nSum += d % 10;
             isSecond = !isSecond;
         }
-        return true;
-//        return (nSum % 10 == 0);
+        return (nSum % 10 == 0);
     }
 
     public CardResponse calculatesCheckDigitLunh(String cardNumber) {
@@ -352,8 +351,8 @@ public class APIOperations {
             transactionCommisionCMS = operationsBD.createTransactionsManagement(transactionsManagement, null, null, null, null, null,
                     TransactionE.COMISION_CMS.getId(), ChannelE.INT.getId(), null, null, null, null, null,
                     transactionCurrency.getId(), transactionCommisionAmount, null, null, null, null,
-                    null, StatusTransactionManagementE.APPROVED.getId(), card.getCardNumber(), card.getCardHolder(), card.getSecurityCodeCard(), expirationCardDate, null, null, null, null,
-                    null, null, null, ResponseCode.SUCCESS.getCode(), null, DocumentTypeE.COMMISION_CMS.getId(), transactionConcept, entityManager);
+                    null, StatusTransactionManagementE.APPROVED.getId(), card.getCardNumber(), card.getCardHolder(), card.getSecurityCodeCard(), expirationCardDate, null, null, null, null, null,
+                    null, null, null, null, null, ResponseCode.SUCCESS.getCode(), null, DocumentTypeE.COMMISION_CMS.getId(), transactionConcept, entityManager);
             try {
                 transactionCommisionCMS = operationsBD.saveTransactionsManagement(transactionCommisionCMS, entityManager);
             } catch (Exception e) {
@@ -528,8 +527,8 @@ public class APIOperations {
             transactionActivateCard = operationsBD.createTransactionsManagement(null, null, acquirerTerminalCodeId, acquirerCountryId, transactionNumberAcquirer, transactionDate,
                     TransactionE.ACTIVACION_TARJETA.getId(), ChannelE.INT.getId(), null, localTimeTransaction, null, null, null,
                     null, null, null, null, null, null,
-                    null, StatusTransactionManagementE.APPROVED.getId(), cardNumber, cardHolder, CVV, cardDueDate, null, null, null, null,
-                    null, null, null, ResponseCode.SUCCESS.getCode(), messageMiddlewareId, DocumentTypeE.ACTIVATE_CARD.getId(), conceptTransaction, entityManager);
+                    null, StatusTransactionManagementE.APPROVED.getId(), cardNumber, cardHolder, CVV, cardDueDate, null, null, null, null, null,
+                    null, null, null, null, null, ResponseCode.SUCCESS.getCode(), messageMiddlewareId, DocumentTypeE.ACTIVATE_CARD.getId(), conceptTransaction, entityManager);
 
             try {
                 transactionActivateCard = operationsBD.saveTransactionsManagement(transactionActivateCard, entityManager);
@@ -677,7 +676,7 @@ public class APIOperations {
         Country country = operationsBD.getCountry(String.valueOf(acquirerCountryId), entityManager);
         transactionManagement = operationsBD.createTransactionsManagement(null, null, acquirerTerminalCodeId, country.getId(), null, new Date(), transactionTypeId, channelId,
                 null, localTimeTransaction, null, null, null, null, null, null, null, null, null, null, StatusTransactionManagementE.APPROVED.getId(),
-                cardNumber, cardHolder, CVV, cardDueDate, null, null, null, null, null, null, null, ResponseCode.SUCCESS.getCode(), messageMiddlewareId, DocumentTypeE.CHANGE_CARD_STATUS.getId(), transactionConcept, entityManager);
+                cardNumber, cardHolder, CVV, cardDueDate, null, null, null, null, null, null, null, null, null, null, ResponseCode.SUCCESS.getCode(), messageMiddlewareId, DocumentTypeE.CHANGE_CARD_STATUS.getId(), transactionConcept, entityManager);
         try {
             transactionManagement = operationsBD.saveTransactionsManagement(transactionManagement, entityManager);
         } catch (Exception e) {
@@ -743,8 +742,8 @@ public class APIOperations {
                 transactionsManagement = operationsBD.createTransactionsManagement(null, null, acquirerTerminalCodeId, acquirerCountryId, transactionNumberAcquirer, transactionDate,
                         TransactionE.CONSULTA.getId(), channelId, null, localTimeTransaction, null, null, null,
                         null, null, null, null, null, null,
-                        null, StatusTransactionManagementE.APPROVED.getId(), cardNumber, cardHolder, CVV, cardDueDate, null, null, null, null,
-                        null, null, null, ResponseCode.SUCCESS.getCode(), messageMiddlewareId, DocumentTypeE.CARD_BALANCE_INQUIRY.getId(), transactionConcept, entityManager);
+                        null, StatusTransactionManagementE.APPROVED.getId(), cardNumber, cardHolder, CVV, cardDueDate, null, null, null, null, null,
+                        null, null, null, null, null, ResponseCode.SUCCESS.getCode(), messageMiddlewareId, DocumentTypeE.CARD_BALANCE_INQUIRY.getId(), transactionConcept, entityManager);
                 try {
                     transactionsManagement = operationsBD.saveTransactionsManagement(transactionsManagement, entityManager);
                 } catch (Exception e) {
@@ -895,8 +894,8 @@ public class APIOperations {
                                 transactionBonificationCMS = operationsBD.createTransactionsManagement(transactionsManagement, null, null, null, null, null,
                                         TransactionE.BONIFICATION_CMS.getId(), ChannelE.INT.getId(), null, null, null, null, null,
                                         currencyTransaction.getId(), bonusAmount, null, null, null, null,
-                                        null, StatusTransactionManagementE.APPROVED.getId(), cardNumber, card.getCardHolder(), card.getSecurityCodeCard(), transactionsManagement.getExpirationCardDate(), null, null, null, null,
-                                        null, null, null, ResponseCode.SUCCESS.getCode(), null, DocumentTypeE.BONUS_TRANSACTION_CMS.getId(), conceptTransaction, entityManager);
+                                        null, StatusTransactionManagementE.APPROVED.getId(), cardNumber, card.getCardHolder(), card.getSecurityCodeCard(), transactionsManagement.getExpirationCardDate(), null, null, null, null, null,
+                                        null, null, null, null, null, ResponseCode.SUCCESS.getCode(), null, DocumentTypeE.BONUS_TRANSACTION_CMS.getId(), conceptTransaction, entityManager);
                                 try {
                                     transactionBonificationCMS = operationsBD.saveTransactionsManagement(transactionBonificationCMS, entityManager);
                                 } catch (Exception e) {
@@ -978,119 +977,144 @@ public class APIOperations {
         TransactionResponse transactionResponse = new TransactionResponse();
         TransactionsManagement transactionsManagement = new TransactionsManagement();
         int indValidateCardActive = 1;
-        try {
-            Float amountCommission = 0.00F;
-            TransactionsManagementHistory transactionsManagementHistory = new TransactionsManagementHistory();
+        Float amountCommission = 0.00F;
+        Float currentBalanceCardOrigin = 0.00F;
+        Float currentBalanceCardDestination = 0.00F;
+        AccountCard OriginCardAccount = null;
+        AccountCard DestinationCardAccount = null;
+        String customerIdentificationNumber = "";
+        String customerIdentificationNumberDestinationCard = "";
+        String customerNameDestinationCard = "";
+        
+        try {            
             CardResponse cardResponseOrigin = validateCard(cardNumberOrigin, ARQCOrigin, cardHolderOrigin, CVVOrigin, cardDueDateOrigin, indValidateCardActive);
             CardResponse cardResponseDestinate = validateCard(cardNumberDestinate, ARQCDestinate, cardHolderDestinate, CVVDestinate, cardDueDateDestinate, indValidateCardActive);
-            Card cardOrigin = getCardByCardNumber(cardNumberOrigin);
-            Card cardDestinate = getCardByCardNumber(cardNumberDestinate);
-            ValidateLimitsResponse validateLimits = getValidateLimits(cardOrigin, TransactionE.TRANSFER_BETWEEN_ACCOUNT.getId(), channelId, cardOrigin.getProductId().getIssuerId().getCountryId().getCode(), amountTransfer);
-            transactionsManagement = (TransactionsManagement) operationsBD.createTransactionsManagement(null, null, acquirerTerminalCodeId, acquirerCountryId, null, transactionDate,
+            Card cardOrigin = cardResponseOrigin.getCard();
+            if (cardOrigin.getPersonCustomerId().getPersonTypeId().getIndNaturalPerson() == true) {
+                customerIdentificationNumber = cardOrigin.getPersonCustomerId().getNaturalCustomer().getIdentificationNumber();
+            } else {
+                customerIdentificationNumber = cardOrigin.getPersonCustomerId().getLegalCustomer().getIdentificationNumber();
+            }
+            Card cardDestinate = cardResponseDestinate.getCard();
+            if (cardDestinate.getPersonCustomerId().getPersonTypeId().getIndNaturalPerson() == true) {
+                customerIdentificationNumberDestinationCard = cardDestinate.getPersonCustomerId().getNaturalCustomer().getIdentificationNumber();
+                customerNameDestinationCard = cardDestinate.getPersonCustomerId().getNaturalCustomer().getFirstNames().concat(" ").concat(cardDestinate.getPersonCustomerId().getNaturalCustomer().getLastNames());
+            } else {
+                customerIdentificationNumberDestinationCard = cardDestinate.getPersonCustomerId().getLegalCustomer().getIdentificationNumber();
+                customerNameDestinationCard = cardDestinate.getPersonCustomerId().getLegalCustomer().getEnterpriseName();
+            }
+            Country country = operationsBD.getCountry(String.valueOf(acquirerCountryId), entityManager);
+            transactionsManagement = (TransactionsManagement) operationsBD.createTransactionsManagement(null, null, acquirerTerminalCodeId, country.getId(), null, transactionDate,
                     TransactionE.TRANSFER_BETWEEN_ACCOUNT.getId(), channelId, dateTimeTransmissionTerminal, localTimeTransaction, localDateTransaction, null, null,
                     null, amountTransfer, null, null, null, null,
-                    null, StatusTransactionManagementE.APPROVED.getId(), cardNumberOrigin, cardHolderOrigin, CVVOrigin, cardDueDateOrigin, null, cardNumberDestinate, null, null,
-                    null, null, null, ResponseCode.SUCCESS.getCode(), messageMiddlewareId, DocumentTypeE.TRANSFER_BETWEEN_ACCOUNT.getId(), conceptTransaction, entityManager);
+                    null, StatusTransactionManagementE.APPROVED.getId(), cardNumberOrigin, cardHolderOrigin, CVVOrigin, cardDueDateOrigin, customerIdentificationNumber, null, cardNumberDestinate, 
+                    customerIdentificationNumberDestinationCard, customerNameDestinationCard, null, null, null, null, null, ResponseCode.SUCCESS.getCode(), messageMiddlewareId, 
+                    DocumentTypeE.TRANSFER_BETWEEN_ACCOUNT.getId(), conceptTransaction, entityManager);
             try {
                 transactionsManagement = operationsBD.saveTransactionsManagement(transactionsManagement, entityManager);
             } catch (Exception e) {
                 return new TransactionResponse(ResponseCode.INTERNAL_ERROR.getCode(), "an error occurred while saving the transaction");
             }
 
-            if (cardResponseOrigin.getCodigoRespuesta().equals(ResponseCode.SUCCESS.getCode()) && cardResponseDestinate.getCodigoRespuesta().equals(ResponseCode.SUCCESS.getCode())) {
-                if (validateLimits.getCodigoRespuesta().equals(ResponseCode.SUCCESS.getCode())) {
+            if (cardResponseOrigin.getCodigoRespuesta().equals(ResponseCode.SUCCESS.getCode())) {
+                if (cardResponseDestinate.getCodigoRespuesta().equals(ResponseCode.SUCCESS.getCode())) {
+                    ValidateLimitsResponse validateLimits = getValidateLimits(cardOrigin, TransactionE.TRANSFER_BETWEEN_ACCOUNT.getId(), channelId, acquirerCountryId.toString(), amountTransfer);
+                    if (validateLimits.getCodigoRespuesta().equals(ResponseCode.SUCCESS.getCode())) {
+                        OriginCardAccount = operationsBD.getAccountCardbyCardId(cardOrigin.getId(), entityManager);
+                        currentBalanceCardOrigin = OriginCardAccount.getCurrentBalance();
+                        DestinationCardAccount = operationsBD.getAccountCardbyCardId(cardDestinate.getId(), entityManager);
+                        currentBalanceCardDestination = DestinationCardAccount.getCurrentBalance();
+                        transactionResponse = calculateCommisionCMS(cardOrigin, channelId, transactionTypeId, amountTransfer, "1234");
+                        if (transactionResponse.getCodigoRespuesta().equals(ResponseCode.COMMISSION_YES_APPLY.getCode())) {
+                            amountCommission = transactionResponse.getTransactionCommissionAmount();
+                        }
+                        Float amountTransferTotal = amountTransfer + amountCommission;
+                        if (currentBalanceCardOrigin == null || currentBalanceCardOrigin < amountTransferTotal) {
+                            return new TransactionResponse(ResponseCode.USER_HAS_NOT_BALANCE.getCode(), ResponseCode.USER_HAS_NOT_BALANCE.getMessage());
+                        }
 
-                    Float amountCardOrigin = getCurrentBalanceCard(cardOrigin.getId());
-                    Float amountCardDestination = getCurrentBalanceCard(cardDestinate.getId());
-                    transactionResponse = calculateCommisionCMS(cardOrigin, channelId, transactionTypeId, amountTransfer, "1234");
-                    if (transactionResponse.getCodigoRespuesta().equals(logger)) {
-                        amountCommission = transactionResponse.getTransactionCommissionAmount();
-                    }
-                    Float amountTransferTotal = amountTransfer + amountCommission;
-                    if (amountCardOrigin == null || amountCardOrigin < amountTransferTotal) {
-                        return new TransactionResponse(ResponseCode.USER_HAS_NOT_BALANCE.getCode(), ResponseCode.USER_HAS_NOT_BALANCE.getMessage());
-                    }
+                        Float currentBalanceOrigin = currentBalanceCardOrigin - amountTransferTotal;
+                        if (currentBalanceOrigin < cardOrigin.getProductId().getMinimumBalance()) {
+                            return new TransactionResponse(ResponseCode.MINIMUM_AMOUNT_NOT_ALLOWED.getCode(), ResponseCode.MINIMUM_AMOUNT_NOT_ALLOWED.getMessage());
+                        }
 
-                    Float currentBalanceOrigin = amountCardOrigin - amountTransferTotal;
-                    if (currentBalanceOrigin < cardOrigin.getProductId().getMinimumBalance()) {
-                        return new TransactionResponse(ResponseCode.MINIMUM_AMOUNT_NOT_ALLOWED.getCode(), ResponseCode.MINIMUM_AMOUNT_NOT_ALLOWED.getMessage());
-                    }
+                        Float currentBalanceDestinate = currentBalanceCardDestination + amountTransfer;
+                        if (currentBalanceDestinate > cardDestinate.getProductId().getMaximumBalance()) {
+                            return new TransactionResponse(ResponseCode.MAXIMUM_AMOUNT_IS_NOT_ALLOWED.getCode(), ResponseCode.MAXIMUM_AMOUNT_IS_NOT_ALLOWED.getMessage());
+                        }
 
-                    Float currentBalanceDestinate = amountCardDestination + amountTransfer;
-                    if (currentBalanceDestinate > cardDestinate.getProductId().getMaximumBalance()) {
-                        return new TransactionResponse(ResponseCode.MAXIMUM_AMOUNT_IS_NOT_ALLOWED.getCode(), ResponseCode.MAXIMUM_AMOUNT_IS_NOT_ALLOWED.getMessage());
-                    }
+                        //Actualizar balance History de Origen
+                        BalanceHistoryCard balanceHistoryCardOrigin = new BalanceHistoryCard();
+                        balanceHistoryCardOrigin.setCardUserId(cardOrigin);
+                        balanceHistoryCardOrigin.setCreateDate(new Timestamp(new Date().getTime()));
+                        Float currentBalanceSource = currentBalanceCardOrigin - amountTransferTotal;
+                        balanceHistoryCardOrigin.setCurrentBalance(currentBalanceSource);
+                        balanceHistoryCardOrigin.setPreviousBalance(currentBalanceCardOrigin);
+                        balanceHistoryCardOrigin.setTransactionsManagementId(transactionsManagement.getId());
+                        entityManager.persist(balanceHistoryCardOrigin);
 
-                    //Actualizar balance History de Origen
-                    BalanceHistoryCard balanceHistoryCardOrigin = new BalanceHistoryCard();
-                    balanceHistoryCardOrigin.setCardUserId(cardOrigin);
-                    balanceHistoryCardOrigin.setCreateDate(new Timestamp(new Date().getTime()));
-                    Float currentBalanceSource = amountCardOrigin - amountTransferTotal;
-                    balanceHistoryCardOrigin.setCurrentBalance(currentBalanceSource);
-                    balanceHistoryCardOrigin.setPreviousBalance(amountCardOrigin);
-                    balanceHistoryCardOrigin.setTransactionsManagementId(transactionsManagement.getId());
-                    entityManager.persist(balanceHistoryCardOrigin);
+                        //Actualizar balance History de Destino
+                        BalanceHistoryCard balanceHistoryCardDestinate = new BalanceHistoryCard();
+                        balanceHistoryCardDestinate.setCardUserId(cardDestinate);
+                        balanceHistoryCardOrigin.setCreateDate(new Timestamp(new Date().getTime()));
+                        if (currentBalanceCardDestination == null) {
+                            balanceHistoryCardDestinate.setCurrentBalance(amountTransfer);
+                            balanceHistoryCardDestinate.setPreviousBalance(Constants.PREVIOUS_BALANCE_DESTINATION);
+                        } else {
+                            Float currentBalanceDestination = currentBalanceCardDestination + amountTransfer;
+                            balanceHistoryCardDestinate.setPreviousBalance(currentBalanceCardDestination);
+                            balanceHistoryCardDestinate.setCurrentBalance(currentBalanceDestination);
+                        }
+                        balanceHistoryCardDestinate.setTransactionsManagementId(transactionsManagement.getId());
+                        entityManager.persist(balanceHistoryCardDestinate);
 
-                    //Actualizar balance History de Destino
-                    BalanceHistoryCard balanceHistoryCardDestinate = new BalanceHistoryCard();
-                    balanceHistoryCardDestinate.setCardUserId(cardDestinate);
-                    balanceHistoryCardOrigin.setCreateDate(new Timestamp(new Date().getTime()));
-                    if (amountCardDestination == null) {
-                        balanceHistoryCardOrigin.setCurrentBalance(amountTransfer);
-                        balanceHistoryCardOrigin.setPreviousBalance(Constants.PREVIOUS_BALANCE_DESTINATION);
+                        //Actualizar currentBalance de la tarjeta origen en la tabla accountCard
+                        OriginCardAccount.setUpdateDate(new Timestamp(new Date().getTime()));
+                        OriginCardAccount.setCurrentBalance(currentBalanceSource);
+                        entityManager.merge(OriginCardAccount);
+
+                        //Actualizar currentBalance de la tarjeta destino en la tabla accountCard
+                        DestinationCardAccount.setUpdateDate(new Timestamp(new Date().getTime()));
+                        DestinationCardAccount.setCurrentBalance(currentBalanceSource);
+                        entityManager.merge(DestinationCardAccount);
                     } else {
-                        Float currentBalanceDestination = amountCardDestination + amountTransfer;
-                        balanceHistoryCardDestinate.setPreviousBalance(amountCardDestination);
-                        balanceHistoryCardDestinate.setCurrentBalance(currentBalanceDestination);
+                        //Fallo en la validación de los limites
+                        transactionsManagement.setStatusTransactionManagementId(StatusTransactionManagementE.REJECTED.getId());
+                        transactionsManagement.setResponseCode(ResponseCode.CARD_NOT_VALIDATE.getCode());
+                        try {
+                            transactionsManagement = operationsBD.saveTransactionsManagement(transactionsManagement, entityManager);
+                        } catch (Exception e) {
+                            return new TransactionResponse(ResponseCode.INTERNAL_ERROR.getCode(), "an error occurred while saving the transaction");
+                        }
+                        return new TransactionResponse(ResponseCode.CARD_NOT_VALIDATE.getCode(), ResponseCode.CARD_NOT_VALIDATE.getMessage());
                     }
-                    balanceHistoryCardDestinate.setTransactionsManagementId(transactionsManagement.getId());
-                    entityManager.persist(balanceHistoryCardDestinate);
-
-                    //Actualizar currentBalance de la tarjeta origen en la tabla accountCard
-                    AccountCard accountNumberOrigin = getAccountNumberByCard(cardNumberOrigin);
-                    AccountCard accountCardOrigin = entityManager.find(AccountCard.class, accountNumberOrigin.getId());
-                    accountCardOrigin.setUpdateDate(new Timestamp(new Date().getTime()));
-                    accountCardOrigin.setCurrentBalance(currentBalanceSource);
-                    entityManager.merge(accountCardOrigin);
-
-                    //Actualizar currentBalance de la tarjeta destino en la tabla accountCard
-                    AccountCard accountNumberDestinate = getAccountNumberByCard(cardNumberDestinate);
-                    AccountCard accountCardDestinate = entityManager.find(AccountCard.class, accountNumberDestinate.getId());
-                    accountCardDestinate.setUpdateDate(new Timestamp(new Date().getTime()));
-                    accountCardDestinate.setCurrentBalance(currentBalanceSource);
-                    entityManager.merge(accountCardDestinate);
-
                 } else {
-                    //Fallo en la validación de los limites
+                    //Fallo en la validación de la tarjeta de destino
                     transactionsManagement.setStatusTransactionManagementId(StatusTransactionManagementE.REJECTED.getId());
-                    transactionsManagement.setResponseCode(ResponseCode.CARD_NOT_VALIDATE.getCode());
+                    transactionsManagement.setResponseCode(cardResponseDestinate.getCodigoRespuesta());
                     try {
                         transactionsManagement = operationsBD.saveTransactionsManagement(transactionsManagement, entityManager);
                     } catch (Exception e) {
                         return new TransactionResponse(ResponseCode.INTERNAL_ERROR.getCode(), "an error occurred while saving the transaction");
                     }
-                    return new TransactionResponse(ResponseCode.CARD_NOT_VALIDATE.getCode(), ResponseCode.CARD_NOT_VALIDATE.getMessage());
-
-                }
+                    return new TransactionResponse(cardResponseDestinate.getCodigoRespuesta(), cardResponseDestinate.getMensajeRespuesta());
+                }                
             } else {
-
-                //Fallo en la validación de la tarjeta
+                //Fallo en la validación de la tarjeta de origen
                 transactionsManagement.setStatusTransactionManagementId(StatusTransactionManagementE.REJECTED.getId());
-                transactionsManagement.setResponseCode(ResponseCode.INVALID_CARD.getCode());
+                transactionsManagement.setResponseCode(cardResponseOrigin.getCodigoRespuesta());
                 try {
                     transactionsManagement = operationsBD.saveTransactionsManagement(transactionsManagement, entityManager);
                 } catch (Exception e) {
                     return new TransactionResponse(ResponseCode.INTERNAL_ERROR.getCode(), "an error occurred while saving the transaction");
                 }
-                return new TransactionResponse(ResponseCode.INVALID_CARD.getCode(), ResponseCode.INVALID_CARD.getMessage());
+                return new TransactionResponse(cardResponseOrigin.getCodigoRespuesta(), cardResponseOrigin.getMensajeRespuesta());
             }
         } catch (Exception e) {
             e.printStackTrace();
             return new TransactionResponse(ResponseCode.INTERNAL_ERROR.getCode(), "INTERNAL_ERROR");
-        }
-        
-        return new TransactionResponse(ResponseCode.SUCCESS.getCode(), "SUCCESS");
-
+        }        
+        return new TransactionResponse(ResponseCode.SUCCESS.getCode(), ResponseCode.SUCCESS.getMessage());
     }
 
     public TransactionResponse viewCardMovements(String cardNumber, String CVV, String cardDueDate, String cardHolder, String documentIdentificationNumber, Integer channelId, Integer transactionTypeId, Long messageMiddlewareId, Date transactionDate,
@@ -1138,7 +1162,7 @@ public class APIOperations {
                     //Se crea el objeto TransactionManagement y se guarda en BD
                     transactionManagement = operationsBD.createTransactionsManagement(null, null, acquirerTerminalCodeId, acquirerCountryId, null, new Date(), transactionTypeId, channelId,
                             null, localTimeTransaction, null, null, null, null, null, null, null, null, null, null, StatusTransactionManagementE.APPROVED.getId(),
-                            cardNumber, cardHolder, CVV, expirationCardDate, null, null, null, null, null, null, null, ResponseCode.SUCCESS.getCode(), messageMiddlewareId, DocumentTypeE.CHECK_CARD_MOVEMENTS.getId(), conceptTransaction, entityManager);
+                            cardNumber, cardHolder, CVV, expirationCardDate, null, null, null, null, null, null, null, null, null, null, ResponseCode.SUCCESS.getCode(), messageMiddlewareId, DocumentTypeE.CHECK_CARD_MOVEMENTS.getId(), conceptTransaction, entityManager);
 
                     try {
                         transactionManagement = operationsBD.saveTransactionsManagement(transactionManagement, entityManager);
@@ -1155,7 +1179,7 @@ public class APIOperations {
                     //Se crea el objeto TransactionManagement RECHAZADO y se guarda en BD
                     transactionManagement = operationsBD.createTransactionsManagement(null, null, acquirerTerminalCodeId, acquirerCountryId, null, new Date(), transactionTypeId, channelId,
                             null, localTimeTransaction, null, null, null, null, null, null, null, null, null, null, StatusTransactionManagementE.REJECTED.getId(),
-                            cardNumber, cardHolder, CVV, expirationCardDate, null, null, null, null, null, null, null, ResponseCode.THE_CARD_HAS_NO_MOVEMENTS.getCode(), messageMiddlewareId, DocumentTypeE.CHECK_CARD_MOVEMENTS.getId(), conceptTransaction, entityManager);
+                            cardNumber, cardHolder, CVV, expirationCardDate, null, null, null, null, null, null, null, null, null, null, ResponseCode.THE_CARD_HAS_NO_MOVEMENTS.getCode(), messageMiddlewareId, DocumentTypeE.CHECK_CARD_MOVEMENTS.getId(), conceptTransaction, entityManager);
                     try {
                         transactionManagement = operationsBD.saveTransactionsManagement(transactionManagement, entityManager);
                     } catch (Exception e) {
@@ -1172,7 +1196,7 @@ public class APIOperations {
                 // Se crea el objeto TransactionManagement RECHAZADO y se guarda en BD
                 transactionManagement = operationsBD.createTransactionsManagement(null, null, acquirerTerminalCodeId, acquirerCountryId, null, new Date(), transactionTypeId, channelId,
                         null, localTimeTransaction, null, null, null, null, null, null, null, null, null, null, StatusTransactionManagementE.REJECTED.getId(),
-                        cardNumber, cardHolder, CVV, expirationCardDate, null, null, null, null, null, null, null, validateCard.getCodigoRespuesta(), messageMiddlewareId, DocumentTypeE.CHECK_CARD_MOVEMENTS.getId(), conceptTransaction, entityManager);
+                        cardNumber, cardHolder, CVV, expirationCardDate, null, null, null, null, null, null, null, null, null, null, validateCard.getCodigoRespuesta(), messageMiddlewareId, DocumentTypeE.CHECK_CARD_MOVEMENTS.getId(), conceptTransaction, entityManager);
                 try {
                     transactionManagement = operationsBD.saveTransactionsManagement(transactionManagement, entityManager);
                 } catch (Exception e) {
@@ -1181,7 +1205,7 @@ public class APIOperations {
                 return new TransactionResponse(validateCard.getCodigoRespuesta(), validateCard.getMensajeRespuesta());
             }
         } catch (Exception e) {
-            return new TransactionResponse(ResponseCode.INTERNAL_ERROR.getCode(), "The card is not a valid card");
+            return new TransactionResponse(ResponseCode.INTERNAL_ERROR.getCode(), "an unexpected error occurred");
         }
     }
 
@@ -1212,7 +1236,7 @@ public class APIOperations {
             transactionRechargeCard = operationsBD.createTransactionsManagement(null, null, acquirerTerminalCodeId, country.getId(), transactionNumberAcquirer, transactionDate,
                     TransactionE.CARD_RECHARGE.getId(), channelId, null, localTimeTransaction, null, null, null,
                     null, amountRecharge, null, null, null, null,
-                    null, StatusTransactionManagementE.APPROVED.getId(), cardNumber, cardHolder, CVV, cardDueDate, null, null, null, null,
+                    null, StatusTransactionManagementE.APPROVED.getId(), cardNumber, cardHolder, CVV, cardDueDate, null, null, null, null, null, null, null,
                     null, null, null, ResponseCode.SUCCESS.getCode(), messageMiddlewareId, DocumentTypeE.CARD_RECHARGE.getId(), conceptTransaction, entityManager);
 
             try {
@@ -1379,7 +1403,7 @@ public class APIOperations {
             transactionManagement = operationsBD.createTransactionsManagement(null, null, acquirerTerminalCodeId, country.getId(), transactionNumberAcquirer, transactionDate, TransactionE.RETIRO_DOMESTICO.getId(),
                     channelId, null, localTimeTransaction, localDateTransaction, null, null,
                     null, withdrawalAmount, null, null, null, null, null, StatusTransactionManagementE.APPROVED.getId(), cardNumber,
-                    cardHolder, CVV, cardDueDate, null, null, null, null, null, null, null, ResponseCode.SUCCESS.getCode(), messageMiddlewareId, DocumentTypeE.CARD_WITHDRAWL.getId(), conceptTransaction, entityManager);
+                    cardHolder, CVV, cardDueDate, null, null, null, null, null, null, null, null, null, null, ResponseCode.SUCCESS.getCode(), messageMiddlewareId, DocumentTypeE.CARD_WITHDRAWL.getId(), conceptTransaction, entityManager);
 
             try {
                 transactionManagement = operationsBD.saveTransactionsManagement(transactionManagement, entityManager);
@@ -1493,7 +1517,7 @@ public class APIOperations {
             transactionsManagement = (TransactionsManagement) operationsBD.createTransactionsManagement(null, null, acquirerTerminalCodeId, acquirerCountryId, null, transactionDate,
                     TransactionE.KEY_CHANGE.getId(), channelId, null, localTimeTransaction, null, null, null,
                     null, null, null, null, null, null,
-                    null, StatusTransactionManagementE.APPROVED.getId(), cardNumber, cardHolder, CVV, cardDueDate, null, null, null, null,
+                    null, StatusTransactionManagementE.APPROVED.getId(), cardNumber, cardHolder, CVV, cardDueDate, null, null, null, null, null, null, null,
                     null, null, null, ResponseCode.SUCCESS.getCode(), messageMiddlewareId, DocumentTypeE.KEY_CHANGE.getId(), conceptTransaction, entityManager);
             try {
                 transactionsManagement = operationsBD.saveTransactionsManagement(transactionsManagement, entityManager);
@@ -1657,7 +1681,7 @@ public class APIOperations {
             transactionPurchageCard = operationsBD.createTransactionsManagement(null, null, acquirerTerminalCodeId, country.getId(), transactionNumberAcquirer, transactionDate,
                     TransactionE.COMPRA_DOMESTICA_PIN.getId(), channelId, null, localTimeTransaction, null, null, null,
                     null, amountPurchage, null, null, null, null,
-                    null, StatusTransactionManagementE.APPROVED.getId(), cardNumber, cardHolder, CVV, cardDueDate, null, null, null, null,
+                    null, StatusTransactionManagementE.APPROVED.getId(), cardNumber, cardHolder, CVV, cardDueDate, null, null, null, null, null, null, null,
                     null, null, null, ResponseCode.SUCCESS.getCode(), messageMiddlewareId, DocumentTypeE.CARD_PURCHAGE.getId(), conceptTransaction, entityManager);
 
             try {
@@ -1805,7 +1829,7 @@ public class APIOperations {
             transactionsManagement = (TransactionsManagement) operationsBD.createTransactionsManagement(null, null, acquirerTerminalCodeId, acquirerCountryId, null, transactionDate,
                     TransactionE.REVERSE_WITHDRAWAL.getId(), channelId, null, localTimeTransaction, null, null, null,
                     null, null, null, null, null, null,
-                    null, null, cardNumber, cardHolder, CVV, cardDueDate, null, null, null, null,
+                    null, null, cardNumber, cardHolder, CVV, cardDueDate, null, null, null, null, null, null, null,
                     null, null, null, null, messageMiddlewareId, DocumentTypeE.REVERSE_WITHDRAWAL.getId(), conceptTransaction, entityManager);
             try {
                 transactionsManagement = operationsBD.saveTransactionsManagement(transactionsManagement, entityManager);
@@ -1913,7 +1937,7 @@ public class APIOperations {
             transactionReverseRechargeCard = operationsBD.createTransactionsManagement(null, null, acquirerTerminalCodeId,  country.getId(), transactionNumberAcquirer, transactionDate,
                     TransactionE.REVERSE_CARD_RECHARGE.getId(), channelId, null, localTimeTransaction, null, null, null,
                     null, amountReverseRecharge, null, null, null, null,
-                    null, StatusTransactionManagementE.APPROVED.getId(), cardNumber, cardHolder, CVV, cardDueDate, null, null, null, null,
+                    null, StatusTransactionManagementE.APPROVED.getId(), cardNumber, cardHolder, CVV, cardDueDate, null, null, null, null, null, null, null,
                     null, null, null, ResponseCode.SUCCESS.getCode(), messageMiddlewareId, DocumentTypeE.REVERSE_CARD_RECHARGE.getId(), conceptTransaction, entityManager);
 
             try {
@@ -1967,7 +1991,7 @@ public class APIOperations {
                             transactionReverseComissionRechargeCard = (TransactionsManagement) operationsBD.createTransactionsManagement(null, null, acquirerTerminalCodeId, acquirerCountryId, null, transactionDate,
                             TransactionE.REVERSE_COMISSION.getId(), channelId, null, localTimeTransaction, null, null, null,
                             null, null, null, null, null, null,
-                            null, null, cardNumber, cardHolder, CVV, cardDueDate, null, null, null, null,
+                            null, null, cardNumber, cardHolder, CVV, cardDueDate, null, null, null, null, null, null, null,
                             null, null, null, null, messageMiddlewareId, DocumentTypeE.REVERSE_COMISSION.getId(), conceptTransaction, entityManager);
 
                             //Se realiza el reverso de la comisión generada por le recarga
@@ -2029,7 +2053,7 @@ public class APIOperations {
             transactionsManagement = (TransactionsManagement) operationsBD.createTransactionsManagement(null, null, acquirerTerminalCodeId, acquirerCountryId, null, transactionDate,
                     TransactionE.KEY_REGISTER.getId(), channelId, null, localTimeTransaction, null, null, null,
                     null, null, null, null, null, null,
-                    null, null, cardNumber, cardHolder, CVV, cardDueDate, null, null, null, null,
+                    null, null, cardNumber, cardHolder, CVV, cardDueDate, null, null, null, null, null, null, null,
                     null, null, null, null, messageMiddlewareId, DocumentTypeE.KEY_REGISTER.getId(), conceptTransaction, entityManager);
             try {
                 transactionsManagement = operationsBD.saveTransactionsManagement(transactionsManagement, entityManager);
@@ -2129,7 +2153,7 @@ public class APIOperations {
             transactionsManagement = (TransactionsManagement) operationsBD.createTransactionsManagement(null, null, acquirerTerminalCodeId, country.getId(), null, transactionDate,
                     TransactionE.REVERSE_CARD_PURCHAGE.getId(), channelId, null, localTimeTransaction, null, null, null,
                     null, null, null, null, null, null,
-                    null, null, cardNumber, cardHolder, CVV, cardDueDate, null, null, null, null,
+                    null, null, cardNumber, cardHolder, CVV, cardDueDate, null, null, null, null, null, null, null,
                     null, null, null, null, messageMiddlewareId, DocumentTypeE.REVERSE_CARD_PURCHAGE.getId(), conceptTransaction, entityManager);
             try {
                 transactionsManagement = operationsBD.saveTransactionsManagement(transactionsManagement, entityManager);
@@ -2182,29 +2206,28 @@ public class APIOperations {
                     accountCard.setCurrentBalance(newBalance);
                     entityManager.merge(accountCard);
 
-                    //Se revisa si la transaccion genero comission
-                    if (transactionsManagementReverse.getAcquirerCommisionAmount() != null) {
-                       if(transactionsManagementReverse.getAcquirerCommisionAmount() > 0){
-                           conceptTransaction = "Reverso de Comisión CMS";
-                           //Se crea la transaction de reverso de comission
-                            transactionsManagementReverseCommision = (TransactionsManagement) operationsBD.createTransactionsManagement(null, null, acquirerTerminalCodeId, acquirerCountryId, null, transactionDate,
-                                    TransactionE.REVERSE_COMISSION.getId(), channelId, null, localTimeTransaction, null, null, null,
-                                    null, null, null, null, null, null,
-                                    null, null, cardNumber, cardHolder, CVV, cardDueDate, null, null, null, null,
-                                    null, null, null, null, messageMiddlewareId, DocumentTypeE.REVERSE_COMISSION.getId(), conceptTransaction, entityManager);
+                    //preguntar si la transaccion genero comission
+                    if (transactionsManagementReverse.getAcquirerCommisionAmount() != null || transactionsManagementReverse.getAcquirerCommisionAmount() > 0) {
+                        conceptTransaction = "Reverso de Comisión CMS";
+                        //Se crea la transaction de reverso de comission
+                        transactionsManagementReverseCommision = (TransactionsManagement) operationsBD.createTransactionsManagement(null, null, acquirerTerminalCodeId, acquirerCountryId, null, transactionDate,
+                                TransactionE.REVERSE_COMISSION.getId(), channelId, null, localTimeTransaction, null, null, null,
+                                null, null, null, null, null, null,
+                                null, null, cardNumber, cardHolder, CVV, cardDueDate, null, null, null, null, null, null, null,
+                                null, null, null, null, messageMiddlewareId, DocumentTypeE.REVERSE_COMISSION.getId(), conceptTransaction, entityManager);
 
                             reverseComission(transactionNumber, transactionsManagementReverseCommision, card);
                        }  
                     }
-                    
-                    //Se revisa si la transacción de recarga generó una bonificación
-                    transactionsManagementReverseBonification = operationsBD.getTransactionsManagementByTransactionReference(transactionNumber, TransactionE.BONIFICATION_CMS.getId(), entityManager);
-                    if (transactionsManagementReverseBonification != null) {
-                        TransactionResponse transactionResponse = reverseBonification(transactionNumber, transactionsManagementReverseBonification, card);
-                        if (!transactionResponse.getCodigoRespuesta().equals(ResponseCode.SUCCESS.getCode())) {
-                            return transactionResponse;
-                        }
-                    }
+                    //Se crea la transaction de reverso de bonificacion
+                    conceptTransaction = "Reverso de Bonificación CMS";
+                    transactionsManagementReverseBonification = (TransactionsManagement) operationsBD.createTransactionsManagement(null, null, acquirerTerminalCodeId, acquirerCountryId, null, transactionDate,
+                            TransactionE.REVERSE_BONIFICATION.getId(), channelId, null, localTimeTransaction, null, null, null,
+                            null, null, null, null, null, null,
+                            null, null, cardNumber, cardHolder, CVV, cardDueDate, null, null, null, null, null, null, null,
+                            null, null, null, null, messageMiddlewareId, DocumentTypeE.REVERSE_BONIFICATION.getId(), conceptTransaction, entityManager);
+
+                    reverseBonification(transactionNumber, transactionsManagementReverseBonification, card);
                     return new TransactionResponse(ResponseCode.SUCCESS.getCode(), "SUCCESS");
 
                 } else {
@@ -2408,7 +2431,7 @@ public class APIOperations {
             transactionAtmCardWithdrawal = operationsBD.createTransactionsManagement(null, null, acquirerTerminalCodeId, acquirerCountryId, transactionNumberAcquirer, transactionDate,
                     TransactionE.ATM_CARD_WITHDRAWAL.getId(), channelId, null, localTimeTransaction, null, null, null,
                     null, amountWithdrawal, null, null, null, null,
-                    null, StatusTransactionManagementE.APPROVED.getId(), cardNumber, cardHolder, CVV, cardDueDate, null, null, null, null,
+                    null, StatusTransactionManagementE.APPROVED.getId(), cardNumber, cardHolder, CVV, cardDueDate, null, null, null, null, null, null, null,
                     null, null, null, ResponseCode.SUCCESS.getCode(), messageMiddlewareId, DocumentTypeE.ATM_CARD_WITHDRAWAL.getId(), conceptTransaction, entityManager);
 
             try {

@@ -80,8 +80,9 @@ public class operationsBDImp implements operationsBD {
     public TransactionsManagement createTransactionsManagement(TransactionsManagement management, Integer acquirerId, String acquirerTerminalCode, Integer acquirerCountryId, String transactionNumberAcquirer, Date dateTransaction,
             Integer transactionTypeId, Integer channelId, String dateTimeTransmissionTerminal, String localTimeTransmission, Date localDateTransaction, Integer localCurrencyTransactionId, Float localCurrencyTransactionAmount,
             Integer settlementCurrencyTransactionId, Float settlementTransactionAmount, Float rateConvertionSettlement, Float acquirerCommisionAmount, Float acquirerSettlementCommisionAmount, Float transactionRateAmount,
-            Integer transactionCityId, Integer statusTransactionManagementId, String cardNumber, String cardHolder, String CVV, String expirationCardDate, Integer pinLenght, String transferDestinationCardNumber, Integer issuerId,
-            String mccCodeTrade, String tradeName, String systemTraceAuditNumber, Integer numberMovementsCheckBalance, String responseCode, Long messageMiddlewareId, Integer DocumentTypeId, String transactionConcept, EntityManager entityManager) {
+            Integer transactionCityId, Integer statusTransactionManagementId, String cardNumber, String cardHolder, String CVV, String expirationCardDate, String customerIdentificationNumber, Integer pinLenght, String transferDestinationCardNumber, 
+            String customerIdentificationNumberDestinationCard, String customerNameDestinationCard,Integer issuerId, String mccCodeTrade, String tradeName, String systemTraceAuditNumber, Integer numberMovementsCheckBalance, String responseCode, 
+            Long messageMiddlewareId, Integer DocumentTypeId, String transactionConcept, EntityManager entityManager) {
 
         TransactionsManagement transactionsManagement = new TransactionsManagement();
         try {            
@@ -99,6 +100,10 @@ public class operationsBDImp implements operationsBD {
                 transactionsManagement.setCardNumber(cardNumber);
                 transactionsManagement.setCvv(CVV);
                 transactionsManagement.setExpirationCardDate(expirationCardDate);
+                transactionsManagement.setCustomerIdentificationNumber(customerIdentificationNumber);
+                transactionsManagement.setTransferDestinationCardNumber(transferDestinationCardNumber);
+                transactionsManagement.setCustomerIdentificationNumberDestinationCard(customerIdentificationNumberDestinationCard);
+                transactionsManagement.setCustomerNameDestinationCard(customerNameDestinationCard);
                 transactionsManagement.setIssuerId(issuerId);
                 transactionsManagement.setMccCodeTrade(mccCodeTrade);
                 transactionsManagement.setTradeName(tradeName);
@@ -111,6 +116,10 @@ public class operationsBDImp implements operationsBD {
                 transactionsManagement.setCardNumber(management.getCardNumber());
                 transactionsManagement.setCvv(management.getCvv());
                 transactionsManagement.setExpirationCardDate(management.getExpirationCardDate());
+                transactionsManagement.setCustomerIdentificationNumber(management.getCustomerIdentificationNumber());
+                transactionsManagement.setTransferDestinationCardNumber(management.getTransferDestinationCardNumber());
+                transactionsManagement.setCustomerIdentificationNumberDestinationCard(management.getCustomerIdentificationNumberDestinationCard());
+                transactionsManagement.setCustomerNameDestinationCard(management.getCustomerNameDestinationCard());
                 transactionsManagement.setIssuerId(management.getIssuerId());
                 transactionsManagement.setMccCodeTrade(management.getMccCodeTrade());
                 transactionsManagement.setTradeName(management.getTradeName());
@@ -316,6 +325,7 @@ public class operationsBDImp implements operationsBD {
     @Override
     public List<TransactionsManagement> getCardMovements(String cardNumber, Date startDate, Date endingDate, EntityManager entityManager) {
         List<TransactionsManagement> transactionsManagement = new ArrayList<TransactionsManagement>();
+        List<TransactionsManagement> transactionsManagementTransfer = new ArrayList<TransactionsManagement>();
         String sql = "SELECT t FROM TransactionsManagement t WHERE t.cardNumber = '" + cardNumber + "' AND t.transactionDateIssuer BETWEEN ?1 AND ?2 AND t.transactionTypeId IN(?3,?4,?5,?6,?7,?8,?9,?10,?11)";
         StringBuilder sqlBuilder = new StringBuilder(sql);
         Query query = entityManager.createQuery(sqlBuilder.toString());
@@ -328,13 +338,29 @@ public class operationsBDImp implements operationsBD {
         query.setParameter("7", TransactionE.COMPRA_DOMESTICA_PIN.getId());
         query.setParameter("8", TransactionE.COMPRA_INTERNACIONAL_PIN.getId());
         query.setParameter("9", TransactionE.DEPOSITO.getId());
-        query.setParameter("10", TransactionE.TRANSFERENCIAS_PROPIAS.getId());
+        query.setParameter("10", TransactionE.TRANSFER_BETWEEN_ACCOUNT.getId());
         query.setParameter("11", TransactionE.RECARGA_MANUAL.getId());
         try {
             transactionsManagement = query.setHint("toplink.refresh", "true").getResultList();
         } catch (NoResultException e) {
-            return null;
+            e.printStackTrace();
         }
+        sql = "SELECT t FROM TransactionsManagement t WHERE t.transferDestinationCardNumber = '" + cardNumber + "' AND t.transactionDateIssuer BETWEEN ?1 AND ?2 AND t.transactionTypeId IN(?10)";
+        sqlBuilder = new StringBuilder(sql);
+        query = entityManager.createQuery(sqlBuilder.toString());
+        query.setParameter("1", startDate);
+        query.setParameter("2", endingDate);
+        query.setParameter("10", TransactionE.TRANSFER_BETWEEN_ACCOUNT.getId());
+        try {
+            transactionsManagementTransfer = query.setHint("toplink.refresh", "true").getResultList();
+        } catch (NoResultException e) {
+            e.printStackTrace();
+        }
+        if (transactionsManagementTransfer.size() > 0) {
+            for (TransactionsManagement tm: transactionsManagementTransfer) {
+                transactionsManagement.add(tm);
+            }
+        }        
         return transactionsManagement;
     }
 

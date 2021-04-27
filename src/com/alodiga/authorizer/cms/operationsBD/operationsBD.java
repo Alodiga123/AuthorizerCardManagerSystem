@@ -43,8 +43,9 @@ public interface operationsBD {
                                   Integer transactionTypeId, Integer channelId, String dateTimeTransmissionTerminal, String localTimeTransmission, Date localDateTransaction, Integer localCurrencyTransactionId,
                                   Float localCurrencyTransactionAmount, Integer settlementCurrencyTransactionId, Float settlementTransactionAmount, Float rateConvertionSettlement, Float acquirerCommisionAmount,
                                   Float acquirerSettlementCommisionAmount, Float transactionRateAmount, Integer transactionCityId, Integer statusTransactionManagementId, String cardNumber, String cardHolder,
-                                  String CVV, String expirationCardDate, Integer pinLenght, String transferDestinationCardNumber, Integer issuerId, String mccCodeTrade, String tradeName, String systemTraceAuditNumber,
-                                  Integer numberMovementsCheckBalance, String responseCode, Long messageMiddlewareId, Integer DocumentTypeId, String transactionConcept, EntityManager entityManager);
+                                  String CVV, String expirationCardDate, String customerIdentificationNumber, Integer pinLenght, String transferDestinationCardNumber, String customerIdentificationNumberDestinationCard, 
+                                  String customerNameDestinationCard, Integer issuerId, String mccCodeTrade, String tradeName, String systemTraceAuditNumber, Integer numberMovementsCheckBalance, String responseCode, 
+                                  Long messageMiddlewareId, Integer DocumentTypeId, String transactionConcept, EntityManager entityManager);
     
     public TransactionsManagementHistory createTransactionsManagementHistory(TransactionsManagement transactionManagement, Integer acquirerId, String acquirerTerminalCode, Integer acquirerCountryId, String transactionNumberAcquirer, Date dateTransaction, 
                                   String transactionSequence, Integer transactionTypeId, Integer channelId, String dateTimeTransmissionTerminal, String localTimeTransmission, Date localDateTransaction, 
