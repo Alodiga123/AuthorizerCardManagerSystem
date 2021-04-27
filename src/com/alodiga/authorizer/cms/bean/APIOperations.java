@@ -2135,6 +2135,7 @@ public class APIOperations {
 
     public TransactionResponse reverseCardPurchage(String cardNumber, String CVV, String cardDueDate, String cardHolder, String ARQC, Integer channelId, Integer transactionTypeId, Long messageMiddlewareId, Date transactionDate,
             String localTimeTransaction, String acquirerTerminalCodeId, Integer acquirerCountryId, String transactionNumber, String tradeName) {
+        
         Card card = null;
         TransactionsManagement transactionsManagementReverse = null;
         TransactionsManagement transactionsManagement = null;
@@ -2206,28 +2207,29 @@ public class APIOperations {
                     accountCard.setCurrentBalance(newBalance);
                     entityManager.merge(accountCard);
 
-                    //preguntar si la transaccion genero comission
-                    if (transactionsManagementReverse.getAcquirerCommisionAmount() != null || transactionsManagementReverse.getAcquirerCommisionAmount() > 0) {
-                        conceptTransaction = "Reverso de Comisión CMS";
-                        //Se crea la transaction de reverso de comission
-                        transactionsManagementReverseCommision = (TransactionsManagement) operationsBD.createTransactionsManagement(null, null, acquirerTerminalCodeId, acquirerCountryId, null, transactionDate,
-                                TransactionE.REVERSE_COMISSION.getId(), channelId, null, localTimeTransaction, null, null, null,
-                                null, null, null, null, null, null,
-                                null, null, cardNumber, cardHolder, CVV, cardDueDate, null, null, null, null, null, null, null,
-                                null, null, null, null, messageMiddlewareId, DocumentTypeE.REVERSE_COMISSION.getId(), conceptTransaction, entityManager);
+                    //Se revisa si la transaccion genero comission
+                    if (transactionsManagementReverse.getAcquirerCommisionAmount() != null) {
+                       if(transactionsManagementReverse.getAcquirerCommisionAmount() > 0){
+                           conceptTransaction = "Reverso de Comisión CMS";
+                           //Se crea la transaction de reverso de comission
+                            transactionsManagementReverseCommision = (TransactionsManagement) operationsBD.createTransactionsManagement(null, null, acquirerTerminalCodeId, acquirerCountryId, null, transactionDate,
+                                    TransactionE.REVERSE_COMISSION.getId(), channelId, null, localTimeTransaction, null, null, null,
+                                    null, null, null, null, null, null,
+                                    null, null, cardNumber, cardHolder, CVV, cardDueDate, null, null, null, null, null, null, null,
+                                    null, null, null, null, messageMiddlewareId, DocumentTypeE.REVERSE_COMISSION.getId(), conceptTransaction, entityManager);
 
                             reverseComission(transactionNumber, transactionsManagementReverseCommision, card);
                        }  
                     }
-                    //Se crea la transaction de reverso de bonificacion
-                    conceptTransaction = "Reverso de Bonificación CMS";
-                    transactionsManagementReverseBonification = (TransactionsManagement) operationsBD.createTransactionsManagement(null, null, acquirerTerminalCodeId, acquirerCountryId, null, transactionDate,
-                            TransactionE.REVERSE_BONIFICATION.getId(), channelId, null, localTimeTransaction, null, null, null,
-                            null, null, null, null, null, null,
-                            null, null, cardNumber, cardHolder, CVV, cardDueDate, null, null, null, null, null, null, null,
-                            null, null, null, null, messageMiddlewareId, DocumentTypeE.REVERSE_BONIFICATION.getId(), conceptTransaction, entityManager);
-
-                    reverseBonification(transactionNumber, transactionsManagementReverseBonification, card);
+                    
+                    //Se revisa si la transacción de recarga generó una bonificación
+                    transactionsManagementReverseBonification = operationsBD.getTransactionsManagementByTransactionReference(transactionNumber, TransactionE.BONIFICATION_CMS.getId(), entityManager);
+                    if (transactionsManagementReverseBonification != null) {
+                        TransactionResponse transactionResponse = reverseBonification(transactionNumber, transactionsManagementReverseBonification, card);
+                        if (!transactionResponse.getCodigoRespuesta().equals(ResponseCode.SUCCESS.getCode())) {
+                            return transactionResponse;
+                        }
+                    }
                     return new TransactionResponse(ResponseCode.SUCCESS.getCode(), "SUCCESS");
 
                 } else {
