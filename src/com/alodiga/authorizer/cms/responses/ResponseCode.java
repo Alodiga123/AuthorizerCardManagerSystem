@@ -9,7 +9,7 @@ public enum ResponseCode {
     INVALID_CREDENTIALS("05",""),
     BLOCKED_USER("06",""),
     COUNTRY_NOT_FOUND("07","The country not found"),
-    CHANNEL_NOT_FOUND("07","The channel not found"),
+    CHANNEL_NOT_FOUND("08","The channel not found"),
     INTERNAL_ERROR("99",""),
     CANCEL("105","The transaction was canceled"),
     
@@ -20,7 +20,8 @@ public enum ResponseCode {
     TRANSACTION_AMOUNT_LIMIT_MONTHLY("37","The card exceeded the maximum amount per month"),
     MIN_TRANSACTION_AMOUNT("38","The card exceeded the minimun amount per transaction"),
     MAX_TRANSACTION_AMOUNT("39","The card exceeded the maximum amount per transaction"),
-         
+    INVALID_TRANSACTIONAL_LIMITS("40","INVALID TRANSACTIONAL LIMITS"),     
+    
     //Mensajes Status Card
     CARD_EXISTS("50","The Card exists in the Card Manager System database"),
     CARD_NOT_EXISTS("51","The card does not exist in the Card Manager System database"),  
@@ -55,6 +56,7 @@ public enum ResponseCode {
     HAS_NO_PROPERTIES("164","has no associated properties"),
     INVALID_PROPERTIES("165","Invalid Properties"),
     INVALID_PIN("166","Invalid PIN"),
+    CHECK_DIGIT_CARD_INCORRECT("167","The verification digit of the card is not correct"),
     
     //Activación de Tarjeta
     ACTIVE_CARD_NO("20","The card cannot be activated. Security responses do not match"),
@@ -99,10 +101,7 @@ public enum ResponseCode {
     BALANCE_NOT_AVAILABLE("45","The card has no unavailable balance"),
     
     //Retiro cajero ATM
-    CARD_BALANCE_BELOW_MINIMUN("46","The balance of the card was below the minimum allowed"),
-    
-    //validación PinOffset
-    ERROR_VALIDATING_PINNLUNCH("46","The verification digit of the card is not correct");
+    CARD_BALANCE_BELOW_MINIMUN("46","The balance of the card was below the minimum allowed");
     
     private final String code;
     private final String message;
