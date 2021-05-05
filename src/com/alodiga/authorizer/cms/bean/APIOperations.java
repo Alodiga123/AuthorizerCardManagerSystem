@@ -1003,17 +1003,23 @@ public class APIOperations {
         String customerIdentificationNumber = "";
         String customerIdentificationNumberDestinationCard = "";
         String customerNameDestinationCard = "";
+        Card cardOrigin = null;
+        Card cardDestinate = null;
+        Float amountTransferTotal = 0.00F;
+        Float currentBalanceOrigin = 0.00F;
+        Float currentBalanceDestinate = 0.00F;
+        Float bonusAmount = 0.00F;
         
         try {            
             CardResponse cardResponseOrigin = validateCard(cardNumberOrigin, ARQCOrigin, cardHolderOrigin, CVVOrigin, cardDueDateOrigin, indValidateCardActive);
             CardResponse cardResponseDestinate = validateCard(cardNumberDestinate, ARQCDestinate, cardHolderDestinate, CVVDestinate, cardDueDateDestinate, indValidateCardActive);
-            Card cardOrigin = cardResponseOrigin.getCard();
+            cardOrigin = cardResponseOrigin.getCard();
             if (cardOrigin.getPersonCustomerId().getPersonTypeId().getIndNaturalPerson() == true) {
                 customerIdentificationNumber = cardOrigin.getPersonCustomerId().getNaturalCustomer().getIdentificationNumber();
             } else {
                 customerIdentificationNumber = cardOrigin.getPersonCustomerId().getLegalCustomer().getIdentificationNumber();
             }
-            Card cardDestinate = cardResponseDestinate.getCard();
+            cardDestinate = cardResponseDestinate.getCard();
             if (cardDestinate.getPersonCustomerId().getPersonTypeId().getIndNaturalPerson() == true) {
                 customerIdentificationNumberDestinationCard = cardDestinate.getPersonCustomerId().getNaturalCustomer().getIdentificationNumber();
                 customerNameDestinationCard = cardDestinate.getPersonCustomerId().getNaturalCustomer().getFirstNames().concat(" ").concat(cardDestinate.getPersonCustomerId().getNaturalCustomer().getLastNames());
@@ -1046,19 +1052,26 @@ public class APIOperations {
                         if (transactionResponse.getCodigoRespuesta().equals(ResponseCode.COMMISSION_YES_APPLY.getCode())) {
                             amountCommission = transactionResponse.getTransactionCommissionAmount();
                         }
-                        Float amountTransferTotal = amountTransfer + amountCommission;
+                        amountTransferTotal = amountTransfer + amountCommission;
                         if (currentBalanceCardOrigin == null || currentBalanceCardOrigin < amountTransferTotal) {
                             return new TransactionResponse(ResponseCode.USER_HAS_NOT_BALANCE.getCode(), ResponseCode.USER_HAS_NOT_BALANCE.getMessage());
                         }
 
-                        Float currentBalanceOrigin = currentBalanceCardOrigin - amountTransferTotal;
+                        currentBalanceOrigin = currentBalanceCardOrigin - amountTransferTotal;
                         if (currentBalanceOrigin < cardOrigin.getProductId().getMinimumBalance()) {
-                            return new TransactionResponse(ResponseCode.MINIMUM_AMOUNT_NOT_ALLOWED.getCode(), ResponseCode.MINIMUM_AMOUNT_NOT_ALLOWED.getMessage());
+                            return new TransactionResponse(ResponseCode.BALANCE_LESS_THAN_ALLOWED.getCode(), ResponseCode.BALANCE_LESS_THAN_ALLOWED.getMessage());
                         }
 
-                        Float currentBalanceDestinate = currentBalanceCardDestination + amountTransfer;
+                        currentBalanceDestinate = currentBalanceCardDestination + amountTransfer;
                         if (currentBalanceDestinate > cardDestinate.getProductId().getMaximumBalance()) {
-                            return new TransactionResponse(ResponseCode.MAXIMUM_AMOUNT_IS_NOT_ALLOWED.getCode(), ResponseCode.MAXIMUM_AMOUNT_IS_NOT_ALLOWED.getMessage());
+                            return new TransactionResponse(ResponseCode.BALANCE_GREATER_THAN_ALLOWED.getCode(), ResponseCode.BALANCE_GREATER_THAN_ALLOWED.getMessage());
+                        }
+                        
+                        //Se revisa si la transacción genera una bonificación
+                        CalculateBonusCardResponse calculateBonus = calculateBonus(cardOrigin.getCardNumber(), transactionTypeId, channelId, country.getCodeIso3(), amountTransfer, transactionsManagement.getTransactionNumberIssuer());
+                        //Si aplica bonificación se obtiene el monto aplicado
+                        if (calculateBonus.getCodigoRespuesta().equals(ResponseCode.SUCCESS.getCode())) {
+                            bonusAmount = calculateBonus.getBonusAmount();
                         }
 
                         //Actualizar balance History de Origen
@@ -1132,7 +1145,8 @@ public class APIOperations {
             e.printStackTrace();
             return new TransactionResponse(ResponseCode.INTERNAL_ERROR.getCode(), "INTERNAL_ERROR");
         }        
-        return new TransactionResponse(ResponseCode.SUCCESS.getCode(), ResponseCode.SUCCESS.getMessage());
+        return new TransactionResponse(ResponseCode.SUCCESS.getCode(), ResponseCode.SUCCESS.getMessage(), cardOrigin.getCardNumber(), cardOrigin.getCardStatusId().getId(), cardOrigin.getCardStatusId().getDescription(), transactionsManagement.getMessageMiddlewareId(),
+                                       transactionsManagement.getTransactionNumberIssuer(), transactionsManagement.getTransactionDateIssuer(), transactionsManagement.getTransactionSequence(), currentBalanceOrigin, amountTransfer, amountCommission, bonusAmount);
     }
 
     public TransactionResponse viewCardMovements(String cardNumber, String CVV, String cardDueDate, String cardHolder, String documentIdentificationNumber, Integer channelId, Integer transactionTypeId, Long messageMiddlewareId, Date transactionDate,
@@ -1229,7 +1243,7 @@ public class APIOperations {
             Integer transactionTypeId, Integer channelId, Date transactionDate, String localTimeTransaction,
             String acquirerTerminalCodeId, String transactionNumberAcquirer, String acquirerCountryId,
             Float amountRecharge, String conceptTransaction) {
-
+        
         String ARQC = null;
         TransactionsManagement transactionRechargeCard = null;
         TransactionsManagementHistory transactionHistoryRechargeCard = null;
@@ -1297,13 +1311,13 @@ public class APIOperations {
                         if (newBalance > card.getProductId().getMaximumBalance()) {
                             //Se actualiza el estatus de la transacción a RECHAZADA, debido a que excedió el monto máximo permitido para la cuenta
                             transactionRechargeCard.setStatusTransactionManagementId(StatusTransactionManagementE.REJECTED.getId());
-                            transactionRechargeCard.setResponseCode(ResponseCode.ACCOUNT_BALANCE_EXCEEDED.getCode());
+                            transactionRechargeCard.setResponseCode(ResponseCode.BALANCE_GREATER_THAN_ALLOWED.getCode());
                             try {
                                 transactionRechargeCard = operationsBD.saveTransactionsManagement(transactionRechargeCard, entityManager);
                             } catch (Exception e) {
                                 return new TransactionResponse(ResponseCode.INTERNAL_ERROR.getCode(), "an error occurred while saving the transaction");
                             }
-                            return new TransactionResponse(ResponseCode.INTERNAL_ERROR.getCode(), ResponseCode.ACCOUNT_BALANCE_EXCEEDED.getMessage());
+                            return new TransactionResponse(ResponseCode.BALANCE_GREATER_THAN_ALLOWED.getCode(), ResponseCode.BALANCE_GREATER_THAN_ALLOWED.getMessage());
                         } else {
                             //Se actualiza el historial del saldos de la tarjeta en la BD del CMS
                             balanceHistoryCard = operationsBD.createBalanceHistoryCard(card, transactionRechargeCard.getId(), currentBalance, newBalance, entityManager);
@@ -1343,7 +1357,8 @@ public class APIOperations {
                             }
 
                             //Se retorna que la recarga de la tarjeta se realizó satisfactoriamente
-                            return new TransactionResponse(ResponseCode.SUCCESS.getCode(), ResponseCode.SUCCESS.getMessage(), cardNumberEncript, card.getCardStatusId().getId(), card.getCardStatusId().getDescription(), messageMiddlewareId.longValue(), transactionRechargeCard.getTransactionNumberIssuer(), newBalance, totalAmountRecharge, amountCommission, bonusAmount);
+                            return new TransactionResponse(ResponseCode.SUCCESS.getCode(), ResponseCode.SUCCESS.getMessage(), cardNumberEncript, card.getCardStatusId().getId(), card.getCardStatusId().getDescription(), messageMiddlewareId.longValue(), transactionRechargeCard.getTransactionNumberIssuer(), 
+                                                           transactionRechargeCard.getTransactionDateIssuer(), transactionRechargeCard.getTransactionReference(), newBalance, totalAmountRecharge, amountCommission, bonusAmount);
                         }
                     }
                 } else {
@@ -1462,13 +1477,13 @@ public class APIOperations {
                     if (newBalance < card.getProductId().getMinimumBalance()) {
                         //Se rechaza la transacción por el balance minimo
                         transactionManagement.setStatusTransactionManagementId(StatusTransactionManagementE.REJECTED.getId());
-                        transactionManagement.setResponseCode(ResponseCode.CARD_MINIMUM_BALANCE_EXCEEDED.getCode());
+                        transactionManagement.setResponseCode(ResponseCode.BALANCE_LESS_THAN_ALLOWED.getCode());
                         try {
                             transactionManagement = operationsBD.saveTransactionsManagement(transactionManagement, entityManager);
                         } catch (Exception e) {
                             return new TransactionResponse(ResponseCode.INTERNAL_ERROR.getCode(), "an error occurred while saving the transaction");
                         }
-                        return new TransactionResponse(ResponseCode.CARD_MINIMUM_BALANCE_EXCEEDED.getCode(), ResponseCode.CARD_MINIMUM_BALANCE_EXCEEDED.getMessage());
+                        return new TransactionResponse(ResponseCode.BALANCE_LESS_THAN_ALLOWED.getCode(), ResponseCode.BALANCE_LESS_THAN_ALLOWED.getMessage());
                     } else {
 
                         if (currentBalance == null || currentBalance < amountWithdrawlTotal) {
@@ -1483,7 +1498,6 @@ public class APIOperations {
                             return new TransactionResponse(ResponseCode.USER_HAS_NOT_BALANCE.getCode(), ResponseCode.USER_HAS_NOT_BALANCE.getMessage());
                         }
                     }
-
                     Float currentBalanceSource = currentBalance - amountWithdrawlTotal;
                     //Actualizar Balance History de la tarjeta
                     balanceHistoryCardOrigin = operationsBD.createBalanceHistoryCard(card, transactionManagement.getId(), currentBalance, currentBalanceSource, entityManager);
@@ -1504,7 +1518,8 @@ public class APIOperations {
                     if (calculateBonus.getCodigoRespuesta().equals(ResponseCode.SUCCESS.getCode())) {
                         bonusAmount = calculateBonus.getBonusAmount();
                     }
-                    return new TransactionResponse(ResponseCode.SUCCESS.getCode(), ResponseCode.SUCCESS.getMessage(), cardNumberEncript, card.getCardStatusId().getId(), card.getCardStatusId().getDescription(), messageMiddlewareId.longValue(), transactionManagement.getTransactionNumberIssuer(), currentBalanceSource, amountWithdrawlTotal, amountCommission, bonusAmount);
+                    return new TransactionResponse(ResponseCode.SUCCESS.getCode(), ResponseCode.SUCCESS.getMessage(), cardNumberEncript, card.getCardStatusId().getId(), card.getCardStatusId().getDescription(), messageMiddlewareId.longValue(), transactionManagement.getTransactionNumberIssuer(), 
+                                                   transactionManagement.getTransactionDateIssuer(), transactionManagement.getTransactionReference(), currentBalanceSource, amountWithdrawlTotal, amountCommission, bonusAmount);
 
                 } else {
                     //El cliente excedio los límites transaccionales
@@ -1757,15 +1772,15 @@ public class APIOperations {
                             newBalance = currentBalance - totalAmountPurchage;
                             //Se verifica que el total de la compra no supere el saldo actual
                             if (newBalance < 0) {
-                                //Se actualiza el estatus de la transacción a RECHAZADA, debido a que la compra excedió el limite dispnible
+                                //Se actualiza el estatus de la transacción a RECHAZADA, debido a que la compra excedió el limite disponible
                                 transactionPurchageCard.setStatusTransactionManagementId(StatusTransactionManagementE.REJECTED.getId());
-                                transactionPurchageCard.setResponseCode(ResponseCode.BALANCE_NOT_AVAILABLE.getCode());
+                                transactionPurchageCard.setResponseCode(ResponseCode.BALANCE_GREATER_THAN_ALLOWED.getCode());
                                 try {
                                     transactionPurchageCard = operationsBD.saveTransactionsManagement(transactionPurchageCard, entityManager);
                                 } catch (Exception e) {
                                     return new TransactionPurchageResponse(ResponseCode.INTERNAL_ERROR.getCode(), "an error occurred while saving the transaction");
                                 }
-                                return new TransactionPurchageResponse(ResponseCode.BALANCE_NOT_AVAILABLE.getCode(), ResponseCode.ACCOUNT_BALANCE_EXCEEDED.getMessage());
+                                return new TransactionPurchageResponse(ResponseCode.BALANCE_GREATER_THAN_ALLOWED.getCode(), ResponseCode.BALANCE_GREATER_THAN_ALLOWED.getMessage());
                             } else {
                                 //Verificar si la transacción genera bonificación
                                 calculateBonification = calculateBonus(card.getCardNumber(), transactionTypeId, channelId, acquirerCountryId.toString(), amountPurchage, transactionPurchageCard.getTransactionNumberIssuer());
@@ -2530,27 +2545,27 @@ public class APIOperations {
                             newBalance = currentBalance - totalAmountWithDrawall;
                             //Se verifica que el monto total del retiro no sea mayor al saldo actual del usuario
                             if (newBalance < 0) {
-                                //Se actualiza el estatus de la transacción a RECHAZADA, debido a que el monto del retiro excedió el saldo dispnible
+                                //Se actualiza el estatus de la transacción a RECHAZADA, debido a que el monto del retiro excedió el saldo disponible
                                 transactionAtmCardWithdrawal.setStatusTransactionManagementId(StatusTransactionManagementE.REJECTED.getId());
-                                transactionAtmCardWithdrawal.setResponseCode(ResponseCode.BALANCE_NOT_AVAILABLE.getCode());
+                                transactionAtmCardWithdrawal.setResponseCode(ResponseCode.BALANCE_GREATER_THAN_ALLOWED.getCode());
                                 try {
                                     transactionAtmCardWithdrawal = operationsBD.saveTransactionsManagement(transactionAtmCardWithdrawal, entityManager);
                                 } catch (Exception e) {
                                     return new TransactionResponse(ResponseCode.INTERNAL_ERROR.getCode(), "an error occurred while saving the transaction");
                                 }
-                                return new TransactionResponse(ResponseCode.BALANCE_NOT_AVAILABLE.getCode(), ResponseCode.ACCOUNT_BALANCE_EXCEEDED.getMessage());
+                                return new TransactionResponse(ResponseCode.BALANCE_GREATER_THAN_ALLOWED.getCode(), ResponseCode.BALANCE_GREATER_THAN_ALLOWED.getMessage());
                             }
                             //Se verifica que el saldo actualizado luego del retiro no sea menor al saldo mínimo permitido para la tarjeta
                             if (newBalance < card.getProductId().getMinimumBalance()) {
                                 //Se actualiza el estatus de la transacción a RECHAZADA, debido a que el nuevo saldo es menor al monto mínimo permitido para la tarjeta
                                 transactionAtmCardWithdrawal.setStatusTransactionManagementId(StatusTransactionManagementE.REJECTED.getId());
-                                transactionAtmCardWithdrawal.setResponseCode(ResponseCode.CARD_BALANCE_BELOW_MINIMUN.getCode());
+                                transactionAtmCardWithdrawal.setResponseCode(ResponseCode.BALANCE_LESS_THAN_ALLOWED.getCode());
                                 try {
                                     transactionAtmCardWithdrawal = operationsBD.saveTransactionsManagement(transactionAtmCardWithdrawal, entityManager);
                                 } catch (Exception e) {
                                     return new TransactionResponse(ResponseCode.INTERNAL_ERROR.getCode(), "an error occurred while saving the transaction");
                                 }
-                                return new TransactionResponse(ResponseCode.CARD_BALANCE_BELOW_MINIMUN.getCode(), ResponseCode.CARD_BALANCE_BELOW_MINIMUN.getMessage());
+                                return new TransactionResponse(ResponseCode.BALANCE_LESS_THAN_ALLOWED.getCode(), ResponseCode.BALANCE_LESS_THAN_ALLOWED.getMessage());
                             } else {
                                 //Se Verifica si la transacción genera bonificación
                                 calculateBonification = calculateBonus(card.getCardNumber(), transactionTypeId, channelId, acquirerCountryId.toString(), amountWithdrawal, transactionAtmCardWithdrawal.getTransactionNumberIssuer());

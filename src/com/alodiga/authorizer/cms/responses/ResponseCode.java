@@ -46,7 +46,8 @@ public enum ResponseCode {
     USER_HAS_NOT_BALANCE("155","The user has no balance available to complete the transaction"),
     THE_CARD_HAS_NO_MOVEMENTS("156","The card has no movements"),
     PIN_OFFSET_DIFFERENT("157","The pinOffset is Different"),
-    CARD_MINIMUM_BALANCE_EXCEEDED("158","The card minimum balance has exceeded"),
+    BALANCE_LESS_THAN_ALLOWED("158","The card balance cannot be less than the minimum allowed balance"),
+    BALANCE_GREATER_THAN_ALLOWED("168","The card balance cannot be greater than the maximum allowed balance"),
     DIFFERENT_PIN_OFFSET_LENGTH("167","KEY LENGTH IS DIFFERENT"),
     EXPIRED_KEY("159","EXPIRED KEY"),
     CONSECUTIVE_KEY("160","THE KEY CANNOT HAVE CONSECUTIVE NUMBERS"),
@@ -71,13 +72,7 @@ public enum ResponseCode {
     
     //Comisiones CMS
     COMMISSION_NOT_APPLY("27","The transaction received did not generate commission to be charged"),
-    COMMISSION_YES_APPLY("28","The transaction to record the Alodiga commission corresponding to the received transaction was successfully saved in the database."),
-
-    
-    //Validaciones de la tarjeta
-    MINIMUM_AMOUNT_NOT_ALLOWED("156","The minimum amount is not allowed"),
-    MAXIMUM_AMOUNT_IS_NOT_ALLOWED("157","The maximum amount is not allowed"),
-    
+    COMMISSION_YES_APPLY("28","The transaction to record the Alodiga commission corresponding to the received transaction was successfully saved in the database."),    
     
     //Cáculo Tarifas CMS
     RATE_BY_CARD_NOT_FOUND("401","The rate for the card has not been defined"),
@@ -93,15 +88,11 @@ public enum ResponseCode {
     
     //Recarga de la Tarjeta
     RECHARGE_AMOUNT_EXCEEDED("41","The amount of the recharge exceeded the maximum allowed"),
-    ACCOUNT_BALANCE_EXCEEDED("42","The balance of the account exceeded the maximum allowed"),
     CARD_RECHARGE_SUCCESS("43","The card recharge was successful"),
     
     //Compra con Tarjeta
     CARD_PURCHAGE_SUCCESS("44","The card purchage was successful"),
-    BALANCE_NOT_AVAILABLE("45","The card has no unavailable balance"),
-    
-    //Retiro cajero ATM
-    CARD_BALANCE_BELOW_MINIMUN("46","The balance of the card was below the minimum allowed");
+    BALANCE_NOT_AVAILABLE("45","The card has no unavailable balance");
     
     private final String code;
     private final String message;
