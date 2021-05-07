@@ -22,6 +22,7 @@ public class TransactionResponse extends Response {
         public Long messageMiddlewareId;
         public String transactionNumberIssuer;
         public Date transactionDateIssuer;
+        public String transactionSequence;
         public TransactionsManagement transactionsManagement;
         private Float transactionCommissionAmount;
         private Float currentBalanceAmount; 
@@ -80,13 +81,16 @@ public class TransactionResponse extends Response {
     }  
     
     public TransactionResponse(String code, String mensaje, String cardNumber, int cardStatusId,
-                                   String descriptionStatusCard, Long messageMiddlewareId, String transactionNumberIssuer,Float currentBalanceAmount,Float transactionAmount, Float transactionCommissionAmount, Float transanctionBonusAmount) {
+                               String descriptionStatusCard, Long messageMiddlewareId, String transactionNumberIssuer, Date transactionDateIssuer, String transactionSequence,
+                               Float currentBalanceAmount, Float transactionAmount, Float transactionCommissionAmount, Float transanctionBonusAmount) {
         super(new Date(), code, mensaje);
         this.cardNumber = cardNumber;
         this.cardStatusId = cardStatusId;
         this.descriptionStatusCard = descriptionStatusCard;
         this.messageMiddlewareId = messageMiddlewareId;
         this.transactionNumberIssuer = transactionNumberIssuer;
+        this.transactionDateIssuer = transactionDateIssuer;
+        this.transactionSequence = transactionSequence;
         this.currentBalanceAmount= currentBalanceAmount; 
         this.transactionAmount = transactionAmount;
         this.transactionCommissionAmount = transactionCommissionAmount;
