@@ -1606,24 +1606,30 @@ public class APIOperations {
                                 entityManager.merge(cardKeyHistory);
                                 entityManager.merge(card);
                             }
+                        } else {
+                            //Otro tipo de respuesta del VerifyPinUsingIBMMethodResponse new PIN
+                            return new TransactionResponse(responseNewPin.getResponseCode(), responseNewPin.getResponseMessage());
                         }
+                    } else {
+                        //Otro tipo de respuesta del VerifyPinUsingIBMMethodResponse
+                        return new TransactionResponse(response.getResponseCode(), response.getResponseMessage());
                     }
                 } else {
                     //Fallo en la validación de las propiedades
                     transactionsManagement.setStatusTransactionManagementId(StatusTransactionManagementE.REJECTED.getId());
-                    transactionsManagement.setResponseCode(ResponseCode.INVALID_PROPERTIES.getCode());
+                    transactionsManagement.setResponseCode(transactionResponse.getCodigoRespuesta());
                     try {
                         transactionsManagement = operationsBD.saveTransactionsManagement(transactionsManagement, entityManager);
                     } catch (Exception e) {
                         return new TransactionResponse(ResponseCode.INTERNAL_ERROR.getCode(), "an error occurred while saving the transaction");
                     }
-                    return new TransactionResponse(ResponseCode.INVALID_PROPERTIES.getCode(), ResponseCode.INVALID_PROPERTIES.getMessage());
+                    return new TransactionResponse(transactionResponse.getCodigoRespuesta(), transactionResponse.getMensajeRespuesta());
                 }
 
             } else {
                 //Fallo en la validación de la tarjeta
                 transactionsManagement.setStatusTransactionManagementId(StatusTransactionManagementE.REJECTED.getId());
-                transactionsManagement.setResponseCode(ResponseCode.INVALID_CARD.getCode());
+                transactionsManagement.setResponseCode(cardResponse.getCodigoRespuesta());
                 try {
                     transactionsManagement = operationsBD.saveTransactionsManagement(transactionsManagement, entityManager);
                 } catch (Exception e) {
@@ -2162,26 +2168,24 @@ public class APIOperations {
                 } else {
                     //Fallo en la validación de las propiedades
                     transactionsManagement.setStatusTransactionManagementId(StatusTransactionManagementE.REJECTED.getId());
-                    transactionsManagement.setResponseCode(ResponseCode.INVALID_PROPERTIES.getCode());
+                    transactionsManagement.setResponseCode(transactionResponse.getCodigoRespuesta());
                     try {
                         transactionsManagement = operationsBD.saveTransactionsManagement(transactionsManagement, entityManager);
                     } catch (Exception e) {
                         return new TransactionResponse(ResponseCode.INTERNAL_ERROR.getCode(), "an error occurred while saving the transaction");
                     }
-                    return new TransactionResponse(ResponseCode.INVALID_PROPERTIES.getCode(), transactionResponse.getMensajeRespuesta());
-
+                    return new TransactionResponse(transactionResponse.getCodigoRespuesta(), transactionResponse.getMensajeRespuesta());
                 }
             } else {
                 //Fallo en la validación de la tarjeta
                 transactionsManagement.setStatusTransactionManagementId(StatusTransactionManagementE.REJECTED.getId());
-                transactionsManagement.setResponseCode(ResponseCode.INVALID_CARD.getCode());
+                transactionsManagement.setResponseCode(cardResponse.getCodigoRespuesta());
                 try {
                     transactionsManagement = operationsBD.saveTransactionsManagement(transactionsManagement, entityManager);
                 } catch (Exception e) {
                     return new TransactionResponse(ResponseCode.INTERNAL_ERROR.getCode(), "an error occurred while saving the transaction");
                 }
-                return new TransactionResponse(ResponseCode.INVALID_CARD.getCode(), cardResponse.getMensajeRespuesta());
-
+                return new TransactionResponse(cardResponse.getCodigoRespuesta(), cardResponse.getMensajeRespuesta());
             }
 
         } catch (Exception e) {
