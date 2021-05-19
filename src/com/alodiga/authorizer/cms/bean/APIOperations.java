@@ -2063,9 +2063,8 @@ public class APIOperations {
                             TransactionResponse transactionResponse = reverseComission(transactionNumberCardRecharge, transactionReverseComissionRechargeCard, card);
                             if (!transactionResponse.getCodigoRespuesta().equals(ResponseCode.SUCCESS.getCode())) {
                                 return transactionResponse;
-                        }
-                        
                             }
+                        }
                     }
 
                     //Se revisa si la transacción de recarga generó una bonificación
@@ -2076,7 +2075,10 @@ public class APIOperations {
                             return transactionResponse;
                         }
                     }
-                    return new TransactionResponse(ResponseCode.SUCCESS.getCode(), ResponseCode.SUCCESS.getMessage());
+                    
+                    return new TransactionResponse(ResponseCode.SUCCESS.getCode(), ResponseCode.SUCCESS.getMessage(), card.getCardNumber(), card.getCardStatusId().getId(), card.getCardStatusId().getDescription(), messageMiddlewareId.longValue(), transactionReverseRechargeCard.getTransactionNumberIssuer(), 
+                                                           transactionReverseRechargeCard.getTransactionDateIssuer(), transactionReverseRechargeCard.getTransactionSequence(), newBalance, amountReverseRecharge, transactionRechargeCardOriginal.getTransactionCommissionAmount(), transactionsReverseManagementBonification.getSettlementTransactionAmount());
+                
                 } else {
                     //Se generó un error inesperado, no se encontró la transacción de recarga a reversar
                     transactionReverseRechargeCard.setStatusTransactionManagementId(StatusTransactionManagementE.REJECTED.getId());
