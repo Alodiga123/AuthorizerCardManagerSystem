@@ -214,8 +214,6 @@ public class TransactionResponse extends Response {
         this.transactionsManagementList = transactionsManagementList;
     }
 
-    
-
     public Float getTransactionAmount() {
         return transactionAmount;
     }
@@ -232,6 +230,11 @@ public class TransactionResponse extends Response {
         this.ARPC = ARPC;
     }
     
-    
-     
+    public String getTransactionSequence() {
+        return transactionSequence;
+    }
+
+    public void setTransactionSequence(String transactionSequence) {
+        this.transactionSequence = transactionSequence;
+    }
 }

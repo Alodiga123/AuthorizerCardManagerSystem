@@ -394,4 +394,25 @@ public class APIAuthorizerCardManagementSystem {
                                             acquirerCountryId,amountWithdrawal,pinBlock,ARQC,terminalId,oPMode,schemeEMV,seqNumber,atc,unpredictableNumber,transactionData,tradeName);
     }
     
+    @WebMethod  
+    public TransactionResponse reverseAtmCardWithdrawal(
+        @WebParam(name = "cardNumber") String cardNumber,
+        @WebParam(name = "cardHolder") String cardHolder,
+        @WebParam(name = "CVV") String CVV,
+        @WebParam(name = "cardDueDate") String cardDueDate,
+        @WebParam(name = "messageMiddlewareId") Long messageMiddlewareId,
+        @WebParam(name = "transactionTypeId") Integer transactionTypeId,        
+        @WebParam(name = "channelId") Integer channelId,
+        @WebParam(name = "transactionDate") Date transactionDate,
+        @WebParam(name = "localTimeTransaction") String localTimeTransaction,
+        @WebParam(name = "acquirerTerminalCodeId") String acquirerTerminalCodeId,
+        @WebParam(name = "acquirerCountryId") Integer acquirerCountryId,
+        @WebParam(name = "transactionNumberAcquirer") String transactionNumberAcquirer,
+        @WebParam(name = "amountReverseAtmWithdrawal") Float amountReverseAtmWithdrawal,
+        @WebParam(name = "transactionNumberAtmCardWithdrawal") String transactionNumberAtmCardWithdrawal,
+        @WebParam(name = "sequenceTransactionAtmCardWithdrawal") String sequenceTransactionAtmCardWithdrawal,
+        @WebParam(name = "tradeName") String tradeName){
+        return operations.reverseAtmCardWithdrawal(cardNumber,cardHolder,CVV,cardDueDate,messageMiddlewareId,transactionTypeId,channelId,transactionDate,localTimeTransaction,acquirerTerminalCodeId,acquirerCountryId,transactionNumberAcquirer,amountReverseAtmWithdrawal,transactionNumberAtmCardWithdrawal,sequenceTransactionAtmCardWithdrawal,tradeName);
+    }
+
 }
