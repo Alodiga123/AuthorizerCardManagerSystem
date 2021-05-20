@@ -1349,7 +1349,7 @@ public class APIOperations {
                             }
                             transactionRechargeCard.setSettlementTransactionAmount(totalAmountRecharge);
                             transactionRechargeCard.setTransactionCommissionAmount(amountCommission);
-                            transactionRechargeCard.setResponseCode(ResponseCode.CARD_RECHARGE_SUCCESS.getCode());
+                            transactionRechargeCard.setResponseCode(ResponseCode.SUCCESS.getCode());
                             transactionRechargeCard.setUpdateDate(new Timestamp(new Date().getTime()));
 
                             try {
@@ -1818,7 +1818,7 @@ public class APIOperations {
                                 }
 
                                 //Se retorna que la compra de la tarjeta se realizó satisfactoriamente
-                                return new TransactionPurchageResponse(ResponseCode.CARD_PURCHAGE_SUCCESS.getCode(), ResponseCode.CARD_RECHARGE_SUCCESS.getMessage(), arpc);
+                                return new TransactionPurchageResponse(ResponseCode.SUCCESS.getCode(), ResponseCode.SUCCESS.getMessage(), arpc);
                             }
                         } else {
                             //Se actualiza el estatus de la transacción a RECHAZADA, debido a que excedió los límites transaccionales
@@ -1999,15 +1999,23 @@ public class APIOperations {
                 } 
             }
             
-            //Buscar pais
+            //Se busca el país asociado al adquiriente
             Country country = operationsBD.getCountry(acquirerCountryId.toString(), entityManager);
+            
+            //Se obtiene la transacción de recarga a reversar
+            transactionRechargeCardOriginal = operationsBD.getTransactionByNumberAndSequence(transactionNumberCardRecharge, sequenceTransactionCardRecharge, entityManager);
+            
             //Se registra la transacción de Reverso de Recarga de la Tarjeta en la BD
             transactionReverseRechargeCard = operationsBD.createTransactionsManagement(null, null, acquirerTerminalCodeId,  country.getId(), transactionNumberAcquirer, transactionDate,
                     TransactionE.REVERSE_CARD_RECHARGE.getId(), channelId, null, localTimeTransaction, null, null, null,
                     null, amountReverseRecharge, null, null, null, null,
                     null, StatusTransactionManagementE.APPROVED.getId(), cardNumber, cardHolder, CVV, cardDueDate, null, null, null, null, null, null, null,
                     null, null, null, ResponseCode.SUCCESS.getCode(), messageMiddlewareId, DocumentTypeE.REVERSE_CARD_RECHARGE.getId(), conceptTransaction, entityManager);
-
+            
+            //Se actualiza la referencia de la transacción original en la transacción de reverso 
+            transactionReverseRechargeCard.setTransactionReference(transactionRechargeCardOriginal.getTransactionNumberIssuer());
+            
+            //Se guarda la transacción de reverso de recarga
             try {
                 transactionReverseRechargeCard = operationsBD.saveTransactionsManagement(transactionReverseRechargeCard, entityManager);
             } catch (Exception e) {
@@ -2016,9 +2024,6 @@ public class APIOperations {
 
             //Se valida la tarjeta
             if (validateCard.getCodigoRespuesta().equals(ResponseCode.SUCCESS.getCode())) {
-                
-                //Se obtiene la transacción de recarga a reversar
-                transactionRechargeCardOriginal = operationsBD.getTransactionByNumberAndSequence(transactionNumberCardRecharge, sequenceTransactionCardRecharge, entityManager);
 
                 if (transactionRechargeCardOriginal != null) {
                     //Se cancela la transacción de recarga
@@ -2076,9 +2081,16 @@ public class APIOperations {
                         }
                     }
                     
-                    return new TransactionResponse(ResponseCode.SUCCESS.getCode(), ResponseCode.SUCCESS.getMessage(), card.getCardNumber(), card.getCardStatusId().getId(), card.getCardStatusId().getDescription(), messageMiddlewareId.longValue(), transactionReverseRechargeCard.getTransactionNumberIssuer(), 
-                                                           transactionReverseRechargeCard.getTransactionDateIssuer(), transactionReverseRechargeCard.getTransactionSequence(), newBalance, amountReverseRecharge, transactionRechargeCardOriginal.getTransactionCommissionAmount(), transactionsReverseManagementBonification.getSettlementTransactionAmount());
-                
+                    //Se actualiza la transacción de recarga para indicar que fué reversada
+                    transactionRechargeCardOriginal.setIndReverseTransaction(Boolean.TRUE);
+                    try {
+                        transactionRechargeCardOriginal = operationsBD.saveTransactionsManagement(transactionRechargeCardOriginal, entityManager);
+                    } catch (Exception e) {
+                        return new TransactionResponse(ResponseCode.INTERNAL_ERROR.getCode(), "an error occurred while saving the transaction");
+                    }
+                    
+                    //Se retorna mensaje de éxito para la transacción de reverso de recarga
+                    return new TransactionResponse(ResponseCode.SUCCESS.getCode(), ResponseCode.SUCCESS.getMessage());
                 } else {
                     //Se generó un error inesperado, no se encontró la transacción de recarga a reversar
                     transactionReverseRechargeCard.setStatusTransactionManagementId(StatusTransactionManagementE.REJECTED.getId());
