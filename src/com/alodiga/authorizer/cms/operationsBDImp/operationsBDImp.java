@@ -37,6 +37,7 @@ import com.cms.commons.models.ProgramLoyalty;
 import com.cms.commons.models.ProgramLoyaltyTransaction;
 import com.cms.commons.models.RateByCard;
 import com.cms.commons.models.RateByProduct;
+import com.cms.commons.models.SecurityKey;
 import com.cms.commons.models.StatusUpdateReason;
 import com.cms.commons.models.TransactionPoint;
 import com.cms.commons.models.User;
@@ -705,5 +706,17 @@ public class operationsBDImp implements operationsBD {
             return new CardKeyHistoryListResponse(ResponseCode.INTERNAL_ERROR, "Error loading countries");
         }
         return new CardKeyHistoryListResponse(ResponseCode.SUCCESS, "", cardKeyHistorys);
+    }
+    
+    public SecurityKey getSecurityKey(String name,EntityManager entityManager) {
+        try {
+            Query query = entityManager.createNamedQuery("SecurityKey.findByName", SecurityKey.class).setParameter("name", name);
+            query.setMaxResults(1);
+            SecurityKey result = (SecurityKey) query.setHint("toplink.refresh", "true").getSingleResult();
+            return result;
+        } catch (NoResultException e) {
+            e.printStackTrace();
+            return null;
+        }
     }
 }
