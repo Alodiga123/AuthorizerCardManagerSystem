@@ -68,6 +68,11 @@ import com.cms.commons.models.HistoryCardStatusChanges;
 import com.cms.commons.models.KeyProperties;
 import java.net.ResponseCache;
 import java.util.ArrayList;
+import com.alodiga.hsm.util.HSMOperations;
+//import static com.alodiga.hsm.util.HSMOperations.translatePINZPKToLMK;
+//import static com.alodiga.hsm.util.HSMOperations.generateIBMPinOffSet;
+import com.alodiga.hsm.response.GenerateKeyResponse;
+import static com.alodiga.hsm.util.HSMOperations.generateKey;
 
 @Stateless(name = "FsProcessorCMSAuthorizer", mappedName = "ejb/FsProcessorCMSAuthorizer")
 @TransactionManagement(TransactionManagementType.CONTAINER)
@@ -749,48 +754,58 @@ public class APIOperations {
 
         int indValidateCardActive = 1;
         Utils utils = new Utils();
+        TransactionsManagement transactionsManagement = new TransactionsManagement();
+        HSMOperations HSMOperation = new HSMOperations();
         Float cardCurrentBalance = 0.00F;
+        AccountCard accountCard = null;
+        String customerIdentificationNumber = "";
+        String maskCardNumber = "";
+        Card card = null;
         String transactionConcept = "Consulta de Saldo sin Movimientos";
         try {
             CardResponse cardResponse = validateCard(cardNumber, ARQC, cardHolder, CVV, cardDueDate, indValidateCardActive);
-            String maskCardNumber = operationsBD.maskCCNumber(cardNumber);
-            TransactionsManagement transactionsManagement = new TransactionsManagement();
-            if (cardResponse.getCodigoRespuesta().equals(ResponseCode.SUCCESS.getCode())) {
-                //validar contra la caja 
-                transactionsManagement = operationsBD.createTransactionsManagement(null, null, acquirerTerminalCodeId, acquirerCountryId, transactionNumberAcquirer, transactionDate,
+            if(cardResponse.getCodigoRespuesta().equals(ResponseCode.SUCCESS.getCode())){
+                //Se obtiene la tarjeta asociada
+                card = cardResponse.getCard(); 
+                //Se obtiene el numero de indentifiación del cliente
+                if(card.getPersonCustomerId().getPersonTypeId().getIndNaturalPerson() == true){
+                    customerIdentificationNumber = card.getPersonCustomerId().getNaturalCustomer().getIdentificationNumber();
+                } else {
+                    customerIdentificationNumber = card.getPersonCustomerId().getLegalCustomer().getIdentificationNumber();
+                } 
+            }
+            
+            //Se crea el objeto TransactionManagement Aprobado y se guarda en BD
+            Country country = operationsBD.getCountry(String.valueOf(acquirerCountryId), entityManager);
+            transactionsManagement = operationsBD.createTransactionsManagement(null, null, acquirerTerminalCodeId, country.getId(), transactionNumberAcquirer, transactionDate,
                         TransactionE.CONSULTA.getId(), channelId, null, localTimeTransaction, null, null, null,
                         null, null, null, null, null, null,
-                        null, StatusTransactionManagementE.APPROVED.getId(), cardNumber, cardHolder, CVV, cardDueDate, null, null, null, null, null,
+                        null, StatusTransactionManagementE.APPROVED.getId(), cardNumber, cardHolder, CVV, cardDueDate, customerIdentificationNumber, null, null, null, null,
                         null, null, null, null, null, ResponseCode.SUCCESS.getCode(), messageMiddlewareId, DocumentTypeE.CARD_BALANCE_INQUIRY.getId(), transactionConcept, entityManager);
-                try {
-                    transactionsManagement = operationsBD.saveTransactionsManagement(transactionsManagement, entityManager);
-                } catch (Exception e) {
-                    return new OperationCardBalanceInquiryResponse(ResponseCode.INTERNAL_ERROR.getCode(), "an error occurred while saving the transaction");
-                }
-                Card card = cardResponse.getCard();
+            try {
+                transactionsManagement = operationsBD.saveTransactionsManagement(transactionsManagement, entityManager);
+            } catch (Exception e) {
+                return new OperationCardBalanceInquiryResponse(ResponseCode.INTERNAL_ERROR.getCode(), "an error occurred while saving the transaction");
+            }
+
+            if (cardResponse.getCodigoRespuesta().equals(ResponseCode.SUCCESS.getCode())) {
+                maskCardNumber = operationsBD.maskCCNumber(cardNumber);
                 String pinBlock = utils.generatePinBlock(cardNumber, pinClear);
+                
                 //Se realizan las validaciones del HSM
-                ParameterRequest request = new ParameterRequest();
-                LoadProperties lp = LoadProperties.getIntance();
-                String metod = lp.getProperties("prop.verifyPINUsingIBMMethod");
-                String params = request.getVerifyPinUsingIBMMethodRequest(terminalId, pinBlock, cardNumber, pinClear);
-                VerifyPinUsingIBMMethodResponse response = (VerifyPinUsingIBMMethodResponse) getResponse(metod, params, VerifyPinUsingIBMMethodResponse.class);
-                if (response.getResponseCode().equals(ResponseCode.SUCCESS.getCode())) {
-                    cardCurrentBalance = getCurrentBalanceCard(card.getId());
-                    if (cardCurrentBalance == null) {
-                        cardCurrentBalance = 0.00F;
-                    }
+//                GenerateKeyResponse response = (GenerateKeyResponse) generateKey("KWP","Single");
+//                translatePINZPKToLMK(pinBlock,card.getCardNumber(),response.getKeyValue(),response.getHeader());
+//                 
+                //Falta agregar la funcion donde la caja HSM genera el PinoffSet y luego validar con el de la BD y si no coninciden retornar un mensaje de error
+                
+                //Se obtiene el saldo de la tarjeta desde el AccountCard
+                accountCard = getAccountNumberByCard(card.getCardNumber());
+                if (accountCard.getCurrentBalance() != null || accountCard.getCurrentBalance() != 0.00F) {
+                    cardCurrentBalance = accountCard.getCurrentBalance();
                 } else {
-                    //Fallo en la verificación del pin
-                    transactionsManagement.setStatusTransactionManagementId(StatusTransactionManagementE.REJECTED.getId());
-                    transactionsManagement.setResponseCode(ResponseCode.INVALID_PIN.getCode());
-                    try {
-                        transactionsManagement = operationsBD.saveTransactionsManagement(transactionsManagement, entityManager);
-                    } catch (Exception e) {
-                        return new OperationCardBalanceInquiryResponse(ResponseCode.INTERNAL_ERROR.getCode(), "an error occurred while saving the transaction");
-                    }
-                    return new OperationCardBalanceInquiryResponse(ResponseCode.INVALID_PIN.getCode(), ResponseCode.INVALID_PIN.getMessage());
+                    cardCurrentBalance = 0.00F;
                 }
+
             } else {
                 //Fallo en la validación de la tarjeta
                 transactionsManagement.setStatusTransactionManagementId(StatusTransactionManagementE.REJECTED.getId());
