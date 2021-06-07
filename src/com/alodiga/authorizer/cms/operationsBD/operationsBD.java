@@ -15,6 +15,7 @@ import com.cms.commons.models.CardStatus;
 import com.cms.commons.models.Channel;
 import com.cms.commons.models.Country;
 import com.cms.commons.models.DaysWeek;
+import com.cms.commons.models.HSMBox;
 import com.cms.commons.models.HistoryCardStatusChanges;
 import com.cms.commons.models.KeyProperties;
 import com.cms.commons.models.ProductHasChannelHasTransaction;
@@ -22,12 +23,14 @@ import com.cms.commons.models.ProgramLoyalty;
 import com.cms.commons.models.ProgramLoyaltyTransaction;
 import com.cms.commons.models.RateByCard;
 import com.cms.commons.models.RateByProduct;
+import com.cms.commons.models.SecurityKeyType;
 import com.cms.commons.models.Sequences;
 import com.cms.commons.models.StatusUpdateReason;
 import com.cms.commons.models.TransactionPoint;
 import com.cms.commons.models.TransactionsManagement;
 import com.cms.commons.models.TransactionsManagementHistory;
 import com.cms.commons.models.User;
+import com.cms.commons.models.VerificationTypeSecurityKey;
 import java.sql.Timestamp;
 import java.util.Date;
 import java.util.List;
@@ -87,6 +90,9 @@ public interface operationsBD {
     public TransactionsManagement getTransactionByNumberAndSequence(String transactionNumber, String transactionSequence, EntityManager entityManager);
     public TransactionsManagement getTransactionsManagementByTransactionReference(String transactionNumber, Integer transactionTypeId, EntityManager entityManager);
     public TransactionPoint getTransactionPointByTransactionReference(String transactionNumber, EntityManager entityManager);
+    public SecurityKeyType getSecurityKeyTypeById(Integer securityKeyTypeId, EntityManager entityManager);
+    public VerificationTypeSecurityKey getVerificationTypeSecurityKeyById(Integer verificationTypeSecurityKeyId, EntityManager entityManager);
+    public HSMBox getHSMBoxById(Integer HSMBoxId, EntityManager entityManager);
     
     //Métodos reutilizados por la API
     public String transformCardNumber(String cardNumber);
