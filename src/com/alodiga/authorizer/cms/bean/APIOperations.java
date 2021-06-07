@@ -81,6 +81,7 @@ import com.cms.commons.models.SecurityKey;
 import com.cms.commons.models.SecurityKeyType;
 import com.cms.commons.models.VerificationTypeSecurityKey;
 import com.alodiga.hsm.response.GenerateKeyResponse;
+import com.alodiga.hsm.util.Test;
 
 @Stateless(name = "FsProcessorCMSAuthorizer", mappedName = "ejb/FsProcessorCMSAuthorizer")
 @TransactionManagement(TransactionManagementType.CONTAINER)
@@ -1591,6 +1592,7 @@ public class APIOperations {
         int indValidateCardActive = 1;
         Utils utils = new Utils();
         TransactionResponse transactionResponse = null;
+        String responsePinELMK = "";
         String conceptTransaction = "Cambio de Pin de tarjeta";
         try {
             //Se guarda el TransactionsManagement
@@ -1620,10 +1622,10 @@ public class APIOperations {
                     VerifyPinUsingIBMMethodResponse response = (VerifyPinUsingIBMMethodResponse) getResponse(metod, params, VerifyPinUsingIBMMethodResponse.class);
                     if (response.getResponseCode().equals(ResponseCode.SUCCESS.getCode())) {
                         String pinBlock = utils.generatePinBlock(cardNumber, newPinClear);
-                        SecurityKey securityKey = operationsBD.getSecurityKey("KWP", entityManager);
-                        HSMOperations hSMOperations = new HSMOperations();
-                        hSMOperations.translatePINZPKToLMK(pinBlock, card.getCardNumber(), securityKey.getEncryptedValue(), "Single");
-                        com.alodiga.hsm.response.IBMOfSetResponse IBMOfSetResponse = hSMOperations.generateIBMPinOffSet(pinBlock, card.getCardNumber(), String.valueOf(securityKey.getInstitutionId().getId()), "D");
+                        SecurityKey securityKey = operationsBD.getSecurityKey("KWP", 16,entityManager);
+                        HSMOperations hSMOperations = new HSMOperations();                        
+                        responsePinELMK = hSMOperations.translatePINZPKToLMK(pinBlock, card.getCardNumber(), securityKey.getEncryptedValue(), "Single");
+                        com.alodiga.hsm.response.IBMOfSetResponse IBMOfSetResponse = hSMOperations.generateIBMPinOffSet(responsePinELMK, card.getCardNumber());
                         if (IBMOfSetResponse.getResponseCode().equals(ResponseCode.SUCCESS.getCode())) {
                             card.setPinOffset(IBMOfSetResponse.getIBMoffset());
                             card.setUpdateDate(new Timestamp(new Date().getTime()));

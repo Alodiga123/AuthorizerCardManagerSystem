@@ -106,6 +106,6 @@ public interface operationsBD {
     public KeyProperties getKeyPropertiesByProductIdByChanelId(Long productId, Integer channelId,EntityManager entityManager);
     public CardKeyHistoryListResponse getCardKeyHistoryByCardId(Long cardId, Integer limit,EntityManager entityManager);
 
-    public SecurityKey getSecurityKey(String name,EntityManager entityManager);
+    public SecurityKey getSecurityKey(String keyType,Integer lenght, EntityManager entityManager);
 
 }
