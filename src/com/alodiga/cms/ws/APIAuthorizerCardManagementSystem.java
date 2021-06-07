@@ -414,5 +414,12 @@ public class APIAuthorizerCardManagementSystem {
         @WebParam(name = "tradeName") String tradeName){
         return operations.reverseAtmCardWithdrawal(cardNumber,cardHolder,CVV,cardDueDate,messageMiddlewareId,transactionTypeId,channelId,transactionDate,localTimeTransaction,acquirerTerminalCodeId,acquirerCountryId,transactionNumberAcquirer,amountReverseAtmWithdrawal,transactionNumberAtmCardWithdrawal,sequenceTransactionAtmCardWithdrawal,tradeName);
     }
+    
+    @WebMethod  
+    public TransactionResponse generateSecurityKey(
+        @WebParam(name = "keyType") String keyType,
+        @WebParam(name = "lenght") String lenght){
+        return operations.generateSecurityKey(keyType,lenght);
+    }
 
 }
