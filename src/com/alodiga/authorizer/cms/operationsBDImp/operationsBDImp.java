@@ -20,6 +20,7 @@ import com.cms.commons.models.Channel;
 import com.cms.commons.models.Country;
 import com.cms.commons.models.DaysWeek;
 import com.cms.commons.models.DaysWeekHasProgramLoyalty;
+import com.cms.commons.models.HSMBox;
 import com.cms.commons.models.HistoryCardStatusChanges;
 import com.cms.commons.models.KeyProperties;
 import com.cms.commons.models.Sequences;
@@ -37,9 +38,12 @@ import com.cms.commons.models.ProgramLoyalty;
 import com.cms.commons.models.ProgramLoyaltyTransaction;
 import com.cms.commons.models.RateByCard;
 import com.cms.commons.models.RateByProduct;
+import com.cms.commons.models.SecurityKeyType;
+import com.cms.commons.models.SecurityKey;
 import com.cms.commons.models.StatusUpdateReason;
 import com.cms.commons.models.TransactionPoint;
 import com.cms.commons.models.User;
+import com.cms.commons.models.VerificationTypeSecurityKey;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -705,5 +709,61 @@ public class operationsBDImp implements operationsBD {
             return new CardKeyHistoryListResponse(ResponseCode.INTERNAL_ERROR, "Error loading countries");
         }
         return new CardKeyHistoryListResponse(ResponseCode.SUCCESS, "", cardKeyHistorys);
+    }
+
+    public SecurityKeyType getSecurityKeyTypeById(Integer securityKeyTypeId, EntityManager entityManager) {
+        SecurityKeyType securityKeyType = null;
+        try {
+            StringBuilder sqlBuilder = new StringBuilder("SELECT * FROM securityKeyType skt ");
+            sqlBuilder.append("WHERE skt.id = ").append(securityKeyTypeId).append("");
+            Query query = entityManager.createNativeQuery(sqlBuilder.toString(), SecurityKeyType.class);
+            securityKeyType = (SecurityKeyType) query.setHint("toplink.refresh", "true").getSingleResult();        
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+        return securityKeyType;    
+    }
+
+    @Override
+    public VerificationTypeSecurityKey getVerificationTypeSecurityKeyById(Integer verificationTypeSecurityKeyId, EntityManager entityManager) {
+        VerificationTypeSecurityKey verificationTypeSecurityKey = null;
+        try {
+            StringBuilder sqlBuilder = new StringBuilder("SELECT * FROM verificationTypeSecurityKey vtsk ");
+            sqlBuilder.append("WHERE vtsk.id = ").append(verificationTypeSecurityKeyId).append("");
+            Query query = entityManager.createNativeQuery(sqlBuilder.toString(), VerificationTypeSecurityKey.class);
+            verificationTypeSecurityKey = (VerificationTypeSecurityKey) query.setHint("toplink.refresh", "true").getSingleResult();        
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+        return verificationTypeSecurityKey; 
+    }
+
+    @Override
+    public HSMBox getHSMBoxById(Integer HSMBoxId, EntityManager entityManager) {
+        HSMBox hsmBox = null;
+        try {
+            StringBuilder sqlBuilder = new StringBuilder("SELECT * FROM HSMBox hsm ");
+            sqlBuilder.append("WHERE hsm.id = ").append(HSMBoxId).append("");
+            Query query = entityManager.createNativeQuery(sqlBuilder.toString(), HSMBox.class);
+            hsmBox = (HSMBox) query.setHint("toplink.refresh", "true").getSingleResult();        
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+        return hsmBox; 
+    }
+    
+    public SecurityKey getSecurityKey(String keyType,Integer lenght, EntityManager entityManager) {
+        SecurityKey securityKey = null;
+        try {
+            StringBuilder sqlBuilder = new StringBuilder("SELECT * FROM securityKey sk ");
+            sqlBuilder.append("WHERE sk.name = ").append("'").append(keyType).append("'").append(" AND sk.lenght = ").append(lenght).append("");
+            System.out.println("sql: " + sqlBuilder.toString());
+            Query query = entityManager.createNativeQuery(sqlBuilder.toString(), SecurityKey.class);
+            securityKey = (SecurityKey) query.setHint("toplink.refresh", "true").getSingleResult();
+        } catch (NoResultException e) {
+            e.printStackTrace();
+            return null;
+        }
+        return securityKey;
     }
 }
