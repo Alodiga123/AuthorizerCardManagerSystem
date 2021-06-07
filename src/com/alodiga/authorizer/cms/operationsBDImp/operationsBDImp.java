@@ -752,15 +752,18 @@ public class operationsBDImp implements operationsBD {
         return hsmBox; 
     }
     
-    public SecurityKey getSecurityKey(String name,EntityManager entityManager) {
+    public SecurityKey getSecurityKey(String keyType,Integer lenght, EntityManager entityManager) {
+        SecurityKey securityKey = null;
         try {
-            Query query = entityManager.createNamedQuery("SecurityKey.findByName", SecurityKey.class).setParameter("name", name);
-            query.setMaxResults(1);
-            SecurityKey result = (SecurityKey) query.setHint("toplink.refresh", "true").getSingleResult();
-            return result;
+            StringBuilder sqlBuilder = new StringBuilder("SELECT * FROM securityKey sk ");
+            sqlBuilder.append("WHERE sk.name = ").append("'").append(keyType).append("'").append(" AND sk.lenght = ").append(lenght).append("");
+            System.out.println("sql: " + sqlBuilder.toString());
+            Query query = entityManager.createNativeQuery(sqlBuilder.toString(), SecurityKey.class);
+            securityKey = (SecurityKey) query.setHint("toplink.refresh", "true").getSingleResult();
         } catch (NoResultException e) {
             e.printStackTrace();
             return null;
         }
+        return securityKey;
     }
 }
