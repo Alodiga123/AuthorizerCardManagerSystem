@@ -24,6 +24,7 @@ import com.cms.commons.models.ProgramLoyaltyTransaction;
 import com.cms.commons.models.RateByCard;
 import com.cms.commons.models.RateByProduct;
 import com.cms.commons.models.SecurityKeyType;
+import com.cms.commons.models.SecurityKey;
 import com.cms.commons.models.Sequences;
 import com.cms.commons.models.StatusUpdateReason;
 import com.cms.commons.models.TransactionPoint;
@@ -104,4 +105,7 @@ public interface operationsBD {
     
     public KeyProperties getKeyPropertiesByProductIdByChanelId(Long productId, Integer channelId,EntityManager entityManager);
     public CardKeyHistoryListResponse getCardKeyHistoryByCardId(Long cardId, Integer limit,EntityManager entityManager);
+
+    public SecurityKey getSecurityKey(String name,EntityManager entityManager);
+
 }
