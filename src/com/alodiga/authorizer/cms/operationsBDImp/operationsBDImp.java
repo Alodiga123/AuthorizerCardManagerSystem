@@ -39,6 +39,7 @@ import com.cms.commons.models.ProgramLoyaltyTransaction;
 import com.cms.commons.models.RateByCard;
 import com.cms.commons.models.RateByProduct;
 import com.cms.commons.models.SecurityKeyType;
+import com.cms.commons.models.SecurityKey;
 import com.cms.commons.models.StatusUpdateReason;
 import com.cms.commons.models.TransactionPoint;
 import com.cms.commons.models.User;
@@ -749,6 +750,21 @@ public class operationsBDImp implements operationsBD {
             ex.printStackTrace();
         }
         return hsmBox; 
+    }
+    
+    public SecurityKey getSecurityKey(String keyType,Integer lenght, EntityManager entityManager) {
+        SecurityKey securityKey = null;
+        try {
+            StringBuilder sqlBuilder = new StringBuilder("SELECT * FROM securityKey sk ");
+            sqlBuilder.append("WHERE sk.name = ").append("'").append(keyType).append("'").append(" AND sk.lenght = ").append(lenght).append("");
+            System.out.println("sql: " + sqlBuilder.toString());
+            Query query = entityManager.createNativeQuery(sqlBuilder.toString(), SecurityKey.class);
+            securityKey = (SecurityKey) query.setHint("toplink.refresh", "true").getSingleResult();
+        } catch (NoResultException e) {
+            e.printStackTrace();
+            return null;
+        }
+        return securityKey;
     }
 
     @Override
