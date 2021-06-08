@@ -101,7 +101,7 @@ public interface operationsBD {
     public boolean testConsecutive(String pinoffset);
     public boolean testContinuous(String pinOffset);
     public boolean isNumeric(String pinOffset);
-    
+    public String convertCardNumber(String cardNumber);    
     
     public KeyProperties getKeyPropertiesByProductIdByChanelId(Long productId, Integer channelId,EntityManager entityManager);
     public CardKeyHistoryListResponse getCardKeyHistoryByCardId(Long cardId, Integer limit,EntityManager entityManager);

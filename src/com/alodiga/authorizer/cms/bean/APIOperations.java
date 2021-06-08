@@ -802,27 +802,22 @@ public class APIOperations {
                 String pinBlock = utils.generatePinBlock(cardNumber, pinClear);
                 
                 //Se realizan las validaciones del HSM
-                ParameterRequest request = new ParameterRequest();
-                LoadProperties lp = LoadProperties.getIntance();
-                String metod = lp.getProperties("prop.verifyPINUsingIBMMethod");
-                String params = request.getVerifyPinUsingIBMMethodRequest(terminalId, pinBlock, cardNumber, pinClear);
-                VerifyPinUsingIBMMethodResponse response = (VerifyPinUsingIBMMethodResponse) getResponse(metod, params, VerifyPinUsingIBMMethodResponse.class);
-                if (response.getResponseCode().equals(ResponseCode.SUCCESS.getCode())) {
-                    cardCurrentBalance = getCurrentBalanceCard(card.getId());
-                    if (cardCurrentBalance == null) {
-                        cardCurrentBalance = 0.00F;
-                    }
-                } else {
-                    //Fallo en la verificación del pin
-                    transactionsManagement.setStatusTransactionManagementId(StatusTransactionManagementE.REJECTED.getId());
-                    transactionsManagement.setResponseCode(ResponseCode.INVALID_PIN.getCode());
-                    try {
-                        transactionsManagement = operationsBD.saveTransactionsManagement(transactionsManagement, entityManager);
-                    } catch (Exception e) {
-                        return new OperationCardBalanceInquiryResponse(ResponseCode.INTERNAL_ERROR.getCode(), "an error occurred while saving the transaction");
-                    }
-                    return new OperationCardBalanceInquiryResponse(ResponseCode.INVALID_PIN.getCode(), ResponseCode.INVALID_PIN.getMessage());
-                }
+//                if (response.getResponseCode().equals(ResponseCode.SUCCESS.getCode())) {
+//                    cardCurrentBalance = getCurrentBalanceCard(card.getId());
+//                    if (cardCurrentBalance == null) {
+//                        cardCurrentBalance = 0.00F;
+//                    }
+//                } else {
+//                    //Fallo en la verificación del pin
+//                    transactionsManagement.setStatusTransactionManagementId(StatusTransactionManagementE.REJECTED.getId());
+//                    transactionsManagement.setResponseCode(ResponseCode.INVALID_PIN.getCode());
+//                    try {
+//                        transactionsManagement = operationsBD.saveTransactionsManagement(transactionsManagement, entityManager);
+//                    } catch (Exception e) {
+//                        return new OperationCardBalanceInquiryResponse(ResponseCode.INTERNAL_ERROR.getCode(), "an error occurred while saving the transaction");
+//                    }
+//                    return new OperationCardBalanceInquiryResponse(ResponseCode.INVALID_PIN.getCode(), ResponseCode.INVALID_PIN.getMessage());
+//                }
             } else {
                 //Fallo en la validación de la tarjeta
                 transactionsManagement.setStatusTransactionManagementId(StatusTransactionManagementE.REJECTED.getId());
