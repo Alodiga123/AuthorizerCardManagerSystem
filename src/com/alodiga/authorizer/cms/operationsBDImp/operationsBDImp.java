@@ -750,4 +750,9 @@ public class operationsBDImp implements operationsBD {
         }
         return hsmBox; 
     }
+
+    @Override
+    public String convertCardNumber(String cardNumber) {
+        return cardNumber.substring(cardNumber.length() - 13, cardNumber.length() -1); 
+    }
 }
