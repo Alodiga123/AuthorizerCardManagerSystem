@@ -108,7 +108,7 @@ public class APIOperations {
 
     public Card getCardByCardNumber(String cardNumber) {
         try {
-            Query query = entityManager.createQuery("SELECT c FROM Card c WHERE c.cardNumber = " + cardNumber + "");
+            Query query = entityManager.createQuery("SELECT c FROM Card c WHERE c.cardNumber = '" + cardNumber + "'");
             query.setMaxResults(1);
             Card result = (Card) query.setHint("toplink.refresh", "true").getSingleResult();
             return result;
@@ -803,19 +803,22 @@ public class APIOperations {
 
             if (cardResponse.getCodigoRespuesta().equals(ResponseCode.SUCCESS.getCode())) {
                 maskCardNumber = operationsBD.maskCCNumber(cardNumber);
-                // Falta cambiar el rpimer parametro por el clearSecurityKey de SecurityKey
-                String pinBlock = getPinblock("8F6D01DA51CB3D9B", "2822", cardNumber); 
-                         
-                  //Se busca la llave en la BD en caso de no conseguir se genera la llave y se busca la llave generada
-                    SecurityKey keyKWP = operationsBD.getSecurityKey("Llave de Seguridad KWP",16,entityManager);
-                    if(keyKWP == null){
-                        TransactionResponse generateKey = generateSecurityKey("KWP","Single");
-                        keyKWP = operationsBD.getSecurityKey("Llave de Seguridad KWP",16,entityManager);
-                    }
-
+                      
+                //Se busca la llave de seguridad en la BD en caso de no conseguir se genera la llave y se busca la llave generada
+                  SecurityKey keyKWP = operationsBD.getSecurityKey("Llave de Seguridad KWP",Constants.KEY_LENGHT_SINGLE,entityManager);
+                  if(keyKWP == null){
+                      TransactionResponse generateKey = generateSecurityKey("KWP","Single");
+                      keyKWP = operationsBD.getSecurityKey("Llave de Seguridad KWP",Constants.KEY_LENGHT_SINGLE,entityManager);
+                  }
+                  
+                  //Se genera el pinBlock      
+                  String pinBlock = getPinblock(keyKWP.getClearSecurityKey(), pinClear, cardNumber);
+                  //Transformar el CardNumber en el formato requerido para el servicio translatePINZPKToLMK
+                  String convertCardNumber = operationsBD.convertCardNumber(cardNumber);
+                  
                   //Se realizan las validaciones del HSM
-                  pinELMK = HSMOperations.translatePINZPKToLMK(pinBlock,cardNumber,keyKWP.getEncryptedValue(),"Single");
-                  IBMOfSetResponse responseGeneratePinOffSet = (IBMOfSetResponse) generateIBMPinOffSet("02822", cardNumber);   
+                  pinELMK = HSMOperations.translatePINZPKToLMK(pinBlock,convertCardNumber,keyKWP.getEncryptedValue(),"Single");
+                  IBMOfSetResponse responseGeneratePinOffSet = (IBMOfSetResponse) generateIBMPinOffSet(pinELMK, cardNumber);   
                   String pinOffSetHSM = responseGeneratePinOffSet.getIBMoffset();
             
                   //Se valida el PinOffSet generado por la caja HSM con el de la BD
@@ -2569,32 +2572,59 @@ public class APIOperations {
         Float newBalance = 0.00F;
         String arpc = "";
         String conceptTransaction = "Retiro Cajero ATM - ";
+        String customerIdentificationNumber = "";
+        String pinELMK = "";
 
         try {
+            CardResponse validateCard = validateCard(cardNumber, ARQC, cardHolder, CVV, cardDueDate, indValidateCardActive);
+            if(validateCard .getCodigoRespuesta().equals(ResponseCode.SUCCESS.getCode())){
+                //Se obtiene la tarjeta asociada
+                card = validateCard.getCard(); 
+                //Se obtiene el numero de indentifiación del cliente
+                if(card.getPersonCustomerId().getPersonTypeId().getIndNaturalPerson() == true){
+                    customerIdentificationNumber = card.getPersonCustomerId().getNaturalCustomer().getIdentificationNumber();
+                } else {
+                    customerIdentificationNumber = card.getPersonCustomerId().getLegalCustomer().getIdentificationNumber();
+                } 
+            }
+
             //Se registra la transacción de retiro por cajero ATM en la BD
             conceptTransaction.concat(tradeName);
-            transactionAtmCardWithdrawal = operationsBD.createTransactionsManagement(null, null, acquirerTerminalCodeId, acquirerCountryId, transactionNumberAcquirer, transactionDate,
+            Country country = operationsBD.getCountry(String.valueOf(acquirerCountryId), entityManager);
+            transactionAtmCardWithdrawal = operationsBD.createTransactionsManagement(null, null, acquirerTerminalCodeId, country.getId(), transactionNumberAcquirer, transactionDate,
                     TransactionE.ATM_CARD_WITHDRAWAL.getId(), channelId, null, localTimeTransaction, null, null, null,
                     null, amountWithdrawal, null, null, null, null,
                     null, StatusTransactionManagementE.APPROVED.getId(), cardNumber, cardHolder, CVV, cardDueDate, null, null, null, null, null, null, null,
                     null, null, null, ResponseCode.SUCCESS.getCode(), messageMiddlewareId, DocumentTypeE.ATM_CARD_WITHDRAWAL.getId(), conceptTransaction, entityManager);
-
             try {
                 transactionAtmCardWithdrawal = operationsBD.saveTransactionsManagement(transactionAtmCardWithdrawal, entityManager);
             } catch (Exception e) {
                 return new TransactionResponse(ResponseCode.INTERNAL_ERROR.getCode(), "an error occurred while saving the transaction");
             }
 
-            //Se valida la tarjeta
-            CardResponse validateCard = validateCard(cardNumber, ARQC, cardHolder, CVV, cardDueDate, indValidateCardActive);
+            //Se valida la tarjeta            
             if (validateCard.getCodigoRespuesta().equals(ResponseCode.SUCCESS.getCode())) {
-                //Se obtiene la tarjeta asociada al retiro
-                card = getCardByCardNumber(cardNumber);
 
-                //Se realizan las validaciones del HSM
-                
-//                if (response.getResponseCode().equals(ResponseCode.SUCCESS.getCode())) {
-//                    //Se valida el criptograma ARQC
+              //Se busca la llave en la BD en caso de no conseguir se genera la llave y se busca la llave generada
+              SecurityKey keyKWP = operationsBD.getSecurityKey("Llave de Seguridad KWP",Constants.KEY_LENGHT_SINGLE,entityManager);
+              if(keyKWP == null){
+                  TransactionResponse generateKey = generateSecurityKey("KWP","Single");
+                  keyKWP = operationsBD.getSecurityKey("Llave de Seguridad KWP",Constants.KEY_LENGHT_SINGLE,entityManager);
+              }
+              
+              //Se genera el pinBlock
+              String generatePinBlock = getPinblock(keyKWP.getClearSecurityKey(), pinBlock, cardNumber);
+              //Transformar el CardNumber en el formato requerido para el servicio translatePINZPKToLMK
+              String convertCardNumber = operationsBD.convertCardNumber(cardNumber);
+              
+              //Se realizan las validaciones del HSM
+              pinELMK = HSMOperations.translatePINZPKToLMK(generatePinBlock,convertCardNumber,keyKWP.getEncryptedValue(),"Single");
+              IBMOfSetResponse responseGeneratePinOffSet = (IBMOfSetResponse) generateIBMPinOffSet(pinELMK, cardNumber);   
+               
+              //Se valida el PinOffSet generado por la caja HSM con el de la BD
+              CardResponse validatePinOffset =  validatePinOffset(cardNumber, responseGeneratePinOffSet.getIBMoffset());
+               if (validatePinOffset.getCodigoRespuesta().equals(ResponseCode.SUCCESS.getCode())){
+                    //Se valida el criptograma ARQC
 //                    metod = lp.getProperties("prop.validateQRQC");
 //                    params = request.getARPCRequest(terminalId, oPMode, schemeEMV, card.getCardNumber(), seqNumber, atc, unpredictableNumber, transactionData, ARQC);
 //                    ARPCResponse arpcResponse = (ARPCResponse) getResponse(metod, params, ARPCResponse.class);
@@ -2667,7 +2697,7 @@ public class APIOperations {
                             } catch (Exception e) {
                                 return new TransactionResponse(ResponseCode.INTERNAL_ERROR.getCode(), "an error occurred while saving the transaction");
                             }
-                            return new TransactionResponse(ResponseCode.INTERNAL_ERROR.getCode(), "an error occurred while saving the transaction");
+                            return new TransactionResponse(validateLimits.getCodigoRespuesta(), validateLimits.getMensajeRespuesta());
                         }
 //                    } else {
 //                        //Se actualiza el estatus de la transacción a RECHAZADA, debido a que el ARQC no es válido
@@ -2680,21 +2710,21 @@ public class APIOperations {
 //                        }
 //                        return new TransactionResponse(ResponseCode.INTERNAL_ERROR.getCode(), "an error occurred while saving the transaction");
 //                    }
-//                } else {
-//                    //Se actualiza el estatus de la transacción a RECHAZADA, debido a validaciones de HSM
-//                    transactionAtmCardWithdrawal.setStatusTransactionManagementId(StatusTransactionManagementE.REJECTED.getId());
-//                    transactionAtmCardWithdrawal.setResponseCode(response.getResponseCode());
-//                    try {
-//                        transactionAtmCardWithdrawal = operationsBD.saveTransactionsManagement(transactionAtmCardWithdrawal, entityManager);
-//                    } catch (Exception e) {
-//                        return new TransactionResponse(ResponseCode.INTERNAL_ERROR.getCode(), "an error occurred while saving the transaction");
-//                    }
-//                    return new TransactionResponse(ResponseCode.INTERNAL_ERROR.getCode(), "an error occurred while saving the transaction");
-//                }
+                } else {
+                    //Se actualiza el estatus de la transacción a RECHAZADA, debido a validaciones de HSM
+                    transactionAtmCardWithdrawal.setStatusTransactionManagementId(StatusTransactionManagementE.REJECTED.getId());
+                    transactionAtmCardWithdrawal.setResponseCode(validatePinOffset.getCodigoRespuesta());
+                    try {
+                        transactionAtmCardWithdrawal = operationsBD.saveTransactionsManagement(transactionAtmCardWithdrawal, entityManager);
+                    } catch (Exception e) {
+                        return new TransactionResponse(ResponseCode.INTERNAL_ERROR.getCode(), "an error occurred while saving the transaction");
+                    }
+                    return new TransactionResponse(validatePinOffset.getCodigoRespuesta(), validatePinOffset.getMensajeRespuesta());
+                }
             } else {
                 //Se rechaza la transacción debido a que la tarjeta no es valida
                 transactionAtmCardWithdrawal.setStatusTransactionManagementId(StatusTransactionManagementE.REJECTED.getId());
-                transactionAtmCardWithdrawal.setResponseCode(ResponseCode.INVALID_CARD.getCode());
+                transactionAtmCardWithdrawal.setResponseCode(validateCard.getCodigoRespuesta());
                 try {
                     transactionAtmCardWithdrawal = operationsBD.saveTransactionsManagement(transactionAtmCardWithdrawal, entityManager);
                 } catch (Exception e) {
