@@ -2575,8 +2575,8 @@ public class APIOperations {
         String conceptTransaction = "Retiro Cajero ATM - ";
         String customerIdentificationNumber = "";
         String pinELMK = "";
-
         try {
+            
             CardResponse validateCard = validateCard(cardNumber, ARQC, cardHolder, CVV, cardDueDate, indValidateCardActive);
             if(validateCard .getCodigoRespuesta().equals(ResponseCode.SUCCESS.getCode())){
                 //Se obtiene la tarjeta asociada
@@ -2588,24 +2588,25 @@ public class APIOperations {
                     customerIdentificationNumber = card.getPersonCustomerId().getLegalCustomer().getIdentificationNumber();
                 } 
             }
-
+            
             //Se registra la transacción de retiro por cajero ATM en la BD
             conceptTransaction.concat(tradeName);
             Country country = operationsBD.getCountry(String.valueOf(acquirerCountryId), entityManager);
             transactionAtmCardWithdrawal = operationsBD.createTransactionsManagement(null, null, acquirerTerminalCodeId, country.getId(), transactionNumberAcquirer, transactionDate,
                     TransactionE.ATM_CARD_WITHDRAWAL.getId(), channelId, null, localTimeTransaction, null, null, null,
                     null, amountWithdrawal, null, null, null, null,
-                    null, StatusTransactionManagementE.APPROVED.getId(), cardNumber, cardHolder, CVV, cardDueDate, null, null, null, null, null, null, null,
+                    null, StatusTransactionManagementE.APPROVED.getId(), cardNumber, cardHolder, CVV, cardDueDate, customerIdentificationNumber, null, null, null, null, null, null,
                     null, null, null, ResponseCode.SUCCESS.getCode(), messageMiddlewareId, DocumentTypeE.ATM_CARD_WITHDRAWAL.getId(), conceptTransaction, entityManager);
+
             try {
                 transactionAtmCardWithdrawal = operationsBD.saveTransactionsManagement(transactionAtmCardWithdrawal, entityManager);
             } catch (Exception e) {
                 return new TransactionResponse(ResponseCode.INTERNAL_ERROR.getCode(), "an error occurred while saving the transaction");
             }
 
-            //Se valida la tarjeta            
+            //Se valida la tarjeta
             if (validateCard.getCodigoRespuesta().equals(ResponseCode.SUCCESS.getCode())) {
-
+                
               //Se busca la llave en la BD en caso de no conseguir se genera la llave y se busca la llave generada
               SecurityKey keyKWP = operationsBD.getSecurityKey("Llave de Seguridad KWP",Constants.KEY_LENGHT_SINGLE,entityManager);
               if(keyKWP == null){
@@ -2613,64 +2614,24 @@ public class APIOperations {
                   keyKWP = operationsBD.getSecurityKey("Llave de Seguridad KWP",Constants.KEY_LENGHT_SINGLE,entityManager);
               }
               
-              //Se genera el pinBlock
+              //Se genera el pinBlock y se transformar el CardNumber en el formato requerido para el servicio translatePINZPKToLMK
               String generatePinBlock = getPinblock(keyKWP.getClearSecurityKey(), pinBlock, cardNumber);
-              //Transformar el CardNumber en el formato requerido para el servicio translatePINZPKToLMK
               String convertCardNumber = operationsBD.convertCardNumber(cardNumber);
               
               //Se realizan las validaciones del HSM
               pinELMK = HSMOperations.translatePINZPKToLMK(generatePinBlock,convertCardNumber,keyKWP.getEncryptedValue(),"Single");
-              IBMOfSetResponse responseGeneratePinOffSet = (IBMOfSetResponse) generateIBMPinOffSet(pinELMK, cardNumber);   
-               
+              IBMOfSetResponse responseGeneratePinOffSet = (IBMOfSetResponse) generateIBMPinOffSet(pinELMK, cardNumber); 
+                 
               //Se valida el PinOffSet generado por la caja HSM con el de la BD
               CardResponse validatePinOffset =  validatePinOffset(cardNumber, responseGeneratePinOffSet.getIBMoffset());
-               if (validatePinOffset.getCodigoRespuesta().equals(ResponseCode.SUCCESS.getCode())){
-                    //Se valida el criptograma ARQC
+              if (validatePinOffset.getCodigoRespuesta().equals(ResponseCode.SUCCESS.getCode())){
+//                    //Se valida el criptograma ARQC
 //                    metod = lp.getProperties("prop.validateQRQC");
 //                    params = request.getARPCRequest(terminalId, oPMode, schemeEMV, card.getCardNumber(), seqNumber, atc, unpredictableNumber, transactionData, ARQC);
 //                    ARPCResponse arpcResponse = (ARPCResponse) getResponse(metod, params, ARPCResponse.class);
 //                    if (response.getResponseCode().equals(ResponseCode.SUCCESS.getCode())) {
 //                        //Se obtiene la respuesta que se envía al terminal (ARPC)
 //                        arpc = arpcResponse.getArpc();
-                //Se validan los límites transaccionales
-                validateLimits = getValidateLimits(card, transactionTypeId, channelId, acquirerCountryId.toString(), amountWithdrawal);
-                if (validateLimits.getCodigoRespuesta().equals(ResponseCode.SUCCESS.getCode())) {
-                    //Se revisa si la transacción genera una comisión
-                    commissionCMS = calculateCommisionCMS(card, channelId, transactionTypeId, amountWithdrawal, transactionNumberAcquirer);
-                    if (commissionCMS.getCodigoRespuesta().equals(ResponseCode.COMMISSION_YES_APPLY.getCode())) {
-                        amountCommission = commissionCMS.getTransactionCommissionAmount();
-                    }
-                    //Se obtiene el saldo de la cuenta asociada a la tarjeta
-                    accountCard = operationsBD.getAccountCardbyCardId(card.getId(), entityManager);
-                    currentBalance = accountCard.getCurrentBalance();
-                    totalAmountWithDrawall = amountWithdrawal + amountCommission;
-                    newBalance = currentBalance - totalAmountWithDrawall;
-                    //Se verifica que el monto total del retiro no sea mayor al saldo actual del usuario
-                    if (newBalance < 0) {
-                        //Se actualiza el estatus de la transacción a RECHAZADA, debido a que el monto del retiro excedió el saldo disponible
-                        transactionAtmCardWithdrawal.setStatusTransactionManagementId(StatusTransactionManagementE.REJECTED.getId());
-                        transactionAtmCardWithdrawal.setResponseCode(ResponseCode.BALANCE_GREATER_THAN_ALLOWED.getCode());
-                        try {
-                            transactionAtmCardWithdrawal = operationsBD.saveTransactionsManagement(transactionAtmCardWithdrawal, entityManager);
-                        } catch (Exception e) {
-                            return new TransactionResponse(ResponseCode.INTERNAL_ERROR.getCode(), "an error occurred while saving the transaction");
-                        }
-                        return new TransactionResponse(ResponseCode.BALANCE_GREATER_THAN_ALLOWED.getCode(), ResponseCode.BALANCE_GREATER_THAN_ALLOWED.getMessage());
-                    }
-                    //Se verifica que el saldo actualizado luego del retiro no sea menor al saldo mínimo permitido para la tarjeta
-                    if (newBalance < card.getProductId().getMinimumBalance()) {
-                        //Se actualiza el estatus de la transacción a RECHAZADA, debido a que el nuevo saldo es menor al monto mínimo permitido para la tarjeta
-                        transactionAtmCardWithdrawal.setStatusTransactionManagementId(StatusTransactionManagementE.REJECTED.getId());
-                        transactionAtmCardWithdrawal.setResponseCode(ResponseCode.BALANCE_LESS_THAN_ALLOWED.getCode());
-                        try {
-                            transactionAtmCardWithdrawal = operationsBD.saveTransactionsManagement(transactionAtmCardWithdrawal, entityManager);
-                        } catch (Exception e) {
-                            return new TransactionResponse(ResponseCode.INTERNAL_ERROR.getCode(), "an error occurred while saving the transaction");
-                        }
-                        return new TransactionResponse(ResponseCode.BALANCE_LESS_THAN_ALLOWED.getCode(), ResponseCode.BALANCE_LESS_THAN_ALLOWED.getMessage());
-                    } else {
-                        //Se Verifica si la transacción genera bonificación
-                        calculateBonification = calculateBonus(card.getCardNumber(), transactionTypeId, channelId, acquirerCountryId.toString(), amountWithdrawal, transactionAtmCardWithdrawal.getTransactionNumberIssuer());
 
                         //Se validan los límites transaccionales
                         validateLimits = getValidateLimits(card, transactionTypeId, channelId, acquirerCountryId.toString(), amountWithdrawal);
@@ -2737,28 +2698,8 @@ public class APIOperations {
                             } catch (Exception e) {
                                 return new TransactionResponse(ResponseCode.INTERNAL_ERROR.getCode(), "an error occurred while saving the transaction");
                             }
-                            return new TransactionResponse(validateLimits.getCodigoRespuesta(), validateLimits.getMensajeRespuesta());
+                            return new TransactionResponse(ResponseCode.INTERNAL_ERROR.getCode(), "an error occurred while saving the transaction");
                         }
-
-                        //Se actualiza el saldo de la cuenta en la BD del CMS
-                        accountCard.setCurrentBalance(newBalance);
-                        accountCard.setUpdateDate(new Timestamp(new Date().getTime()));
-                        entityManager.persist(accountCard);
-
-                        //Se retorna que el retiro por cajero ATM se realizó satisfactoriamente
-                        return new TransactionResponse(ResponseCode.SUCCESS.getCode(), ResponseCode.SUCCESS.getMessage(), arpc);
-                    }
-                } else {
-                    //Se actualiza el estatus de la transacción a RECHAZADA, debido a que excedió los límites transaccionales
-                    transactionAtmCardWithdrawal.setStatusTransactionManagementId(StatusTransactionManagementE.REJECTED.getId());
-                    transactionAtmCardWithdrawal.setResponseCode(validateLimits.getCodigoRespuesta());
-                    try {
-                        transactionAtmCardWithdrawal = operationsBD.saveTransactionsManagement(transactionAtmCardWithdrawal, entityManager);
-                    } catch (Exception e) {
-                        return new TransactionResponse(ResponseCode.INTERNAL_ERROR.getCode(), "an error occurred while saving the transaction");
-                    }
-                    return new TransactionResponse(ResponseCode.INTERNAL_ERROR.getCode(), "an error occurred while saving the transaction");
-                }
 //                    } else {
 //                        //Se actualiza el estatus de la transacción a RECHAZADA, debido a que el ARQC no es válido
 //                        transactionAtmCardWithdrawal.setStatusTransactionManagementId(StatusTransactionManagementE.REJECTED.getId());
