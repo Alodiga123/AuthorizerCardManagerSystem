@@ -40,6 +40,7 @@ import com.cms.commons.models.RateByCard;
 import com.cms.commons.models.RateByProduct;
 import com.cms.commons.models.SecurityKeyType;
 import com.cms.commons.models.SecurityKey;
+import com.cms.commons.models.SecurityKeySize;
 import com.cms.commons.models.StatusUpdateReason;
 import com.cms.commons.models.TransactionPoint;
 import com.cms.commons.models.User;
@@ -723,6 +724,19 @@ public class operationsBDImp implements operationsBD {
         }
         return securityKeyType;    
     }
+    
+    public SecurityKeySize getSecurityKeySizeById(Integer securityKeySizeId, EntityManager entityManager) {
+        SecurityKeySize securityKeySize = null;
+        try {
+            StringBuilder sqlBuilder = new StringBuilder("SELECT * FROM securityKeySize sks ");
+            sqlBuilder.append("WHERE sks.id = ").append(securityKeySizeId).append("");
+            Query query = entityManager.createNativeQuery(sqlBuilder.toString(), SecurityKeySize.class);
+            securityKeySize = (SecurityKeySize) query.setHint("toplink.refresh", "true").getSingleResult();        
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+        return securityKeySize;    
+    }
 
     @Override
     public VerificationTypeSecurityKey getVerificationTypeSecurityKeyById(Integer verificationTypeSecurityKeyId, EntityManager entityManager) {
@@ -752,11 +766,11 @@ public class operationsBDImp implements operationsBD {
         return hsmBox; 
     }
     
-    public SecurityKey getSecurityKey(String keyType,Integer lenght, EntityManager entityManager) {
+    public SecurityKey getSecurityKey(Integer securityKeyTypeId,Integer lenght, EntityManager entityManager) {
         SecurityKey securityKey = null;
         try {
             StringBuilder sqlBuilder = new StringBuilder("SELECT * FROM securityKey sk ");
-            sqlBuilder.append("WHERE sk.name = ").append("'").append(keyType).append("'").append(" AND sk.lenght = ").append(lenght).append("");
+            sqlBuilder.append("WHERE sk.securityKeyTypeId = ").append("'").append(securityKeyTypeId).append("'").append(" AND sk.lenght = ").append(lenght).append("");
             System.out.println("sql: " + sqlBuilder.toString());
             Query query = entityManager.createNativeQuery(sqlBuilder.toString(), SecurityKey.class);
             securityKey = (SecurityKey) query.setHint("toplink.refresh", "true").getSingleResult();

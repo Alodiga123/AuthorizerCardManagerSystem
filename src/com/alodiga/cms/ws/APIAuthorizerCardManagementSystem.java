@@ -241,7 +241,7 @@ public class APIAuthorizerCardManagementSystem {
         @WebParam(name = "transactionDate") Date transactionDate,
         @WebParam(name = "localTimeTransaction") String localTimeTransaction,
         @WebParam(name = "acquirerTerminalCodeId") String acquirerTerminalCodeId,
-        @WebParam(name = "acquirerCountryId") Integer acquirerCountryId,
+        @WebParam(name = "acquirerCountryId") String acquirerCountryId,
         @WebParam(name = "newpinOffset") String newPinClear,        
         @WebParam(name = "terminalId") String terminalId){
         return operations.keyChange(cardNumber, CVV,cardDueDate,cardHolder,ARQC,channelId,transactionTypeId,messageMiddlewareId,transactionDate,localTimeTransaction,acquirerTerminalCodeId,acquirerCountryId,newPinClear,terminalId);
