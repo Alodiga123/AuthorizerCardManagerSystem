@@ -25,6 +25,7 @@ import com.cms.commons.models.RateByCard;
 import com.cms.commons.models.RateByProduct;
 import com.cms.commons.models.SecurityKeyType;
 import com.cms.commons.models.SecurityKey;
+import com.cms.commons.models.SecurityKeySize;
 import com.cms.commons.models.Sequences;
 import com.cms.commons.models.StatusUpdateReason;
 import com.cms.commons.models.TransactionPoint;
@@ -92,8 +93,10 @@ public interface operationsBD {
     public TransactionsManagement getTransactionsManagementByTransactionReference(String transactionNumber, Integer transactionTypeId, EntityManager entityManager);
     public TransactionPoint getTransactionPointByTransactionReference(String transactionNumber, EntityManager entityManager);
     public SecurityKeyType getSecurityKeyTypeById(Integer securityKeyTypeId, EntityManager entityManager);
+    public SecurityKeySize getSecurityKeySizeById(Integer securityKeySizeId, EntityManager entityManager);
     public VerificationTypeSecurityKey getVerificationTypeSecurityKeyById(Integer verificationTypeSecurityKeyId, EntityManager entityManager);
     public HSMBox getHSMBoxById(Integer HSMBoxId, EntityManager entityManager);
+    public SecurityKey getSecurityKey(Integer securityKeyTypeId, Integer lenght, EntityManager entityManager);
     
     //Métodos reutilizados por la API
     public String transformCardNumber(String cardNumber);
@@ -105,7 +108,5 @@ public interface operationsBD {
     
     public KeyProperties getKeyPropertiesByProductIdByChanelId(Long productId, Integer channelId,EntityManager entityManager);
     public CardKeyHistoryListResponse getCardKeyHistoryByCardId(Long cardId, Integer limit,EntityManager entityManager);
-
-    public SecurityKey getSecurityKey(String keyType,Integer lenght, EntityManager entityManager);
 
 }
