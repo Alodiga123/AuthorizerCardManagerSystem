@@ -1649,7 +1649,9 @@ public class APIOperations {
                     String pan = operationsBD.convertCardNumber(cardNumber);
                     HSMOperations hSMOperations = new HSMOperations();
                     //Falta cambiar el securityKey
-                    pinELMK = hSMOperations.translatePINZPKToLMK(pinBlock, pan, "B563D6ABD6692220", Constants.SECURITY_KEY_TYPE_SINGLE);
+                    
+                    pinELMK = translatePINZPKToLMK(pinBlock,pan,securityKey.getClearSecurityKey(),securityKey.getSecurityKeySizeId().getName());
+                    //pinELMK = hSMOperations.translatePINZPKToLMK(pinBlock, pan, "B563D6ABD6692220", Constants.SECURITY_KEY_TYPE_SINGLE);
                     com.alodiga.hsm.response.IBMOfSetResponse IBMOfSetResponse = hSMOperations.generateIBMPinOffSet(pinELMK, pan);
                     if (IBMOfSetResponse.getResponseCode().equals(ResponseCode.SUCCESS.getCode())) {
                         card.setPinOffset(IBMOfSetResponse.getIBMoffset());
@@ -1823,9 +1825,9 @@ public class APIOperations {
                 //Busqueda de la llave de seguridad
                 SecurityKey securityKey = operationsBD.getSecurityKey(securityKeyType.getId(), 16, entityManager);
                 String pan = operationsBD.convertCardNumber(cardNumber);
-                HSMOperations hSMOperations = new HSMOperations();
-                //Falta cambiar el securityKey
-                pinELMK = hSMOperations.translatePINZPKToLMK(pinBlock, pan, "B563D6ABD6692220", Constants.SECURITY_KEY_TYPE_SINGLE);
+                HSMOperations hSMOperations = new HSMOperations();                
+                pinELMK = translatePINZPKToLMK(pinBlock,pan,securityKey.getClearSecurityKey(),securityKey.getSecurityKeySizeId().getName());
+                //pinELMK = hSMOperations.translatePINZPKToLMK(pinBlock, pan, "B563D6ABD6692220", Constants.SECURITY_KEY_TYPE_SINGLE);
                 com.alodiga.hsm.response.IBMOfSetResponse IBMOfSetResponse = hSMOperations.generateIBMPinOffSet(pinELMK, pan);
                 //Se valida el pinOffset
                 CardResponse validatePinOffset = validatePinOffset(cardNumber, IBMOfSetResponse.getIBMoffset());
