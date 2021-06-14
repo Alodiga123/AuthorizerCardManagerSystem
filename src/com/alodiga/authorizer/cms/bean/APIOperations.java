@@ -1645,7 +1645,7 @@ public class APIOperations {
                     //Se obtiene la llave de seguridad KWP
                     SecurityKeyType securityKeyType = operationsBD.getSecurityKeyTypeById(SecurityKeyTypeE.KWP.getId(), entityManager);
                     //Busqueda de la llave de seguridad
-                    SecurityKey securityKey = operationsBD.getSecurityKey(securityKeyType.getId(), 16, entityManager);
+                    SecurityKey securityKey = operationsBD.getSecurityKey(securityKeyType.getId(), Constants.KEY_LENGHT_SINGLE, entityManager);
                     String pan = operationsBD.convertCardNumber(cardNumber);
                     HSMOperations hSMOperations = new HSMOperations();
                     //Falta cambiar el securityKey
@@ -1823,7 +1823,7 @@ public class APIOperations {
                 //Se obtiene la llave de seguridad KWP
                 SecurityKeyType securityKeyType = operationsBD.getSecurityKeyTypeById(SecurityKeyTypeE.KWP.getId(), entityManager);
                 //Busqueda de la llave de seguridad
-                SecurityKey securityKey = operationsBD.getSecurityKey(securityKeyType.getId(), 16, entityManager);
+                SecurityKey securityKey = operationsBD.getSecurityKey(securityKeyType.getId(), Constants.KEY_LENGHT_SINGLE, entityManager);
                 String pan = operationsBD.convertCardNumber(cardNumber);
                 HSMOperations hSMOperations = new HSMOperations();                
                 pinELMK = translatePINZPKToLMK(pinBlock,pan,securityKey.getClearSecurityKey(),securityKey.getSecurityKeySizeId().getName());
