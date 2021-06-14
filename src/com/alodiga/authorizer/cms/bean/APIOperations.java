@@ -802,12 +802,13 @@ public class APIOperations {
 
             if (cardResponse.getCodigoRespuesta().equals(ResponseCode.SUCCESS.getCode())) {
                 maskCardNumber = operationsBD.maskCCNumber(cardNumber);
-
+                //Se obtiene el tipo de llave
+                SecurityKeyType securityKeyType = operationsBD.getSecurityKeyTypeById(SecurityKeyTypeE.KWP.getId(), entityManager);
                 //Se busca la llave de seguridad en la BD en caso de no conseguir se genera la llave y se busca la llave generada
-                SecurityKey keyKWP = operationsBD.getSecurityKey("Llave de Seguridad KWP", Constants.KEY_LENGHT_SINGLE, entityManager);
+                SecurityKey keyKWP = operationsBD.getSecurityKey(securityKeyType.getId(), Constants.KEY_LENGHT_SINGLE, entityManager);
                 if (keyKWP == null) {
                     TransactionResponse generateKey = generateSecurityKey("KWP", "Single");
-                    keyKWP = operationsBD.getSecurityKey("Llave de Seguridad KWP", Constants.KEY_LENGHT_SINGLE, entityManager);
+                    keyKWP = operationsBD.getSecurityKey(securityKeyType.getId(), Constants.KEY_LENGHT_SINGLE, entityManager);
                 }
 
                 //Se genera el pinBlock      
@@ -2599,12 +2600,13 @@ public class APIOperations {
 
             //Se valida la tarjeta
             if (validateCard.getCodigoRespuesta().equals(ResponseCode.SUCCESS.getCode())) {
-
+                //Se obtiene el tipo de llave
+                SecurityKeyType securityKeyType = operationsBD.getSecurityKeyTypeById(SecurityKeyTypeE.KWP.getId(), entityManager);
                 //Se busca la llave en la BD en caso de no conseguir se genera la llave y se busca la llave generada
-                SecurityKey keyKWP = operationsBD.getSecurityKey("Llave de Seguridad KWP", Constants.KEY_LENGHT_SINGLE, entityManager);
+                SecurityKey keyKWP = operationsBD.getSecurityKey(securityKeyType.getId(), Constants.KEY_LENGHT_SINGLE, entityManager);
                 if (keyKWP == null) {
                     TransactionResponse generateKey = generateSecurityKey("KWP", "Single");
-                    keyKWP = operationsBD.getSecurityKey("Llave de Seguridad KWP", Constants.KEY_LENGHT_SINGLE, entityManager);
+                    keyKWP = operationsBD.getSecurityKey(securityKeyType.getId(), Constants.KEY_LENGHT_SINGLE, entityManager);
                 }
 
                 //Se genera el pinBlock y se transformar el CardNumber en el formato requerido para el servicio translatePINZPKToLMK
