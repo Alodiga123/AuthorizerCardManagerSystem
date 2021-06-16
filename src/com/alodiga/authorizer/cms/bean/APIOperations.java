@@ -71,6 +71,9 @@ import java.util.ArrayList;
 import com.alodiga.hsm.util.HSMOperations;
 import static com.alodiga.hsm.util.HSMOperations.generateKey;
 import static com.alodiga.hsm.util.HSMOperations.translatePINZPKToLMK;
+import com.alodiga.hsm.util.ConstantResponse;
+import com.alodiga.hsm.util.Constant;
+import com.alodiga.hsm.response.IBMOfSetResponse;
 import com.cms.commons.enumeraciones.VerificationTypeSecurityKeyE;
 import com.cms.commons.models.HSMBox;
 import com.cms.commons.models.SecurityKey;
@@ -81,7 +84,7 @@ import com.alodiga.hsm.response.IBMOfSetResponse;
 import com.alodiga.hsm.util.ConstantResponse;
 import static com.alodiga.hsm.util.HSMOperations.generateIBMPinOffSet;
 import com.alodiga.hsm.util.Test;
-import static com.alodiga.hsm.util.Utils.getPinblock;
+import static com.alodiga.hsm.util.HSMOperations.getPinblock;
 import com.cms.commons.enumeraciones.SecurityKeySizeE;
 import com.cms.commons.models.SecurityKeySize;
 
@@ -774,6 +777,8 @@ public class APIOperations {
         Card card = null;
         String transactionConcept = "Consulta de Saldo sin Movimientos";
         String pinELMK = "";
+        SecurityKeyType securityKeyType = null;
+        
         try {
             CardResponse cardResponse = validateCard(cardNumber, ARQC, cardHolder, CVV, cardDueDate, indValidateCardActive);
             if (cardResponse.getCodigoRespuesta().equals(ResponseCode.SUCCESS.getCode())) {
@@ -803,7 +808,7 @@ public class APIOperations {
             if (cardResponse.getCodigoRespuesta().equals(ResponseCode.SUCCESS.getCode())) {
                 maskCardNumber = operationsBD.maskCCNumber(cardNumber);
                 //Se obtiene el tipo de llave
-                SecurityKeyType securityKeyType = operationsBD.getSecurityKeyTypeById(SecurityKeyTypeE.KWP.getId(), entityManager);
+                securityKeyType = operationsBD.getSecurityKeyTypeById(SecurityKeyTypeE.KWP.getId(), entityManager);
                 //Se busca la llave de seguridad en la BD en caso de no conseguir se genera la llave y se busca la llave generada
                 SecurityKey keyKWP = operationsBD.getSecurityKey(securityKeyType.getId(), Constants.KEY_LENGHT_SINGLE, entityManager);
                 if (keyKWP == null) {
@@ -1641,15 +1646,17 @@ public class APIOperations {
                 //Se busca el objeto en la tabla card
                 transactionResponse = validatePropertiesKey(card, newPinClear, channelId, true);
                 if (transactionResponse.getCodigoRespuesta().equals(ResponseCode.SUCCESS.getCode())) {
-                    String pinBlock = com.alodiga.hsm.util.Utils.getPinblock("E5614FF24C765137", "2822", card.getCardNumber());
+                    String pinBlock = getPinblock("E5614FF24C765137", "2822", card.getCardNumber());
                     //Se obtiene la llave de seguridad KWP
                     SecurityKeyType securityKeyType = operationsBD.getSecurityKeyTypeById(SecurityKeyTypeE.KWP.getId(), entityManager);
                     //Busqueda de la llave de seguridad
-                    SecurityKey securityKey = operationsBD.getSecurityKey(securityKeyType.getId(), 16, entityManager);
+                    SecurityKey securityKey = operationsBD.getSecurityKey(securityKeyType.getId(), Constants.KEY_LENGHT_SINGLE, entityManager);
                     String pan = operationsBD.convertCardNumber(cardNumber);
                     HSMOperations hSMOperations = new HSMOperations();
                     //Falta cambiar el securityKey
-                    pinELMK = hSMOperations.translatePINZPKToLMK(pinBlock, pan, "B563D6ABD6692220", Constants.SECURITY_KEY_TYPE_SINGLE);
+                    
+                    pinELMK = translatePINZPKToLMK(pinBlock,pan,securityKey.getClearSecurityKey(),securityKey.getSecurityKeySizeId().getName());
+                    //pinELMK = hSMOperations.translatePINZPKToLMK(pinBlock, pan, "B563D6ABD6692220", Constants.SECURITY_KEY_TYPE_SINGLE);
                     com.alodiga.hsm.response.IBMOfSetResponse IBMOfSetResponse = hSMOperations.generateIBMPinOffSet(pinELMK, pan);
                     if (IBMOfSetResponse.getResponseCode().equals(ResponseCode.SUCCESS.getCode())) {
                         card.setPinOffset(IBMOfSetResponse.getIBMoffset());
@@ -1821,11 +1828,11 @@ public class APIOperations {
                 //Se obtiene la llave de seguridad KWP
                 SecurityKeyType securityKeyType = operationsBD.getSecurityKeyTypeById(SecurityKeyTypeE.KWP.getId(), entityManager);
                 //Busqueda de la llave de seguridad
-                SecurityKey securityKey = operationsBD.getSecurityKey(securityKeyType.getId(), 16, entityManager);
+                SecurityKey securityKey = operationsBD.getSecurityKey(securityKeyType.getId(), Constants.KEY_LENGHT_SINGLE, entityManager);
                 String pan = operationsBD.convertCardNumber(cardNumber);
-                HSMOperations hSMOperations = new HSMOperations();
-                //Falta cambiar el securityKey
-                pinELMK = hSMOperations.translatePINZPKToLMK(pinBlock, pan, "B563D6ABD6692220", Constants.SECURITY_KEY_TYPE_SINGLE);
+                HSMOperations hSMOperations = new HSMOperations();                
+                pinELMK = translatePINZPKToLMK(pinBlock,pan,securityKey.getClearSecurityKey(),securityKey.getSecurityKeySizeId().getName());
+                //pinELMK = hSMOperations.translatePINZPKToLMK(pinBlock, pan, "B563D6ABD6692220", Constants.SECURITY_KEY_TYPE_SINGLE);
                 com.alodiga.hsm.response.IBMOfSetResponse IBMOfSetResponse = hSMOperations.generateIBMPinOffSet(pinELMK, pan);
                 //Se valida el pinOffset
                 CardResponse validatePinOffset = validatePinOffset(cardNumber, IBMOfSetResponse.getIBMoffset());
@@ -2206,12 +2213,12 @@ public class APIOperations {
                 if (transactionResponse.getCodigoRespuesta().equals(ResponseCode.SUCCESS.getCode())) {
                     convertCard = operationsBD.convertCardNumber(cardNumber);
                     //Se obtiene la llave de seguridad KEK
-                    securityKeyType = operationsBD.getSecurityKeyTypeById(SecurityKeyTypeE.KEK.getId(), entityManager);
+                    securityKeyType = operationsBD.getSecurityKeyTypeById(SecurityKeyTypeE.KWP.getId(), entityManager);
                     securityKey = operationsBD.getSecurityKey(securityKeyType.getId(), Constants.KEY_LENGHT_SINGLE, entityManager);
                     //Se genera el pinBlock
                     pinBlock = getPinblock(securityKey.getClearSecurityKey(), pinClear, cardNumber);
                     //Se genera el pinELMK
-                    responsePinELMK = translatePINZPKToLMK(pinBlock, convertCard, Constants.SECURITY_KEY_KWP, Constants.SECURITY_KEY_TYPE_SINGLE);
+                    responsePinELMK = translatePINZPKToLMK(pinBlock,convertCard,securityKey.getEncryptedValue(),securityKey.getSecurityKeySizeId().getName());
                     //Se genera el pinOffset y se guarda en la BD
                     IBMOfSetResponse ibmOfSetResponse = generateIBMPinOffSet(responsePinELMK, convertCard);
                     if (ibmOfSetResponse.getResponseCode().equals(ConstantResponse.SUCESSFULL_RESPONSE_CODE)) {
@@ -2569,6 +2576,8 @@ public class APIOperations {
         String conceptTransaction = "Retiro Cajero ATM - ";
         String customerIdentificationNumber = "";
         String pinELMK = "";
+        SecurityKeyType securityKeyType = null;
+        SecurityKey securityKey = null;
         try {
 
             CardResponse validateCard = validateCard(cardNumber, ARQC, cardHolder, CVV, cardDueDate, indValidateCardActive);
@@ -2601,7 +2610,7 @@ public class APIOperations {
             //Se valida la tarjeta
             if (validateCard.getCodigoRespuesta().equals(ResponseCode.SUCCESS.getCode())) {
                 //Se obtiene el tipo de llave
-                SecurityKeyType securityKeyType = operationsBD.getSecurityKeyTypeById(SecurityKeyTypeE.KWP.getId(), entityManager);
+                securityKeyType = operationsBD.getSecurityKeyTypeById(SecurityKeyTypeE.KWP.getId(), entityManager);
                 //Se busca la llave en la BD en caso de no conseguir se genera la llave y se busca la llave generada
                 SecurityKey keyKWP = operationsBD.getSecurityKey(securityKeyType.getId(), Constants.KEY_LENGHT_SINGLE, entityManager);
                 if (keyKWP == null) {
@@ -2905,10 +2914,12 @@ public class APIOperations {
                     securityKeyType = operationsBD.getSecurityKeyTypeById(SecurityKeyTypeE.KWP.getId(), entityManager);
                     securityKey.setSecurityKeyTypeId(securityKeyType);
                     securityKey.setLenght(Constants.KEY_LENGHT_DOUBLE);
+                    break;
                 case Constants.SECURITY_KEY_KVC:
                     securityKeyType = operationsBD.getSecurityKeyTypeById(SecurityKeyTypeE.KVC.getId(), entityManager);
                     securityKey.setSecurityKeyTypeId(securityKeyType);
                     securityKey.setLenght(Constants.KEY_LENGHT_TRIPLE);
+                    break;
                 default:
                     break;
             }
@@ -2922,10 +2933,12 @@ public class APIOperations {
                     securityKeySize = operationsBD.getSecurityKeySizeById(SecurityKeySizeE.Double.getId(), entityManager);
                     securityKey.setSecurityKeySizeId(securityKeySize);
                     securityKey.setLenght(Constants.KEY_LENGHT_DOUBLE);
+                    break;
                 case Constants.SECURITY_KEY_TYPE_TRIPLE:
                     securityKeySize = operationsBD.getSecurityKeySizeById(SecurityKeySizeE.Triple.getId(), entityManager);
                     securityKey.setSecurityKeySizeId(securityKeySize);
                     securityKey.setLenght(Constants.KEY_LENGHT_TRIPLE);
+                    break;
                 default:
                     break;
             }
