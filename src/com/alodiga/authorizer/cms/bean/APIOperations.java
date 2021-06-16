@@ -84,7 +84,7 @@ import com.alodiga.hsm.response.IBMOfSetResponse;
 import com.alodiga.hsm.util.ConstantResponse;
 import static com.alodiga.hsm.util.HSMOperations.generateIBMPinOffSet;
 import com.alodiga.hsm.util.Test;
-import static com.alodiga.hsm.util.Utils.getPinblock;
+import static com.alodiga.hsm.util.HSMOperations.getPinblock;
 import com.cms.commons.enumeraciones.SecurityKeySizeE;
 import com.cms.commons.models.SecurityKeySize;
 
@@ -808,7 +808,7 @@ public class APIOperations {
             if (cardResponse.getCodigoRespuesta().equals(ResponseCode.SUCCESS.getCode())) {
                 maskCardNumber = operationsBD.maskCCNumber(cardNumber);
                 //Se obtiene el tipo de llave
-                SecurityKeyType securityKeyType = operationsBD.getSecurityKeyTypeById(SecurityKeyTypeE.KWP.getId(), entityManager);
+                securityKeyType = operationsBD.getSecurityKeyTypeById(SecurityKeyTypeE.KWP.getId(), entityManager);
                 //Se busca la llave de seguridad en la BD en caso de no conseguir se genera la llave y se busca la llave generada
                 SecurityKey keyKWP = operationsBD.getSecurityKey(securityKeyType.getId(), Constants.KEY_LENGHT_SINGLE, entityManager);
                 if (keyKWP == null) {
@@ -1646,7 +1646,7 @@ public class APIOperations {
                 //Se busca el objeto en la tabla card
                 transactionResponse = validatePropertiesKey(card, newPinClear, channelId, true);
                 if (transactionResponse.getCodigoRespuesta().equals(ResponseCode.SUCCESS.getCode())) {
-                    String pinBlock = com.alodiga.hsm.util.Utils.getPinblock("E5614FF24C765137", "2822", card.getCardNumber());
+                    String pinBlock = getPinblock("E5614FF24C765137", "2822", card.getCardNumber());
                     //Se obtiene la llave de seguridad KWP
                     SecurityKeyType securityKeyType = operationsBD.getSecurityKeyTypeById(SecurityKeyTypeE.KWP.getId(), entityManager);
                     //Busqueda de la llave de seguridad
@@ -2610,7 +2610,7 @@ public class APIOperations {
             //Se valida la tarjeta
             if (validateCard.getCodigoRespuesta().equals(ResponseCode.SUCCESS.getCode())) {
                 //Se obtiene el tipo de llave
-                SecurityKeyType securityKeyType = operationsBD.getSecurityKeyTypeById(SecurityKeyTypeE.KWP.getId(), entityManager);
+                securityKeyType = operationsBD.getSecurityKeyTypeById(SecurityKeyTypeE.KWP.getId(), entityManager);
                 //Se busca la llave en la BD en caso de no conseguir se genera la llave y se busca la llave generada
                 SecurityKey keyKWP = operationsBD.getSecurityKey(securityKeyType.getId(), Constants.KEY_LENGHT_SINGLE, entityManager);
                 if (keyKWP == null) {
