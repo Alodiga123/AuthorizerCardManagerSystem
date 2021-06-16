@@ -817,7 +817,7 @@ public class APIOperations {
                 String convertCardNumber = operationsBD.convertCardNumber(cardNumber);
 
                 //Se realizan las validaciones del HSM
-                pinELMK = HSMOperations.translatePINZPKToLMK(pinBlock, convertCardNumber, keyKWP.getEncryptedValue(), "Single");
+                pinELMK = HSMOperations.translatePINZPKToLMK(pinBlock, convertCardNumber, keyKWP.getEncryptedValue(), keyKWP.getSecurityKeySizeId().getName());
                 IBMOfSetResponse responseGeneratePinOffSet = (IBMOfSetResponse) generateIBMPinOffSet(pinELMK, cardNumber);
                 String pinOffSetHSM = responseGeneratePinOffSet.getIBMoffset();
 
@@ -2614,7 +2614,7 @@ public class APIOperations {
                 String convertCardNumber = operationsBD.convertCardNumber(cardNumber);
 
                 //Se realizan las validaciones del HSM
-                pinELMK = HSMOperations.translatePINZPKToLMK(generatePinBlock, convertCardNumber, keyKWP.getEncryptedValue(), "Single");
+                pinELMK = HSMOperations.translatePINZPKToLMK(generatePinBlock, convertCardNumber, keyKWP.getEncryptedValue(), keyKWP.getSecurityKeySizeId().getName());
                 IBMOfSetResponse responseGeneratePinOffSet = (IBMOfSetResponse) generateIBMPinOffSet(pinELMK, cardNumber);
 
                 //Se valida el PinOffSet generado por la caja HSM con el de la BD
