@@ -228,24 +228,24 @@ public class APIAuthorizerCardManagementSystem {
         return operations.cardRecharge(cardNumber,cardHolder,CVV,cardDueDate,messageMiddlewareId,transactionTypeId,channelId,transactionDate,localTimeTransaction,acquirerTerminalCodeId,transactionNumberAcquirer,acquirerCountryId,amountRecharge,conceptTransaction);
     }
     
-   @WebMethod    
-   public TransactionResponse keyChange(
-       @WebParam(name = "cardNumber") String cardNumber,
-       @WebParam(name = "CVV") String CVV,
-       @WebParam(name = "cardDueDate") String cardDueDate,
-       @WebParam(name = "cardHolde") String cardHolder,
-       @WebParam(name = "ARQC") String ARQC,
-       @WebParam(name = "channelId") Integer channelId,
-       @WebParam(name = "transactionTypeId") Integer transactionTypeId,
-       @WebParam(name = "messageMiddlewareId") Long messageMiddlewareId,
-       @WebParam(name = "transactionDate") Date transactionDate,
-       @WebParam(name = "localTimeTransaction") String localTimeTransaction,
-       @WebParam(name = "acquirerTerminalCodeId") String acquirerTerminalCodeId,
-       @WebParam(name = "acquirerCountryId") String acquirerCountryId,
-       @WebParam(name = "newpinOffset") String newPinClear,        
-       @WebParam(name = "terminalId") String terminalId){
-       return operations.keyChange(cardNumber, CVV,cardDueDate,cardHolder,ARQC,channelId,transactionTypeId,messageMiddlewareId,transactionDate,localTimeTransaction,acquirerTerminalCodeId,acquirerCountryId,newPinClear,terminalId);
-   }
+    @WebMethod    
+    public TransactionResponse keyChange(
+        @WebParam(name = "cardNumber") String cardNumber,
+        @WebParam(name = "CVV") String CVV,
+        @WebParam(name = "cardDueDate") String cardDueDate,
+        @WebParam(name = "cardHolde") String cardHolder,
+        @WebParam(name = "ARQC") String ARQC,
+        @WebParam(name = "channelId") Integer channelId,
+        @WebParam(name = "transactionTypeId") Integer transactionTypeId,
+        @WebParam(name = "messageMiddlewareId") Long messageMiddlewareId,
+        @WebParam(name = "transactionDate") Date transactionDate,
+        @WebParam(name = "localTimeTransaction") String localTimeTransaction,
+        @WebParam(name = "acquirerTerminalCodeId") String acquirerTerminalCodeId,
+        @WebParam(name = "acquirerCountryId") String acquirerCountryId,
+        @WebParam(name = "newpinOffset") String newPinClear,        
+        @WebParam(name = "terminalId") String terminalId){
+        return operations.keyChange(cardNumber, CVV,cardDueDate,cardHolder,ARQC,channelId,transactionTypeId,messageMiddlewareId,transactionDate,localTimeTransaction,acquirerTerminalCodeId,acquirerCountryId,newPinClear,terminalId);
+    }
    
     
     @WebMethod
