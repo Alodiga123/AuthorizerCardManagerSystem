@@ -1650,7 +1650,7 @@ public class APIOperations {
                     SecurityKeyType securityKeyType = operationsBD.getSecurityKeyTypeById(SecurityKeyTypeE.KWP.getId(), entityManager);
                     //Busqueda de la llave de seguridad
                     SecurityKey securityKey = operationsBD.getSecurityKey(securityKeyType.getId(), Constants.KEY_LENGHT_SINGLE, entityManager);
-                    String pinBlock = com.alodiga.hsm.util.Utils.getPinblock(securityKey.getClearSecurityKey(), newPinClear, card.getCardNumber());
+                    String pinBlock = getPinblock(securityKey.getClearSecurityKey(), newPinClear, card.getCardNumber());
                     String pan = operationsBD.convertCardNumber(cardNumber);
                     HSMOperations hSMOperations = new HSMOperations();
                     //Falta cambiar el securityKey
