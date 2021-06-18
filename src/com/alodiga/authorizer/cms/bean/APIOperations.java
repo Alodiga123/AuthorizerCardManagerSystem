@@ -70,7 +70,6 @@ import java.net.ResponseCache;
 import java.util.ArrayList;
 import com.alodiga.hsm.util.HSMOperations;
 import static com.alodiga.hsm.util.HSMOperations.generateKey;
-import static com.alodiga.hsm.util.HSMOperations.translatePINZPKToLMK;
 import com.alodiga.hsm.util.ConstantResponse;
 import com.alodiga.hsm.util.Constant;
 import com.cms.commons.enumeraciones.VerificationTypeSecurityKeyE;
@@ -86,6 +85,7 @@ import static com.alodiga.hsm.util.HSMOperations.generateIBMPinOffSet;
 import static com.alodiga.hsm.util.HSMOperations.generateCVV;
 import com.alodiga.hsm.util.Test;
 import static com.alodiga.hsm.util.HSMOperations.getPinblock;
+import static com.alodiga.hsm.util.HSMOperations.translatePINZPKToLMK;
 import com.cms.commons.enumeraciones.SecurityKeySizeE;
 import com.cms.commons.models.IsoHsmEquivalence;
 import com.cms.commons.models.PlastiCustomizingRequestHasCard;
@@ -818,7 +818,6 @@ public class APIOperations {
                     TransactionResponse generateKey = generateSecurityKey("KWP", "Single");
                     keyKWP = operationsBD.getSecurityKey(securityKeyType.getId(), Constants.KEY_LENGHT_SINGLE, entityManager);
                 }
-
                 //Se genera el pinBlock      
                 String pinBlock = getPinblock(keyKWP.getClearSecurityKey(), pinClear, cardNumber);
                 //Transformar el CardNumber en el formato requerido para el servicio translatePINZPKToLMK
@@ -1649,15 +1648,14 @@ public class APIOperations {
                 //Se busca el objeto en la tabla card
                 transactionResponse = validatePropertiesKey(card, newPinClear, channelId, true);
                 if (transactionResponse.getCodigoRespuesta().equals(ResponseCode.SUCCESS.getCode())) {
-                    String pinBlock = getPinblock("E5614FF24C765137", "2822", card.getCardNumber());
                     //Se obtiene la llave de seguridad KWP
                     SecurityKeyType securityKeyType = operationsBD.getSecurityKeyTypeById(SecurityKeyTypeE.KWP.getId(), entityManager);
                     //Busqueda de la llave de seguridad
                     SecurityKey securityKey = operationsBD.getSecurityKey(securityKeyType.getId(), Constants.KEY_LENGHT_SINGLE, entityManager);
+                    String pinBlock = getPinblock(securityKey.getClearSecurityKey(), newPinClear, card.getCardNumber());
                     String pan = operationsBD.convertCardNumber(cardNumber);
                     HSMOperations hSMOperations = new HSMOperations();
-                    //Falta cambiar el securityKey
-                    
+                    //Falta cambiar el securityKey                    
                     pinELMK = translatePINZPKToLMK(pinBlock,pan,securityKey.getClearSecurityKey(),securityKey.getSecurityKeySizeId().getName());
                     //pinELMK = hSMOperations.translatePINZPKToLMK(pinBlock, pan, "B563D6ABD6692220", Constants.SECURITY_KEY_TYPE_SINGLE);
                     com.alodiga.hsm.response.IBMOfSetResponse IBMOfSetResponse = hSMOperations.generateIBMPinOffSet(pinELMK, pan);
