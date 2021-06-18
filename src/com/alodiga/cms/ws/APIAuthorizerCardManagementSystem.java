@@ -383,7 +383,7 @@ public class APIAuthorizerCardManagementSystem {
             @WebParam(name = "pinBlock") String pinBlock,
             @WebParam(name = "ARQC") String ARQC,
             @WebParam(name = "terminalId") String terminalId,
-            @WebParam(name = "oPMode") String oPMode,
+            @WebParam(name = "entryMode") String entryMode,
             @WebParam(name = "schemeEMV") String schemeEMV,
             @WebParam(name = "seqNumber") String seqNumber,
             @WebParam(name = "atc") String atc,
@@ -391,7 +391,7 @@ public class APIAuthorizerCardManagementSystem {
             @WebParam(name = "transactionData") String transactionData,
             @WebParam(name = "tradeName") String tradeName){
         return operations.atmCardWithdrawal(cardNumber,cardHolder,CVV,cardDueDate,messageMiddlewareId,transactionTypeId,channelId,transactionDate,localTimeTransaction,acquirerTerminalCodeId,transactionNumberAcquirer,
-                                            acquirerCountryId,amountWithdrawal,pinBlock,ARQC,terminalId,oPMode,schemeEMV,seqNumber,atc,unpredictableNumber,transactionData,tradeName);
+                                            acquirerCountryId,amountWithdrawal,pinBlock,ARQC,terminalId,entryMode,schemeEMV,seqNumber,atc,unpredictableNumber,transactionData,tradeName);
     }
     
     @WebMethod  
