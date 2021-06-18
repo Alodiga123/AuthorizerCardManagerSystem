@@ -2636,11 +2636,10 @@ public class APIOperations {
                     //Se obtiene el id de la llave CVK o KVC asociada a la tarjeta a validar
                     PlastiCustomizingRequestHasCard plasticRequest = operationsBD.getSecurityKeyIdByCardId(card.getId(), entityManager);
                     //Se genera el CVV con la caja HSM
-                    GenerateCVVResponse CVVValidate = (GenerateCVVResponse) generateCVV(plasticRequest.getSecurityKeyId().getEncryptedValue(),card.getCardNumber(),cardDueDate,isoHsmEquivalence.getHsmRequestValue());
-                    //Se valida el CVV generado por la caja HSM con el de la BD
-                    CardResponse validateCVV = validateCVV(CVVValidate.getCvv(), cardNumber, isoHsmEquivalence.getHsmRequestValue());
-
-//                  if (validateCVV.getCodigoRespuesta().equals(ResponseCode.SUCCESS.getCode())) {
+                    GenerateCVVResponse CVVHSMGenerate = (GenerateCVVResponse) generateCVV(plasticRequest.getSecurityKeyId().getEncryptedValue(),card.getCardNumber(),cardDueDate,isoHsmEquivalence.getHsmRequestValue());
+                    //Se valida el CVV generado por la caja HSM con el CVV del parametro de entrada
+                    if(CVV.equals(CVVHSMGenerate.getCvv())){
+                     
                     //Se valida el criptograma ARQC
 //                    metod = lp.getProperties("prop.validateQRQC");
 //                    params = request.getARPCRequest(terminalId, oPMode, schemeEMV, card.getCardNumber(), seqNumber, atc, unpredictableNumber, transactionData, ARQC);
@@ -2727,18 +2726,18 @@ public class APIOperations {
 //                        }
 //                        return new TransactionResponse(ResponseCode.INTERNAL_ERROR.getCode(), "an error occurred while saving the transaction");
 //                    }
-//                    }else {
+                    }else {
 //                        //Se actualiza el estatus de la transacción a RECHAZADA, debido a que el CVV no es válido
 //                        transactionAtmCardWithdrawal.setStatusTransactionManagementId(StatusTransactionManagementE.REJECTED.getId());
-//                        transactionAtmCardWithdrawal.setResponseCode(validateCVV.getCodigoRespuesta());
+//                        transactionAtmCardWithdrawal.setResponseCode(ResponseCode.CVV_DIFFERENT.getCode());
 //                        try {
 //                            transactionAtmCardWithdrawal = operationsBD.saveTransactionsManagement(transactionAtmCardWithdrawal, entityManager);
 //                        } catch (Exception e) {
 //                            return new TransactionResponse(ResponseCode.INTERNAL_ERROR.getCode(), "an error occurred while saving the transaction");
 //                        }
-//                        return new TransactionResponse(validateCVV.getCodigoRespuesta(), validateCVV.getMensajeRespuesta());
+                        return new TransactionResponse(ResponseCode.CVV_DIFFERENT.getCode(), ResponseCode.CVV_DIFFERENT.getMessage());
 //                        
-//                    }
+                    }
 //                } else {
 //                    //Se actualiza el estatus de la transacción a RECHAZADA, debido a validaciones de HSM
 //                    transactionAtmCardWithdrawal.setStatusTransactionManagementId(StatusTransactionManagementE.REJECTED.getId());
@@ -2978,37 +2977,5 @@ public class APIOperations {
         return new TransactionResponse(ResponseCode.SUCCESS.getCode(), ResponseCode.SUCCESS.getMessage());
     }
     
-    public CardResponse validateCVV(String CVV, String cardNumber, String CVVType) {
-        Card card;
-        CardResponse cardResponse = new CardResponse();
-        try {
-            card = getCardByCardNumber(cardNumber);
-
-            switch (CVVType) {
-                //Impreso en la tarjeta
-                case Constants.PRINTED_ON_CARD:
-                    if(!card.getSecurityCodeCard().equals(CVV)){
-                        return new CardResponse(ResponseCode.CVV_DIFFERENT.getCode(), ResponseCode.CVV_DIFFERENT.getMessage());
-                    }  
-                    break;
-                //Banda Magnética     
-                case Constants.MAGNETIC_STRIP:
-                    if(!card.getSecurityCodeMagneticStrip().equals(CVV)){
-                        return new CardResponse(ResponseCode.CVV_DIFFERENT.getCode(), ResponseCode.CVV_DIFFERENT.getMessage());
-                    }   
-                    break;
-                //Almacenado en el Chip    
-                case Constants.STORE_ON_CHIP:
-                    if(!card.getICVVMagneticStrip().equals(CVV)){
-                        return new CardResponse(ResponseCode.CVV_DIFFERENT.getCode(), ResponseCode.CVV_DIFFERENT.getMessage());
-                    }   break;
-                default:
-                    return new CardResponse(ResponseCode.INTERNAL_ERROR.getCode(), "The CVV type could not be verified");
-            }
-        } catch (Exception e) {
-            return new CardResponse(ResponseCode.INTERNAL_ERROR.getCode(), "An error occurred trying to validate the CVV");
-        }
-        return new CardResponse(ResponseCode.SUCCESS.getCode(), "The CVV matches the one in the database");
-    }
-
+    
 }
