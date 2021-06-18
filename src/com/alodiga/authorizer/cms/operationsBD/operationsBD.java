@@ -17,10 +17,12 @@ import com.cms.commons.models.Country;
 import com.cms.commons.models.DaysWeek;
 import com.cms.commons.models.HSMBox;
 import com.cms.commons.models.HistoryCardStatusChanges;
+import com.cms.commons.models.IsoHsmEquivalence;
 import com.cms.commons.models.KeyProperties;
 import com.cms.commons.models.ProductHasChannelHasTransaction;
 import com.cms.commons.models.ProgramLoyalty;
 import com.cms.commons.models.ProgramLoyaltyTransaction;
+import com.cms.commons.models.PlastiCustomizingRequestHasCard;
 import com.cms.commons.models.RateByCard;
 import com.cms.commons.models.RateByProduct;
 import com.cms.commons.models.SecurityKeyType;
@@ -97,6 +99,8 @@ public interface operationsBD {
     public VerificationTypeSecurityKey getVerificationTypeSecurityKeyById(Integer verificationTypeSecurityKeyId, EntityManager entityManager);
     public HSMBox getHSMBoxById(Integer HSMBoxId, EntityManager entityManager);
     public SecurityKey getSecurityKey(Integer securityKeyTypeId, Integer lenght, EntityManager entityManager);
+    public PlastiCustomizingRequestHasCard getSecurityKeyIdByCardId (Long cardId, EntityManager entityManager);
+    public IsoHsmEquivalence getHSMRequestValue(String isoValue,EntityManager entityManager);
     
     //Métodos reutilizados por la API
     public String transformCardNumber(String cardNumber);

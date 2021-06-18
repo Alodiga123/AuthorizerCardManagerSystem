@@ -22,7 +22,9 @@ import com.cms.commons.models.DaysWeek;
 import com.cms.commons.models.DaysWeekHasProgramLoyalty;
 import com.cms.commons.models.HSMBox;
 import com.cms.commons.models.HistoryCardStatusChanges;
+import com.cms.commons.models.IsoHsmEquivalence;
 import com.cms.commons.models.KeyProperties;
+import com.cms.commons.models.PlastiCustomizingRequestHasCard;
 import com.cms.commons.models.Sequences;
 import com.cms.commons.models.TransactionsManagement;
 import com.cms.commons.models.TransactionsManagementHistory;
@@ -784,5 +786,37 @@ public class operationsBDImp implements operationsBD {
     @Override
     public String convertCardNumber(String cardNumber) {
         return cardNumber.substring(cardNumber.length() - 13, cardNumber.length() -1); 
+    }
+    
+    @Override
+    public PlastiCustomizingRequestHasCard getSecurityKeyIdByCardId(Long cardId, EntityManager entityManager) {
+        PlastiCustomizingRequestHasCard plastiCustomizingRequestHasCard = null;
+        try {
+            StringBuilder sqlBuilder = new StringBuilder("SELECT * FROM plastiCustomizingRequestHasCard p ");
+            sqlBuilder.append("WHERE p.cardId = '").append(cardId).append("'");
+            System.out.println("sql: " + sqlBuilder.toString());
+            Query query = entityManager.createNativeQuery(sqlBuilder.toString(), PlastiCustomizingRequestHasCard.class);
+            plastiCustomizingRequestHasCard = (PlastiCustomizingRequestHasCard) query.setHint("toplink.refresh", "true").getSingleResult();        
+        } catch (Exception ex) {
+            ex.printStackTrace();
+            return null;
+        }
+        return plastiCustomizingRequestHasCard; 
+    }
+    
+    @Override
+    public IsoHsmEquivalence getHSMRequestValue(String isoValue,EntityManager entityManager) {
+        IsoHsmEquivalence isoHsmEquivalence = null;
+        try {
+            StringBuilder sqlBuilder = new StringBuilder("SELECT * FROM isoHsmEquivalence i ");
+            sqlBuilder.append("WHERE i.isoItemValue LIKE '").append(isoValue).append("%'");
+            System.out.println("sql: " + sqlBuilder.toString());
+            Query query = entityManager.createNativeQuery(sqlBuilder.toString(), IsoHsmEquivalence.class);
+            isoHsmEquivalence = (IsoHsmEquivalence) query.setHint("toplink.refresh", "true").getSingleResult();        
+        } catch (Exception ex) {
+            ex.printStackTrace();
+            return null;
+        }
+        return isoHsmEquivalence; 
     }
 }
