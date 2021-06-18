@@ -789,7 +789,7 @@ public class operationsBDImp implements operationsBD {
     }
     
     @Override
-    public PlastiCustomizingRequestHasCard getSecurityKeyIdByCardId(Long cardId, EntityManager entityManager) {
+    public PlastiCustomizingRequestHasCard getSecurityKeyByCard(Long cardId, EntityManager entityManager) {
         PlastiCustomizingRequestHasCard plastiCustomizingRequestHasCard = null;
         try {
             StringBuilder sqlBuilder = new StringBuilder("SELECT * FROM plastiCustomizingRequestHasCard p ");
@@ -805,11 +805,12 @@ public class operationsBDImp implements operationsBD {
     }
     
     @Override
-    public IsoHsmEquivalence getHSMRequestValue(String isoValue,EntityManager entityManager) {
+    public IsoHsmEquivalence getHSMRequestValue(String isoValue,Integer isoItem, EntityManager entityManager) {
         IsoHsmEquivalence isoHsmEquivalence = null;
         try {
             StringBuilder sqlBuilder = new StringBuilder("SELECT * FROM isoHsmEquivalence i ");
-            sqlBuilder.append("WHERE i.isoItemValue LIKE '").append(isoValue).append("%'");
+            sqlBuilder.append("WHERE i.isoItemValue LIKE '").append(isoValue).append("%' ");
+            sqlBuilder.append("AND i.isoItem ='").append(isoItem).append("'");
             System.out.println("sql: " + sqlBuilder.toString());
             Query query = entityManager.createNativeQuery(sqlBuilder.toString(), IsoHsmEquivalence.class);
             isoHsmEquivalence = (IsoHsmEquivalence) query.setHint("toplink.refresh", "true").getSingleResult();        

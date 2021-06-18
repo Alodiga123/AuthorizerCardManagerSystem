@@ -99,8 +99,8 @@ public interface operationsBD {
     public VerificationTypeSecurityKey getVerificationTypeSecurityKeyById(Integer verificationTypeSecurityKeyId, EntityManager entityManager);
     public HSMBox getHSMBoxById(Integer HSMBoxId, EntityManager entityManager);
     public SecurityKey getSecurityKey(Integer securityKeyTypeId, Integer lenght, EntityManager entityManager);
-    public PlastiCustomizingRequestHasCard getSecurityKeyIdByCardId (Long cardId, EntityManager entityManager);
-    public IsoHsmEquivalence getHSMRequestValue(String isoValue,EntityManager entityManager);
+    public PlastiCustomizingRequestHasCard getSecurityKeyByCard(Long cardId, EntityManager entityManager);
+    public IsoHsmEquivalence getHSMRequestValue(String isoValue,Integer isoItem, EntityManager entityManager);
     
     //Métodos reutilizados por la API
     public String transformCardNumber(String cardNumber);
