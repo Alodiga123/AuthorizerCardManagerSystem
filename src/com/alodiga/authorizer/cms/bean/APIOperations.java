@@ -2632,9 +2632,9 @@ public class APIOperations {
 //                CardResponse validatePinOffset = validatePinOffset(cardNumber, responseGeneratePinOffSet.getIBMoffset());
 //                if (validatePinOffset.getCodigoRespuesta().equals(ResponseCode.SUCCESS.getCode())) {
                     //Se obtiene el codigo del tipo de CVV que se va a validar contra la caja HSM mediante el mensaje ISO 
-                    isoHsmEquivalence = operationsBD.getHSMRequestValue(entryMode, entityManager);
+                    isoHsmEquivalence = operationsBD.getHSMRequestValue(entryMode,22, entityManager);
                     //Se obtiene el id de la llave CVK o KVC asociada a la tarjeta a validar
-                    PlastiCustomizingRequestHasCard plasticRequest = operationsBD.getSecurityKeyIdByCardId(card.getId(), entityManager);
+                    PlastiCustomizingRequestHasCard plasticRequest = operationsBD.getSecurityKeyByCard(card.getId(), entityManager);
                     //Se genera el CVV con la caja HSM
                     GenerateCVVResponse CVVHSMGenerate = (GenerateCVVResponse) generateCVV(plasticRequest.getSecurityKeyId().getEncryptedValue(),card.getCardNumber(),cardDueDate,isoHsmEquivalence.getHsmRequestValue());
                     //Se valida el CVV generado por la caja HSM con el CVV del parametro de entrada
