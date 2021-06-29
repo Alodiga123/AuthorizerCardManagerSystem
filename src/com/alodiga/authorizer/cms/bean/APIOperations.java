@@ -89,9 +89,14 @@ import com.alodiga.hsm.util.Test;
 import static com.alodiga.hsm.util.HSMOperations.getPinblock;
 import static com.alodiga.hsm.util.HSMOperations.translatePINZPKToLMK;
 import com.cms.commons.enumeraciones.SecurityKeySizeE;
+import com.cms.commons.models.ApplicantNaturalPerson;
+import com.cms.commons.models.CardRequestNaturalPerson;
+import com.cms.commons.models.PhonePerson;
+import com.cms.commons.models.ReviewRequest;
 import com.cms.commons.models.IsoHsmEquivalence;
 import com.cms.commons.models.PlastiCustomizingRequestHasCard;
 import com.cms.commons.models.SecurityKeySize;
+import com.cms.commons.models.StatusApplicant;
 
 @Stateless(name = "FsProcessorCMSAuthorizer", mappedName = "ejb/FsProcessorCMSAuthorizer")
 @TransactionManagement(TransactionManagementType.CONTAINER)
@@ -3047,19 +3052,15 @@ public class APIOperations {
             SecurityKey securityKey = new SecurityKey();
             securityKey.setEncryptedValue(responseKey.getKeyValue());
             securityKey.setCheckDigit(responseKey.getVerificationDigit());
-            if (keyType.equals("KEK")) {
-                securityKey.setName("Llave de Seguridad KEK");
-            }
-            if (keyType.equals("KWP")) {
-                securityKey.setName("Llave de Seguridad KWP");
-            }
             switch (keyType) {
                 case Constants.SECURITY_KEY_KEK:
+                    securityKey.setName("Llave de Seguridad KEK");
                     securityKeyType = operationsBD.getSecurityKeyTypeById(SecurityKeyTypeE.KEK.getId(), entityManager);
                     securityKey.setSecurityKeyTypeId(securityKeyType);
                     securityKey.setLenght(Constants.KEY_LENGHT_SINGLE);
                     break;
                 case Constants.SECURITY_KEY_KWP:
+                    securityKey.setName("Llave de Seguridad KWP");
                     securityKeyType = operationsBD.getSecurityKeyTypeById(SecurityKeyTypeE.KWP.getId(), entityManager);
                     securityKey.setSecurityKeyTypeId(securityKeyType);
                     securityKey.setLenght(Constants.KEY_LENGHT_DOUBLE);
@@ -3101,5 +3102,24 @@ public class APIOperations {
             e.printStackTrace();
         }
         return new TransactionResponse(ResponseCode.SUCCESS.getCode(), ResponseCode.SUCCESS.getMessage());
-    }  
+    }
+    
+    public TransactionResponse createCard(String keyType, String lenght) {
+        
+        Card card = null;
+        boolean indRenewal = true;
+        CardStatus cardStatus = null;
+        StatusApplicant statusApplicant = null;
+        List<ReviewRequest> reviewRequestList = null;
+        List<ApplicantNaturalPerson> cardComplementaryList = null;
+        List<CardRequestNaturalPerson> cardRequestList = null;
+        List<PhonePerson> phonePersonList = null;
+        String cardNumber = null;
+        String accountAssigned = null;
+        Long countCardComplementary = 0L;
+        
+        return new TransactionResponse(ResponseCode.SUCCESS.getCode(), ResponseCode.SUCCESS.getMessage());
+        
+    }
+
 }

@@ -40,6 +40,7 @@ import com.cms.commons.models.ProgramLoyalty;
 import com.cms.commons.models.ProgramLoyaltyTransaction;
 import com.cms.commons.models.RateByCard;
 import com.cms.commons.models.RateByProduct;
+import com.cms.commons.models.Request;
 import com.cms.commons.models.SecurityKeyType;
 import com.cms.commons.models.SecurityKey;
 import com.cms.commons.models.SecurityKeySize;
@@ -819,5 +820,22 @@ public class operationsBDImp implements operationsBD {
             return null;
         }
         return isoHsmEquivalence; 
+    }
+
+    @Override
+    public Request getRequestCardByCustomer(String requestNumber, Integer personCustomerId,EntityManager entityManager) {
+        Request requestCard = null;
+        try {
+            StringBuilder sqlBuilder = new StringBuilder("SELECT * FROM request r ");
+            sqlBuilder.append("WHERE r.personCustomerId = ").append("'").append(personCustomerId).append("'");
+            sqlBuilder.append(" AND r.requestNumber = ").append("'").append(requestNumber).append("'");
+            System.out.println("sql: " + sqlBuilder.toString());
+            Query query = entityManager.createNativeQuery(sqlBuilder.toString(), Request.class);
+            requestCard = (Request) query.setHint("toplink.refresh", "true").getSingleResult();
+        } catch (NoResultException e) {
+            e.printStackTrace();
+            return null;
+        }
+        return requestCard;
     }
 }
