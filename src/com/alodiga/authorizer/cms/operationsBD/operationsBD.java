@@ -23,6 +23,7 @@ import com.cms.commons.models.ProgramLoyalty;
 import com.cms.commons.models.ProgramLoyaltyTransaction;
 import com.cms.commons.models.RateByCard;
 import com.cms.commons.models.RateByProduct;
+import com.cms.commons.models.Request;
 import com.cms.commons.models.SecurityKeyType;
 import com.cms.commons.models.SecurityKey;
 import com.cms.commons.models.SecurityKeySize;
@@ -97,6 +98,8 @@ public interface operationsBD {
     public VerificationTypeSecurityKey getVerificationTypeSecurityKeyById(Integer verificationTypeSecurityKeyId, EntityManager entityManager);
     public HSMBox getHSMBoxById(Integer HSMBoxId, EntityManager entityManager);
     public SecurityKey getSecurityKey(Integer securityKeyTypeId, Integer lenght, EntityManager entityManager);
+    public KeyProperties getKeyPropertiesByProductIdByChanelId(Long productId, Integer channelId,EntityManager entityManager);
+    public CardKeyHistoryListResponse getCardKeyHistoryByCardId(Long cardId, Integer limit,EntityManager entityManager);
     
     //Métodos reutilizados por la API
     public String transformCardNumber(String cardNumber);
@@ -106,7 +109,7 @@ public interface operationsBD {
     public boolean isNumeric(String pinOffset);
     public String convertCardNumber(String cardNumber);    
     
-    public KeyProperties getKeyPropertiesByProductIdByChanelId(Long productId, Integer channelId,EntityManager entityManager);
-    public CardKeyHistoryListResponse getCardKeyHistoryByCardId(Long cardId, Integer limit,EntityManager entityManager);
+    //Métodos utilizados para la creación de tarjeta
+    public Request getRequestCardByCustomer(String requestNumber, Integer personCustomerId, EntityManager entityManager);
 
 }
