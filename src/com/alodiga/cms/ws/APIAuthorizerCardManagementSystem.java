@@ -272,11 +272,10 @@ public class APIAuthorizerCardManagementSystem {
             @WebParam(name = "transactionNumberAcquirer") String transactionNumberAcquirer,
             @WebParam(name = "acquirerCountryId") String acquirerCountryId,
             @WebParam(name = "purchaseAmount") Float purchaseAmount,
-            @WebParam(name = "documentNumber") String documentNumber,
             @WebParam(name = "pinBlock") String pinBlock,
             @WebParam(name = "ARQC") String ARQC,
             @WebParam(name = "terminalId") String terminalId,
-            @WebParam(name = "oPMode") String oPMode,
+            @WebParam(name = "entryMode") String entryMode,
             @WebParam(name = "schemeEMV") String schemeEMV,
             @WebParam(name = "seqNumber") String seqNumber,
             @WebParam(name = "atc") String atc,
@@ -284,7 +283,7 @@ public class APIAuthorizerCardManagementSystem {
             @WebParam(name = "transactionData") String transactionData,
             @WebParam(name = "tradeName") String tradeName){
         return operations.cardPurchage(cardNumber,cardHolder,CVV,cardDueDate,messageMiddlewareId,transactionTypeId,channelId,transactionDate,localTimeTransaction,acquirerTerminalCodeId,transactionNumberAcquirer,acquirerCountryId,purchaseAmount,pinBlock, ARQC, terminalId,
-                oPMode,schemeEMV,seqNumber,atc,unpredictableNumber,transactionData,tradeName);
+                entryMode,schemeEMV,seqNumber,atc,unpredictableNumber,transactionData,tradeName);
     }
     @WebMethod    
     public TransactionResponse reverseWalletWithdrawal(
