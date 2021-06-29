@@ -17,10 +17,12 @@ import com.cms.commons.models.Country;
 import com.cms.commons.models.DaysWeek;
 import com.cms.commons.models.HSMBox;
 import com.cms.commons.models.HistoryCardStatusChanges;
+import com.cms.commons.models.IsoHsmEquivalence;
 import com.cms.commons.models.KeyProperties;
 import com.cms.commons.models.ProductHasChannelHasTransaction;
 import com.cms.commons.models.ProgramLoyalty;
 import com.cms.commons.models.ProgramLoyaltyTransaction;
+import com.cms.commons.models.PlastiCustomizingRequestHasCard;
 import com.cms.commons.models.RateByCard;
 import com.cms.commons.models.RateByProduct;
 import com.cms.commons.models.Request;
@@ -98,6 +100,8 @@ public interface operationsBD {
     public VerificationTypeSecurityKey getVerificationTypeSecurityKeyById(Integer verificationTypeSecurityKeyId, EntityManager entityManager);
     public HSMBox getHSMBoxById(Integer HSMBoxId, EntityManager entityManager);
     public SecurityKey getSecurityKey(Integer securityKeyTypeId, Integer lenght, EntityManager entityManager);
+    public PlastiCustomizingRequestHasCard getSecurityKeyByCard(Long cardId, EntityManager entityManager);
+    public IsoHsmEquivalence getHSMRequestValue(String isoValue,Integer isoItem, EntityManager entityManager);
     public KeyProperties getKeyPropertiesByProductIdByChanelId(Long productId, Integer channelId,EntityManager entityManager);
     public CardKeyHistoryListResponse getCardKeyHistoryByCardId(Long cardId, Integer limit,EntityManager entityManager);
     
