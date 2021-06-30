@@ -1701,6 +1701,8 @@ public class APIOperations {
         String customerIdentificationNumber = "";
         String conceptTransaction = "Cambio de Pin de tarjeta";
         GenerateCVVResponse generateCVVResponse = null;
+        PlastiCustomizingRequestHasCard plasticRequest = null;
+        GenerateCVVResponse CVVHSMGenerate = null;
         try {
             CardResponse cardResponse = validateCard(cardNumber, ARQC, cardHolder, CVV, cardDueDate, indValidateCardActive);
             if (cardResponse.getCodigoRespuesta().equals(ResponseCode.SUCCESS.getCode())) {
@@ -1742,20 +1744,36 @@ public class APIOperations {
                     pinELMK = HSMOperations.translatePINZPKToLMK(pinBlock, pan, securityKey.getEncryptedValue(), securityKey.getSecurityKeySizeId().getName());
                     IBMOfSetResponse IBMOfSetResponse = (IBMOfSetResponse) generateIBMPinOffSet(pinELMK, cardNumber);
                     if (IBMOfSetResponse.getResponseCode().equals(ResponseCode.SUCCESS.getCode())) {
-                        CardKeyHistory cardKeyHistory = new CardKeyHistory();
-                        cardKeyHistory.setCardId(card);
-                        cardKeyHistory.setPreviousPinOffset(card.getPinOffset());
-                        cardKeyHistory.setCreateDate(new Date());
-                        entityManager.merge(cardKeyHistory);
-                        
-                        card.setPinOffset(IBMOfSetResponse.getIBMoffset());
-                        card.setUpdateDate(new Timestamp(new Date().getTime()));
-                        entityManager.merge(card);
-                        
+                        //Validación CVV
+                        //Se obtiene el id de la llave CVK o KVC asociada a la tarjeta a validar
+                        plasticRequest = operationsBD.getSecurityKeyByCard(card.getId(), entityManager);
+                        //Se genera el CVV con la caja HSM
+                        CVVHSMGenerate = (GenerateCVVResponse) generateCVV(plasticRequest.getSecurityKeyId().getEncryptedValue(),card.getCardNumber(),cardDueDate,Constants.HSM_REQUEST_VALUE_CVV2); 
+                        if(CVV.trim().equals(CVVHSMGenerate.getCvv().trim())){
+                            CardKeyHistory cardKeyHistory = new CardKeyHistory();
+                            cardKeyHistory.setCardId(card);
+                            cardKeyHistory.setPreviousPinOffset(card.getPinOffset());
+                            cardKeyHistory.setCreateDate(new Date());
+                            entityManager.merge(cardKeyHistory);
+
+                            card.setPinOffset(IBMOfSetResponse.getIBMoffset());
+                            card.setUpdateDate(new Timestamp(new Date().getTime()));
+                            entityManager.merge(card);  
+                        } else {
+                            //Se actualiza el estatus de la transacción a RECHAZADA, debido a la validacion del CVV
+                            transactionsManagement.setStatusTransactionManagementId(StatusTransactionManagementE.REJECTED.getId());
+                            transactionsManagement.setResponseCode(ResponseCode.CVV_DIFFERENT.getCode());
+                            try {
+                                transactionsManagement = operationsBD.saveTransactionsManagement(transactionsManagement, entityManager);
+                            } catch (Exception e) {
+                                return new TransactionResponse(ResponseCode.INTERNAL_ERROR.getCode(), "an error occurred while saving the transaction");
+                            }
+                            return new TransactionResponse(ResponseCode.CVV_DIFFERENT.getCode(), ResponseCode.CVV_DIFFERENT.getMessage());
+                        }
                     } else {
-                        //Fallo en la validación de las propiedades
+                        //Fallo en la validación de la generación del PinOffSet en la caja HSM
                         transactionsManagement.setStatusTransactionManagementId(StatusTransactionManagementE.REJECTED.getId());
-                        transactionsManagement.setResponseCode(transactionResponse.getCodigoRespuesta());
+                        transactionsManagement.setResponseCode(IBMOfSetResponse.getResponseCode());
                         try {
                             transactionsManagement = operationsBD.saveTransactionsManagement(transactionsManagement, entityManager);
                         } catch (Exception e) {
@@ -1764,15 +1782,15 @@ public class APIOperations {
                         return new TransactionResponse(IBMOfSetResponse.getResponseCode(), IBMOfSetResponse.getResponseMessage());
                     }                       
                 } else {
-                    //Se actualiza el estatus de la transacción a RECHAZADA, debido a la validacion del CVV
+                    //Se actualiza el estatus de la transacción a RECHAZADA, debido a la validacion de las propiedades de la clave
                     transactionsManagement.setStatusTransactionManagementId(StatusTransactionManagementE.REJECTED.getId());
-                    transactionsManagement.setResponseCode(generateCVVResponse.getResponseCode());
+                    transactionsManagement.setResponseCode(transactionResponse.getCodigoRespuesta());
                     try {
                         transactionsManagement = operationsBD.saveTransactionsManagement(transactionsManagement, entityManager);
                     } catch (Exception e) {
                         return new TransactionResponse(ResponseCode.INTERNAL_ERROR.getCode(), "an error occurred while saving the transaction");
                     }
-                    return new TransactionResponse(generateCVVResponse.getResponseCode(), generateCVVResponse.getResponseMessage());
+                    return new TransactionResponse(transactionResponse.getCodigoRespuesta(), transactionResponse.getMensajeRespuesta());
                 }
             } else {
                 //Fallo en la validación de la tarjeta
