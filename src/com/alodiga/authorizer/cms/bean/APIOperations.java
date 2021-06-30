@@ -1684,29 +1684,31 @@ public class APIOperations {
                 return new TransactionResponse(ResponseCode.INTERNAL_ERROR.getCode(), "an error occurred while saving the transaction");
             }
             if (cardResponse.getCodigoRespuesta().equals(ResponseCode.SUCCESS.getCode())) {
-                //Se busca el objeto en la tabla card
+                //Se validan las propiedades de la clave
                 transactionResponse = validatePropertiesKey(card, newPinClear, channelId, true);
                 if (transactionResponse.getCodigoRespuesta().equals(ResponseCode.SUCCESS.getCode())) {
                     //Se obtiene la llave de seguridad KWP
                     SecurityKeyType securityKeyType = operationsBD.getSecurityKeyTypeById(SecurityKeyTypeE.KWP.getId(), entityManager);
                     //Busqueda de la llave de seguridad
                     SecurityKey securityKey = operationsBD.getSecurityKey(securityKeyType.getId(), Constants.KEY_LENGHT_SINGLE, entityManager);
-                    String pinBlock = getPinblock(securityKey.getClearSecurityKey(), newPinClear, card.getCardNumber());
+                    //Se genera el PinBlock
+                    String pinBlock = getPinblock(securityKey.getClearSecurityKey(), newPinClear, cardNumber);
+                    //Se genera el pinBlock y se transformar el CardNumber en el formato requerido para el servicio translatePINZPKToLMK
                     String pan = operationsBD.convertCardNumber(cardNumber);
-                    HSMOperations hSMOperations = new HSMOperations();
-                    //Falta cambiar el securityKey                    
-                    pinELMK = translatePINZPKToLMK(pinBlock, pan, securityKey.getClearSecurityKey(), securityKey.getSecurityKeySizeId().getName());
-                    //pinELMK = hSMOperations.translatePINZPKToLMK(pinBlock, pan, "B563D6ABD6692220", Constants.SECURITY_KEY_TYPE_SINGLE);
-                    com.alodiga.hsm.response.IBMOfSetResponse IBMOfSetResponse = hSMOperations.generateIBMPinOffSet(pinELMK, pan);
+                    
+                    pinELMK = HSMOperations.translatePINZPKToLMK(pinBlock, pan, securityKey.getEncryptedValue(), securityKey.getSecurityKeySizeId().getName());
+                    IBMOfSetResponse IBMOfSetResponse = (IBMOfSetResponse) generateIBMPinOffSet(pinELMK, cardNumber);
                     if (IBMOfSetResponse.getResponseCode().equals(ResponseCode.SUCCESS.getCode())) {
-                        card.setPinOffset(IBMOfSetResponse.getIBMoffset());
-                        card.setUpdateDate(new Timestamp(new Date().getTime()));
                         CardKeyHistory cardKeyHistory = new CardKeyHistory();
                         cardKeyHistory.setCardId(card);
                         cardKeyHistory.setPreviousPinOffset(card.getPinOffset());
                         cardKeyHistory.setCreateDate(new Date());
                         entityManager.merge(cardKeyHistory);
+                        
+                        card.setPinOffset(IBMOfSetResponse.getIBMoffset());
+                        card.setUpdateDate(new Timestamp(new Date().getTime()));
                         entityManager.merge(card);
+                        
                     } else {
                         //Fallo en la generación del pinOffset
                         transactionsManagement.setStatusTransactionManagementId(StatusTransactionManagementE.REJECTED.getId());
@@ -1717,9 +1719,7 @@ public class APIOperations {
                             return new TransactionResponse(ResponseCode.INTERNAL_ERROR.getCode(), "an error occurred while saving the transaction");
                         }
                         return new TransactionResponse(IBMOfSetResponse.getResponseCode(), IBMOfSetResponse.getResponseMessage());
-
-                    }
-//                        
+                    }                       
                 } else {
                     //Fallo en la validación de las propiedades
                     transactionsManagement.setStatusTransactionManagementId(StatusTransactionManagementE.REJECTED.getId());
@@ -1731,7 +1731,6 @@ public class APIOperations {
                     }
                     return new TransactionResponse(transactionResponse.getCodigoRespuesta(), transactionResponse.getMensajeRespuesta());
                 }
-
             } else {
                 //Fallo en la validación de la tarjeta
                 transactionsManagement.setStatusTransactionManagementId(StatusTransactionManagementE.REJECTED.getId());
@@ -1742,23 +1741,17 @@ public class APIOperations {
                     return new TransactionResponse(ResponseCode.INTERNAL_ERROR.getCode(), "an error occurred while saving the transaction");
                 }
                 return new TransactionResponse(cardResponse.getCodigoRespuesta(), cardResponse.getMensajeRespuesta());
-
             }
-
         } catch (Exception e) {
             e.printStackTrace();
             return new TransactionResponse(ResponseCode.INTERNAL_ERROR.getCode(), "INTERNAL_ERROR");
         }
-
         return new TransactionResponse(ResponseCode.SUCCESS.getCode(), "SUCCESS");
-
     }
 
     public TransactionResponse validatePropertiesKey(Card card, String pinOffset, Integer channelId, boolean typeTrasaction) {
         int milisecondsByDay = 86400000;
         try {
-
-            card = getCardByCardNumber(card.getCardNumber());
 
             KeyProperties keyProperties = operationsBD.getKeyPropertiesByProductIdByChanelId(card.getProductId().getId(), channelId, entityManager);
 
@@ -2125,7 +2118,7 @@ public class APIOperations {
             transactionReverseRechargeCard = operationsBD.createTransactionsManagement(null, null, acquirerTerminalCodeId, country.getId(), transactionNumberAcquirer, transactionDate,
                     TransactionE.REVERSE_CARD_RECHARGE.getId(), channelId, null, localTimeTransaction, null, null, null,
                     null, amountReverseRecharge, null, null, null, null,
-                    null, StatusTransactionManagementE.APPROVED.getId(), cardNumber, cardHolder, CVV, cardDueDate, null, null, null, null, null, null, null,
+                    null, StatusTransactionManagementE.APPROVED.getId(), cardNumber, cardHolder, CVV, cardDueDate, customerIdentificationNumber, null, null, null, null, null, null,
                     null, null, null, ResponseCode.SUCCESS.getCode(), messageMiddlewareId, DocumentTypeE.REVERSE_CARD_RECHARGE.getId(), conceptTransaction, entityManager);
 
             //Se actualiza la referencia de la transacción original en la transacción de reverso 
@@ -2249,12 +2242,28 @@ public class APIOperations {
         SecurityKeyType securityKeyType = null;
         GenerateCVVResponse CVVHSMGenerate = null;
         PlastiCustomizingRequestHasCard plasticRequest = null;
+        String customerIdentificationNumber = "";
+        Card card = null;
         try {
+            
+            CardResponse validateCard = validateCard(cardNumber, ARQC, cardHolder, CVV, cardDueDate, indValidateCardActive);
+            if (validateCard.getCard() != null) {
+                //Se obtiene la tarjeta asociada
+                card = validateCard.getCard();
+                //Se obtiene el numero de indentifiación del cliente
+                if (card.getPersonCustomerId().getPersonTypeId().getIndNaturalPerson() == true) {
+                    customerIdentificationNumber = card.getPersonCustomerId().getNaturalCustomer().getIdentificationNumber();
+                } else {
+                    customerIdentificationNumber = card.getPersonCustomerId().getLegalCustomer().getIdentificationNumber();
+                }
+            }
+            //Buscar pais
+            Country country = operationsBD.getCountry(acquirerCountryId.toString(), entityManager);
             //Se crea la transaction
-            transactionsManagement = (TransactionsManagement) operationsBD.createTransactionsManagement(null, null, acquirerTerminalCodeId, acquirerCountryId, null, transactionDate,
+            transactionsManagement = (TransactionsManagement) operationsBD.createTransactionsManagement(null, null, acquirerTerminalCodeId, country.getId(), null, transactionDate,
                     TransactionE.KEY_REGISTER.getId(), channelId, null, localTimeTransaction, null, null, null,
                     null, null, null, null, null, null,
-                    null, null, cardNumber, cardHolder, CVV, cardDueDate, null, null, null, null, null, null, null,
+                    null, null, cardNumber, cardHolder, CVV, cardDueDate, customerIdentificationNumber, null, null, null, null, null, null,
                     null, null, null, null, messageMiddlewareId, DocumentTypeE.KEY_REGISTER.getId(), conceptTransaction, entityManager);
             try {
                 transactionsManagement = operationsBD.saveTransactionsManagement(transactionsManagement, entityManager);
@@ -2262,31 +2271,30 @@ public class APIOperations {
                 return new TransactionResponse(ResponseCode.INTERNAL_ERROR.getCode(), "an error occurred while saving the transaction");
             }
 
-            CardResponse cardResponse = validateCard(cardNumber, ARQC, cardHolder, CVV, cardDueDate, indValidateCardActive);
-            if (cardResponse.getCodigoRespuesta().equals(ResponseCode.SUCCESS.getCode())) {
-                Card card = cardResponse.getCard();
+            if (validateCard.getCodigoRespuesta().equals(ResponseCode.SUCCESS.getCode())) {
                 transactionResponse = validatePropertiesKey(card, pinClear, channelId, false);
-                if (transactionResponse.getCodigoRespuesta().equals(ResponseCode.SUCCESS.getCode())) {
+                if (transactionResponse.getCodigoRespuesta().equals(ResponseCode.SUCCESS.getCode())){
                     convertCard = operationsBD.convertCardNumber(cardNumber);
-                    //Se obtiene la llave de seguridad KEK
+                    //Se obtiene el tipo de la llave de seguridad KWP
                     securityKeyType = operationsBD.getSecurityKeyTypeById(SecurityKeyTypeE.KWP.getId(), entityManager);
+                    //Busqueda de la llave de seguridad
                     securityKey = operationsBD.getSecurityKey(securityKeyType.getId(), Constants.KEY_LENGHT_SINGLE, entityManager);
                     //Se genera el pinBlock
                     pinBlock = getPinblock(securityKey.getClearSecurityKey(), pinClear, cardNumber);
                     //Se genera el pinELMK
-                    responsePinELMK = translatePINZPKToLMK(pinBlock, convertCard, securityKey.getEncryptedValue(), securityKey.getSecurityKeySizeId().getName());
+                    responsePinELMK = HSMOperations.translatePINZPKToLMK(pinBlock, convertCard, securityKey.getEncryptedValue(), securityKey.getSecurityKeySizeId().getName());
                     //Se genera el pinOffset y se guarda en la BD
-                    IBMOfSetResponse ibmOfSetResponse = generateIBMPinOffSet(responsePinELMK, convertCard);
-                    if (ibmOfSetResponse.getResponseCode().equals(ConstantResponse.SUCESSFULL_RESPONSE_CODE)) {
+                    IBMOfSetResponse ibmOfSetResponse = (IBMOfSetResponse) generateIBMPinOffSet(responsePinELMK, cardNumber);
+                    if (ibmOfSetResponse.getResponseCode().equals(ResponseCode.SUCCESS.getCode())) {
                         //Se obtiene el id de la llave CVK o KVC asociada a la tarjeta a validar
                         plasticRequest = operationsBD.getSecurityKeyByCard(card.getId(), entityManager);
                         //Se genera el CVV con la caja HSM
-                        CVVHSMGenerate = (GenerateCVVResponse) generateCVV(plasticRequest.getSecurityKeyId().getEncryptedValue(),card.getCardNumber(),cardDueDate,"000"); 
+                        CVVHSMGenerate = (GenerateCVVResponse) generateCVV(plasticRequest.getSecurityKeyId().getEncryptedValue(),card.getCardNumber(),cardDueDate,Constants.HSM_REQUEST_VALUE_CVV2); 
                         if(CVV.trim().equals(CVVHSMGenerate.getCvv().trim())){
                             //Se guarda el pinOffset en la BD del CMS
                             card.setPinOffset(ibmOfSetResponse.getIBMoffset());
                             entityManager.merge(card);
-                            //Se guarda la clave en el historial de claves
+                            //Se guarda el pinOffset en el historial de claves
                             CardKeyHistory cardKeyHistory = new CardKeyHistory();
                             cardKeyHistory.setCardId(card);
                             cardKeyHistory.setPreviousPinOffset(ibmOfSetResponse.getIBMoffset());
@@ -2306,13 +2314,13 @@ public class APIOperations {
                     } else {
                         //Se actualiza la transacción a RECHAZADA debido a que falló la validación del pin
                         transactionsManagement.setStatusTransactionManagementId(StatusTransactionManagementE.REJECTED.getId());
-                        transactionsManagement.setResponseCode(ResponseCode.INVALID_PIN.getCode());
+                        transactionsManagement.setResponseCode(ibmOfSetResponse.getResponseCode());
                         try {
                             transactionsManagement = operationsBD.saveTransactionsManagement(transactionsManagement, entityManager);
                         } catch (Exception e) {
                             return new TransactionResponse(ResponseCode.INTERNAL_ERROR.getCode(), "an error occurred while saving the transaction");
                         }
-                        return new TransactionResponse(ResponseCode.INVALID_PIN.getCode(), ResponseCode.INVALID_PIN.getMessage());
+                        return new TransactionResponse(ibmOfSetResponse.getResponseCode(), ibmOfSetResponse.getResponseMessage());
                     }
                 } else {
                     //Fallo en la validación de las propiedades
@@ -2328,13 +2336,13 @@ public class APIOperations {
             } else {
                 //Fallo en la validación de la tarjeta
                 transactionsManagement.setStatusTransactionManagementId(StatusTransactionManagementE.REJECTED.getId());
-                transactionsManagement.setResponseCode(cardResponse.getCodigoRespuesta());
+                transactionsManagement.setResponseCode(validateCard.getCodigoRespuesta());
                 try {
                     transactionsManagement = operationsBD.saveTransactionsManagement(transactionsManagement, entityManager);
                 } catch (Exception e) {
                     return new TransactionResponse(ResponseCode.INTERNAL_ERROR.getCode(), "an error occurred while saving the transaction");
                 }
-                return new TransactionResponse(cardResponse.getCodigoRespuesta(), cardResponse.getMensajeRespuesta());
+                return new TransactionResponse(validateCard.getCodigoRespuesta(), validateCard.getMensajeRespuesta());
             }
 
         } catch (Exception e) {
