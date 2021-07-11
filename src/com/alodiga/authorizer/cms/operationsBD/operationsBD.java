@@ -65,7 +65,7 @@ public interface operationsBD {
     
     public HistoryCardStatusChanges createHistoryCardStatusChanges(Card cardId, CardStatus cardStatusId, User userResponsabileId, StatusUpdateReason statusUpdateReasonId, EntityManager entityManager);
     public BalanceHistoryCard createBalanceHistoryCard(Card cardUserId, Long transactionManagementId, Float previousBalance, Float currentBalance, EntityManager entityManager);
-    public DataEMVField createDataEMVField(String amount,String terminalCountryCode,String transactionDate, String transactionTypeId, EntityManager entityManager);
+    public DataEMVField createDataEMVField(String amount,String terminalCountryCode, String transactionTypeId, EntityManager entityManager);
     
     //Operaciones en BD
     public TransactionsManagement saveTransactionsManagement(TransactionsManagement transactionsManagement, EntityManager entityManager) throws Exception;    

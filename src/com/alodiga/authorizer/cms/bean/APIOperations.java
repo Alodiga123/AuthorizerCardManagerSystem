@@ -2741,8 +2741,7 @@ public class APIOperations {
                 } else {
                     customerIdentificationNumber = card.getPersonCustomerId().getLegalCustomer().getIdentificationNumber();
                 }
-            }
-
+            }        
             //Se registra la transacción de retiro por cajero ATM en la BD
             conceptTransaction.concat(tradeName);
             Country country = operationsBD.getCountry(String.valueOf(acquirerCountryId), entityManager);
@@ -2789,11 +2788,14 @@ public class APIOperations {
                     //Se valida el CVV generado por la caja HSM con el CVV del parametro de entrada
                     if(CVV.trim().equals(CVVHSMGenerate.getCvv().trim())){
                     //Se valida el criptograma ARQC
-                      String pattern = "dd-MM-yyyy";
-                      SimpleDateFormat simpleDateFormat = new SimpleDateFormat(pattern);
-                      //IMPORTANTE: esto es temporal, el middleware debe pasar el objeto con sus valores
-                      DataEMVField emvData = operationsBD.createDataEMVField(amountWithdrawal.toString(), acquirerTerminalCodeId, "070721", transactionTypeId.toString(), entityManager);
-                      ARQCEmvDataResponse validateARQC = (ARQCEmvDataResponse) ARQCVerificationAndgenerationARPC(emvData,"009443AB394F696DF3D193271375D491",cardNumber,"1"); 
+                    //Se obtiene el tipo de llave y se busca la llave en la BD
+                    securityKeyType = operationsBD.getSecurityKeyTypeById(SecurityKeyTypeE.CAK.getId(), entityManager);
+                    SecurityKey keyCAK = operationsBD.getSecurityKey(securityKeyType.getId(), Constants.KEY_LENGHT_DOUBLE, entityManager);
+                    //IMPORTANTE: esto es temporal, el middleware debe pasar el objeto con sus valores
+                    DataEMVField emvData = operationsBD.createDataEMVField(amountWithdrawal.toString(), acquirerTerminalCodeId,transactionTypeId.toString(), entityManager);
+                    //Se verifica si la tarjeta es VISA o Master
+                    String visaOrMaster = checkCardIsVisaOrMaster(cardNumber);
+                    ARQCEmvDataResponse validateARQC = (ARQCEmvDataResponse) ARQCVerificationAndgenerationARPC(emvData,keyCAK.getEncryptedValue(),cardNumber,visaOrMaster); 
                     if (validateARQC.getResponseCode().equals(ResponseCode.SUCCESS.getCode())) {
                         //Se obtiene la respuesta que se envía al terminal (ARPC)
                         arpc = validateARQC.getDataemvField().getApplicationCryptogram();
@@ -3087,6 +3089,11 @@ public class APIOperations {
                     securityKey.setSecurityKeyTypeId(securityKeyType);
                     securityKey.setLenght(Constants.KEY_LENGHT_TRIPLE);
                     break;
+                case Constants.SECURITY_KEY_CAK:
+                    securityKeyType = operationsBD.getSecurityKeyTypeById(SecurityKeyTypeE.CAK.getId(), entityManager);
+                    securityKey.setSecurityKeyTypeId(securityKeyType);
+                    securityKey.setLenght(Constants.KEY_LENGHT_DOUBLE);
+                    break;    
                 default:
                     break;
             }
@@ -3121,6 +3128,22 @@ public class APIOperations {
         return new TransactionResponse(ResponseCode.SUCCESS.getCode(), ResponseCode.SUCCESS.getMessage());
     }
     
+    public String checkCardIsVisaOrMaster(String cardNumber){
+        if(cardNumber.substring(0,1).equals("4")){
+            return "0";
+        } else if(cardNumber.substring(0,1).equals("5")){
+          if(cardNumber.substring(0,2).equals("50") ||
+             cardNumber.substring(0,2).equals("51") ||
+             cardNumber.substring(0,2).equals("52") ||
+             cardNumber.substring(0,2).equals("53") ||
+             cardNumber.substring(0,2).equals("54") ||
+             cardNumber.substring(0,2).equals("55")){
+              return "1";
+          }
+        }
+        return null;
+    }
+    
     public TransactionResponse createCard(String keyType, String lenght) {
         
         Card card = null;
@@ -3135,8 +3158,6 @@ public class APIOperations {
         String accountAssigned = null;
         Long countCardComplementary = 0L;
         
-        return new TransactionResponse(ResponseCode.SUCCESS.getCode(), ResponseCode.SUCCESS.getMessage());
-        
-    }
-
+        return new TransactionResponse(ResponseCode.SUCCESS.getCode(), ResponseCode.SUCCESS.getMessage());  
+    }   
 }
