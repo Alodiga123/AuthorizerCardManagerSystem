@@ -48,6 +48,7 @@ import com.cms.commons.models.StatusUpdateReason;
 import com.cms.commons.models.TransactionPoint;
 import com.cms.commons.models.User;
 import com.cms.commons.models.VerificationTypeSecurityKey;
+import com.alodiga.hsm.data.object.DataEMVField;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -838,4 +839,28 @@ public class operationsBDImp implements operationsBD {
         }
         return requestCard;
     }
+    
+    @Override
+    public DataEMVField createDataEMVField(String amount,String terminalCountryCode,String transactionTypeId, EntityManager entityManager) {
+        DataEMVField dataEMVField = new DataEMVField();
+        dataEMVField.setAmount(amount);
+        dataEMVField.setOtherAmount("000000000000");
+        dataEMVField.setTerminalCountryCode(terminalCountryCode);
+        dataEMVField.setTerminalVerificationResult("4000048000");
+        dataEMVField.setTransactionCurrencyCode("0862");
+        dataEMVField.setTransactionDate("180511");
+        dataEMVField.setTransactionType(transactionTypeId);
+        dataEMVField.setUnpredictableNumber("7DEDDD6E");
+        dataEMVField.setAplicationInterchangeProfile("5800");
+        dataEMVField.setAplicationTransactionCounter("049E");
+        dataEMVField.setIsuuerAplicationDate("0110A00003220000000000000000000000FF");
+        dataEMVField.setPanSerialNumber("12");
+        dataEMVField.setCryptogramAplicationData("4746E2ED8B7166C9");
+        dataEMVField.setTerminalType("22");
+        dataEMVField.setInterfaceDeviceSerialNumber("05773805");
+        dataEMVField.setCardHolderVerificationMethod("020300");
+        dataEMVField.setTerminalCapabilities("terminalCapabilities");
+        return dataEMVField;
+    }
+
 }

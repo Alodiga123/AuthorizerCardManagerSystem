@@ -7,6 +7,7 @@ package com.alodiga.authorizer.cms.operationsBD;
 
 import com.alodiga.authorizer.cms.responses.CardKeyHistoryListResponse;
 import com.alodiga.authorizer.cms.responses.CardResponse;
+import com.alodiga.hsm.data.object.DataEMVField;
 import com.cms.commons.models.AccountCard;
 import com.cms.commons.models.BalanceHistoryCard;
 import com.cms.commons.models.BonusCard;
@@ -64,6 +65,7 @@ public interface operationsBD {
     
     public HistoryCardStatusChanges createHistoryCardStatusChanges(Card cardId, CardStatus cardStatusId, User userResponsabileId, StatusUpdateReason statusUpdateReasonId, EntityManager entityManager);
     public BalanceHistoryCard createBalanceHistoryCard(Card cardUserId, Long transactionManagementId, Float previousBalance, Float currentBalance, EntityManager entityManager);
+    public DataEMVField createDataEMVField(String amount,String terminalCountryCode, String transactionTypeId, EntityManager entityManager);
     
     //Operaciones en BD
     public TransactionsManagement saveTransactionsManagement(TransactionsManagement transactionsManagement, EntityManager entityManager) throws Exception;    
