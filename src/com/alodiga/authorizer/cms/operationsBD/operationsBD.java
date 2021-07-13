@@ -102,7 +102,7 @@ public interface operationsBD {
     public VerificationTypeSecurityKey getVerificationTypeSecurityKeyById(Integer verificationTypeSecurityKeyId, EntityManager entityManager);
     public HSMBox getHSMBoxById(Integer HSMBoxId, EntityManager entityManager);
     public SecurityKey getSecurityKey(Integer securityKeyTypeId, Integer lenght, EntityManager entityManager);
-    public PlastiCustomizingRequestHasCard getSecurityKeyByCard(Long cardId, EntityManager entityManager);
+    public PlastiCustomizingRequestHasCard getSecurityKeyByCard(Long cardId,int keyTypeId, EntityManager entityManager);
     public IsoHsmEquivalence getHSMRequestValue(String isoValue,Integer isoItem, EntityManager entityManager);
     public KeyProperties getKeyPropertiesByProductIdByChanelId(Long productId, Integer channelId,EntityManager entityManager);
     public CardKeyHistoryListResponse getCardKeyHistoryByCardId(Long cardId, Integer limit,EntityManager entityManager);
