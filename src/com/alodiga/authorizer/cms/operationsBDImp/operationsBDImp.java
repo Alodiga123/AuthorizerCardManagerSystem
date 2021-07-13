@@ -791,11 +791,12 @@ public class operationsBDImp implements operationsBD {
     }
     
     @Override
-    public PlastiCustomizingRequestHasCard getSecurityKeyByCard(Long cardId, EntityManager entityManager) {
+    public PlastiCustomizingRequestHasCard getSecurityKeyByCard(Long cardId,int keyTypeId,  EntityManager entityManager) {
         PlastiCustomizingRequestHasCard plastiCustomizingRequestHasCard = null;
         try {
             StringBuilder sqlBuilder = new StringBuilder("SELECT * FROM plastiCustomizingRequestHasCard p ");
             sqlBuilder.append("WHERE p.cardId = '").append(cardId).append("'");
+            sqlBuilder.append(" AND p.securityKeyId IN(SELECT s.id FROM securityKey s WHERE s.securityKeyTypeId = '").append(keyTypeId).append("')");
             System.out.println("sql: " + sqlBuilder.toString());
             Query query = entityManager.createNativeQuery(sqlBuilder.toString(), PlastiCustomizingRequestHasCard.class);
             plastiCustomizingRequestHasCard = (PlastiCustomizingRequestHasCard) query.setHint("toplink.refresh", "true").getSingleResult();        

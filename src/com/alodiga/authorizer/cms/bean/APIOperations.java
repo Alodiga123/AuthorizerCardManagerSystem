@@ -586,7 +586,7 @@ public class APIOperations {
             //Se valida la tarjeta
             if (validateCard.getCodigoRespuesta().equals(ResponseCode.SUCCESS.getCode())) {
                 //Se obtiene el id de la llave CVK o KVC asociada a la tarjeta a validar
-                PlastiCustomizingRequestHasCard plasticRequest = operationsBD.getSecurityKeyByCard(card.getId(), entityManager);
+                PlastiCustomizingRequestHasCard plasticRequest = operationsBD.getSecurityKeyByCard(card.getId(),SecurityKeyTypeE.KVC.getId(), entityManager);
                 generateCVVResponse = generateCVV(plasticRequest.getSecurityKeyId().getEncryptedValue(), cardNumber, cardDueDate, Constants.HSM_REQUEST_VALUE_CVV2);
                 if (!generateCVVResponse.getCvv().equals(CVV)) {
                     //Se valida si la tarjeta ya esta ACTIVADA
@@ -759,7 +759,7 @@ public class APIOperations {
 
             if (validateCard.getCodigoRespuesta().equals(ResponseCode.SUCCESS.getCode())) {
                 //Se obtiene el id de la llave CVK o KVC asociada a la tarjeta a validar
-                PlastiCustomizingRequestHasCard plasticRequest = operationsBD.getSecurityKeyByCard(card.getId(), entityManager);
+                PlastiCustomizingRequestHasCard plasticRequest = operationsBD.getSecurityKeyByCard(card.getId(),SecurityKeyTypeE.KVC.getId(), entityManager);
                 generateCVVResponse = generateCVV(plasticRequest.getSecurityKeyId().getEncryptedValue(), cardNumber, cardDueDate, Constants.HSM_REQUEST_VALUE_CVV2);
                 if (!generateCVVResponse.getCvv().equals(CVV)) {
                     //Colocar asteriscos al cardNumber
@@ -881,7 +881,7 @@ public class APIOperations {
                 if (validatePinOffset.getCodigoRespuesta().equals(ResponseCode.SUCCESS.getCode())) {
                     //Se valida el CVV ingresado contra el generado por la caja HSM
                     //Se obtiene el id de la llave CVK o KVC asociada a la tarjeta a validar
-                    PlastiCustomizingRequestHasCard plasticRequest = operationsBD.getSecurityKeyByCard(card.getId(), entityManager);
+                    PlastiCustomizingRequestHasCard plasticRequest = operationsBD.getSecurityKeyByCard(card.getId(),SecurityKeyTypeE.KVC.getId(), entityManager);
                     //Se genera el CVV con la caja HSM
                     GenerateCVVResponse CVVHSMGenerate = (GenerateCVVResponse) generateCVV(plasticRequest.getSecurityKeyId().getEncryptedValue(),card.getCardNumber(),cardDueDate,Constants.HSM_REQUEST_VALUE_CVV2);    
                     if(CVV.trim().equals(CVVHSMGenerate.getCvv().trim())){
@@ -1312,7 +1312,7 @@ public class APIOperations {
             if (validateCard.getCodigoRespuesta().equals(ResponseCode.SUCCESS.getCode())) {
                 //Se valida el CVV Ingresado con el generado por la caja HSM
                 //Se obtiene el id de la llave CVK o KVC asociada a la tarjeta a validar
-                PlastiCustomizingRequestHasCard plasticRequest = operationsBD.getSecurityKeyByCard(card.getId(), entityManager);
+                PlastiCustomizingRequestHasCard plasticRequest = operationsBD.getSecurityKeyByCard(card.getId(), SecurityKeyTypeE.KVC.getId(),entityManager);
                 //Se genera el CVV con la caja HSM
                 GenerateCVVResponse CVVHSMGenerate = (GenerateCVVResponse) generateCVV(plasticRequest.getSecurityKeyId().getEncryptedValue(),card.getCardNumber(),cardDueDate,Constants.HSM_REQUEST_VALUE_CVV2);    
                 if(CVV.trim().equals(CVVHSMGenerate.getCvv().trim())){
@@ -1749,7 +1749,7 @@ public class APIOperations {
                     if (IBMOfSetResponse.getResponseCode().equals(ResponseCode.SUCCESS.getCode())) {
                         //Validación CVV
                         //Se obtiene el id de la llave CVK o KVC asociada a la tarjeta a validar
-                        plasticRequest = operationsBD.getSecurityKeyByCard(card.getId(), entityManager);
+                        plasticRequest = operationsBD.getSecurityKeyByCard(card.getId(),SecurityKeyTypeE.KVC.getId(), entityManager);
                         //Se genera el CVV con la caja HSM
                         CVVHSMGenerate = (GenerateCVVResponse) generateCVV(plasticRequest.getSecurityKeyId().getEncryptedValue(),card.getCardNumber(),cardDueDate,Constants.HSM_REQUEST_VALUE_CVV2); 
                         if(CVV.trim().equals(CVVHSMGenerate.getCvv().trim())){
@@ -1938,7 +1938,7 @@ public class APIOperations {
                 //Se obtiene el codigo del tipo de CVV que se va a validar contra la caja HSM mediante el mensaje ISO 
                 isoHsmEquivalence = operationsBD.getHSMRequestValue(entryMode, 22, entityManager);
                 //Se obtiene el id de la llave CVK o KVC asociada a la tarjeta a validar
-                PlastiCustomizingRequestHasCard plasticRequest = operationsBD.getSecurityKeyByCard(card.getId(), entityManager);
+                PlastiCustomizingRequestHasCard plasticRequest = operationsBD.getSecurityKeyByCard(card.getId(),SecurityKeyTypeE.KVC.getId(), entityManager);
                 generateCVVResponse = generateCVV(plasticRequest.getSecurityKeyId().getEncryptedValue(), cardNumber, cardDueDate, isoHsmEquivalence.getHsmRequestValue());
                 if (!generateCVVResponse.getCvv().equals(CVV)) {
                     if (validatePinOffset.getCodigoRespuesta().equals(ResponseCode.SUCCESS.getCode())) {
@@ -2356,7 +2356,7 @@ public class APIOperations {
                     IBMOfSetResponse ibmOfSetResponse = (IBMOfSetResponse) generateIBMPinOffSet(responsePinELMK, cardNumber);
                     if (ibmOfSetResponse.getResponseCode().equals(ResponseCode.SUCCESS.getCode())) {
                         //Se obtiene el id de la llave CVK o KVC asociada a la tarjeta a validar
-                        plasticRequest = operationsBD.getSecurityKeyByCard(card.getId(), entityManager);
+                        plasticRequest = operationsBD.getSecurityKeyByCard(card.getId(),SecurityKeyTypeE.KVC.getId(), entityManager);
                         //Se genera el CVV con la caja HSM
                         CVVHSMGenerate = (GenerateCVVResponse) generateCVV(plasticRequest.getSecurityKeyId().getEncryptedValue(),card.getCardNumber(),cardDueDate,Constants.HSM_REQUEST_VALUE_CVV2); 
                         if(CVV.trim().equals(CVVHSMGenerate.getCvv().trim())){
@@ -2729,6 +2729,7 @@ public class APIOperations {
         SecurityKeyType securityKeyType = null;
         SecurityKey securityKey = null;
         IsoHsmEquivalence isoHsmEquivalence = null;
+        PlastiCustomizingRequestHasCard plasticRequest = null;
         try {
 
             CardResponse validateCard = validateCard(cardNumber, ARQC, cardHolder, CVV, cardDueDate, indValidateCardActive);
@@ -2760,20 +2761,13 @@ public class APIOperations {
             //Se valida la tarjeta
             if (validateCard.getCodigoRespuesta().equals(ResponseCode.SUCCESS.getCode())) {
                 //Se obtiene el tipo de llave
-                securityKeyType = operationsBD.getSecurityKeyTypeById(SecurityKeyTypeE.KWP.getId(), entityManager);
-                //Se busca la llave en la BD en caso de no conseguir se genera la llave y se busca la llave generada
-                SecurityKey keyKWP = operationsBD.getSecurityKey(securityKeyType.getId(), Constants.KEY_LENGHT_SINGLE, entityManager);
-                if (keyKWP == null) {
-                    TransactionResponse generateKey = generateSecurityKey("KWP", "Single");
-                    keyKWP = operationsBD.getSecurityKey(securityKeyType.getId(), Constants.KEY_LENGHT_SINGLE, entityManager);
-                }
-
+                plasticRequest = operationsBD.getSecurityKeyByCard(card.getId(),SecurityKeyTypeE.KWP.getId(), entityManager);
                 //Se genera el pinBlock y se transformar el CardNumber en el formato requerido para el servicio translatePINZPKToLMK
-                String generatePinBlock = getPinblock(keyKWP.getClearSecurityKey(), pinBlock, cardNumber);
+                String generatePinBlock = getPinblock(plasticRequest.getSecurityKeyId().getClearSecurityKey(), pinBlock, cardNumber);
                 String convertCardNumber = operationsBD.convertCardNumber(cardNumber);
 
                 //Se realizan las validaciones del HSM
-                pinELMK = HSMOperations.translatePINZPKToLMK(generatePinBlock, convertCardNumber, keyKWP.getEncryptedValue(), keyKWP.getSecurityKeySizeId().getName());
+                pinELMK = HSMOperations.translatePINZPKToLMK(generatePinBlock, convertCardNumber, plasticRequest.getSecurityKeyId().getEncryptedValue(), plasticRequest.getSecurityKeyId().getSecurityKeySizeId().getName());
                 IBMOfSetResponse responseGeneratePinOffSet = (IBMOfSetResponse) generateIBMPinOffSet(pinELMK, cardNumber);
 
                 //Se valida el PinOffSet generado por la caja HSM con el de la BD
@@ -2782,20 +2776,19 @@ public class APIOperations {
                     //Se obtiene el codigo del tipo de CVV que se va a validar contra la caja HSM mediante el mensaje ISO 
                     isoHsmEquivalence = operationsBD.getHSMRequestValue(entryMode,22, entityManager);
                     //Se obtiene el id de la llave CVK o KVC asociada a la tarjeta a validar
-                    PlastiCustomizingRequestHasCard plasticRequest = operationsBD.getSecurityKeyByCard(card.getId(), entityManager);
+                    plasticRequest = operationsBD.getSecurityKeyByCard(card.getId(),SecurityKeyTypeE.KVC.getId(), entityManager);
                     //Se genera el CVV con la caja HSM
                     GenerateCVVResponse CVVHSMGenerate = (GenerateCVVResponse) generateCVV(plasticRequest.getSecurityKeyId().getEncryptedValue(),card.getCardNumber(),cardDueDate,isoHsmEquivalence.getHsmRequestValue());
                     //Se valida el CVV generado por la caja HSM con el CVV del parametro de entrada
                     if(CVV.trim().equals(CVVHSMGenerate.getCvv().trim())){
                     //Se valida el criptograma ARQC
-                    //Se obtiene el tipo de llave y se busca la llave en la BD
-                    securityKeyType = operationsBD.getSecurityKeyTypeById(SecurityKeyTypeE.CAK.getId(), entityManager);
-                    SecurityKey keyCAK = operationsBD.getSecurityKey(securityKeyType.getId(), Constants.KEY_LENGHT_DOUBLE, entityManager);
+                    //Se obtiene el id de la llave CAK asociada a la tarjeta a validar
+                    plasticRequest = operationsBD.getSecurityKeyByCard(card.getId(),SecurityKeyTypeE.CAK.getId(), entityManager);
                     //IMPORTANTE: esto es temporal, el middleware debe pasar el objeto con sus valores
                     DataEMVField emvData = operationsBD.createDataEMVField(amountWithdrawal.toString(), acquirerTerminalCodeId,transactionTypeId.toString(), entityManager);
                     //Se verifica si la tarjeta es VISA o Master
                     String visaOrMaster = checkCardIsVisaOrMaster(cardNumber);
-                    ARQCEmvDataResponse validateARQC = (ARQCEmvDataResponse) ARQCVerificationAndgenerationARPC(emvData,keyCAK.getEncryptedValue(),cardNumber,visaOrMaster); 
+                    ARQCEmvDataResponse validateARQC = (ARQCEmvDataResponse) ARQCVerificationAndgenerationARPC(emvData,plasticRequest.getSecurityKeyId().getEncryptedValue(),cardNumber,visaOrMaster); 
                     if (validateARQC.getResponseCode().equals(ResponseCode.SUCCESS.getCode())) {
                         //Se obtiene la respuesta que se envía al terminal (ARPC)
                         arpc = validateARQC.getDataemvField().getApplicationCryptogram();
